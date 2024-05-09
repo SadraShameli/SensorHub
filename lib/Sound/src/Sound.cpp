@@ -107,8 +107,6 @@ static void vTask(void *pvParameters)
     }
 #endif
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
-
     for (;;)
     {
         Sound::Update();
@@ -126,113 +124,121 @@ void Sound::Update()
 {
     static wave_audio_t<SAMPLE_TYPE> wave(SAMPLE_RATE, SAMPLE_BITRATE, RECORD_TIME);
 
-    size_t i2sBytesRead = 0;
-    i2s_channel_read(i2sHandle, wave.buffer, wave.buffer_length, &i2sBytesRead, portMAX_DELAY);
-
-#ifdef UNIT_ENABLE_SOUND_REGISTERING
-    static clock_t previousTime = 0;
-    clock_t currentTime = clock();
-#endif
-
-    double rms = SoundFilter::CalculateRMS(wave.buffer, wave.buffer_count);
-    double decibel = 20.0f * log10(rms / s_MicAmplitude) + MIC_REF_DB + MIC_OFFSET_DB;
-
-    if (decibel >= MIC_NOISE_DB && decibel <= MIC_OVERLOAD_DB)
+    while (WiFi::IsConnected())
     {
-        m_SoundLevel = decibel;
+        Output::SetContinuity(DeviceConfig::LedY, false);
 
-        if (m_SoundLevel > m_MaxLevel)
-        {
-            m_MaxLevel = m_SoundLevel;
-        }
-
-        if (m_SoundLevel < m_MinLevel)
-        {
-            m_MinLevel = m_SoundLevel;
-        }
-
-        ESP_LOGI(TAG, "dB: %d", (int)m_SoundLevel);
+        size_t i2sBytesRead = 0;
+        i2s_channel_read(i2sHandle, wave.buffer, wave.buffer_length, &i2sBytesRead, portMAX_DELAY);
 
 #ifdef UNIT_ENABLE_SOUND_REGISTERING
-        if ((currentTime - previousTime) > Backend::RegisterInterval * 1000)
-        {
-            previousTime = currentTime;
-
-            if (Backend::RegisterReadings())
-            {
-                Output::Blink(DeviceConfig::Outputs::LedG, 1000);
-            }
-
-            else
-            {
-                Output::Blink(DeviceConfig::Outputs::LedR, 1000);
-            }
-
-            ResetLevels();
-        }
+        static clock_t previousTime = 0;
+        clock_t currentTime = clock();
 #endif
 
-#ifdef UNIT_ENABLE_SOUND_RECORDING
-        if (m_SoundLevel > Backend::LoudnessThreshold)
+        double rms = SoundFilter::CalculateRMS(wave.buffer, wave.buffer_count);
+        double decibel = 20.0f * log10(rms / s_MicAmplitude) + MIC_REF_DB + MIC_OFFSET_DB;
+
+        if (decibel >= MIC_NOISE_DB && decibel <= MIC_OVERLOAD_DB)
         {
-            ESP_LOGI(TAG, "Continuing recording - dB: %f, Threshold: %d", m_SoundLevel, Backend::LoudnessThreshold);
-            ESP_LOGI(TAG, "Stream request to URL: %s - Size: %u", endpointURL.c_str(), wave.total_size);
-            UNIT_TIMER("Stream request");
+            m_SoundLevel = decibel;
 
-            Output::Toggle(DeviceConfig::Outputs::LedY, true);
-            esp_err_t err = esp_http_client_open(httpClientHandle, wave.total_size);
-
-            if (err != ESP_FAIL)
+            if (m_SoundLevel > m_MaxLevel)
             {
-                esp_http_client_write(httpClientHandle, (char *)&wave.header, sizeof(wave_header_t));
-                esp_http_client_write(httpClientHandle, (char *)wave.buffer, wave.buffer_length);
+                m_MaxLevel = m_SoundLevel;
+            }
 
-                for (size_t byte_count = wave.header.data_length - wave.header.bytes_per_second; byte_count > 0; byte_count -= wave.buffer_length)
-                {
-                    i2s_channel_read(i2sHandle, wave.buffer, wave.buffer_length, &i2sBytesRead, portMAX_DELAY);
-                    esp_http_client_write(httpClientHandle, (char *)wave.buffer, wave.buffer_length);
-                }
+            if (m_SoundLevel < m_MinLevel)
+            {
+                m_MinLevel = m_SoundLevel;
+            }
 
-                int length = esp_http_client_fetch_headers(httpClientHandle);
-                int statusCode = esp_http_client_get_status_code(httpClientHandle);
+            ESP_LOGI(TAG, "dB: %d", (int)m_SoundLevel);
 
-                if (length > 0)
-                {
-                    httpPayload.clear();
-                    httpPayload.resize(length);
+#ifdef UNIT_ENABLE_SOUND_REGISTERING
+            if ((currentTime - previousTime) > Backend::RegisterInterval * 1000)
+            {
+                previousTime = currentTime;
 
-                    esp_http_client_read_response(httpClientHandle, httpPayload.data(), httpPayload.capacity());
-
-                    ESP_LOGI(TAG, "HTTP Status: %d - Length: %d - Payload: %.*s", statusCode, httpPayload.length(), httpPayload.length(), httpPayload.c_str());
-                }
-
-                Output::Toggle(DeviceConfig::Outputs::LedY, false);
-
-                if (statusCode == 200)
+                if (Backend::RegisterReadings())
                 {
                     Output::Blink(DeviceConfig::Outputs::LedG, 1000);
                 }
 
                 else
                 {
+                    Output::Blink(DeviceConfig::Outputs::LedR, 1000);
+                }
+
+                ResetLevels();
+            }
+#endif
+
+#ifdef UNIT_ENABLE_SOUND_RECORDING
+            if (m_SoundLevel > Backend::LoudnessThreshold)
+            {
+                ESP_LOGI(TAG, "Continuing recording - dB: %f, Threshold: %d", m_SoundLevel, Backend::LoudnessThreshold);
+                ESP_LOGI(TAG, "Stream request to URL: %s - Size: %u", endpointURL.c_str(), wave.total_size);
+                UNIT_TIMER("Stream request");
+
+                Output::Toggle(DeviceConfig::Outputs::LedY, true);
+                esp_err_t err = esp_http_client_open(httpClientHandle, wave.total_size);
+
+                if (err != ESP_FAIL)
+                {
+                    esp_http_client_write(httpClientHandle, (char *)&wave.header, sizeof(wave_header_t));
+                    esp_http_client_write(httpClientHandle, (char *)wave.buffer, wave.buffer_length);
+
+                    for (size_t byte_count = wave.header.data_length - wave.header.bytes_per_second; byte_count > 0; byte_count -= wave.buffer_length)
+                    {
+                        i2s_channel_read(i2sHandle, wave.buffer, wave.buffer_length, &i2sBytesRead, portMAX_DELAY);
+                        esp_http_client_write(httpClientHandle, (char *)wave.buffer, wave.buffer_length);
+                    }
+
+                    int length = esp_http_client_fetch_headers(httpClientHandle);
+                    int statusCode = esp_http_client_get_status_code(httpClientHandle);
+
+                    if (length > 0)
+                    {
+                        httpPayload.clear();
+                        httpPayload.resize(length);
+
+                        esp_http_client_read_response(httpClientHandle, httpPayload.data(), httpPayload.capacity());
+
+                        ESP_LOGI(TAG, "HTTP Status: %d - Length: %d - Payload: %.*s", statusCode, httpPayload.length(), httpPayload.length(), httpPayload.c_str());
+                    }
+
+                    Output::Toggle(DeviceConfig::Outputs::LedY, false);
+
+                    if (statusCode == 200)
+                    {
+                        Output::Blink(DeviceConfig::Outputs::LedG, 1000);
+                    }
+
+                    else
+                    {
+                        Failsafe::AddFailure({.Message = "Registering wave file failed"});
+                    }
+                }
+
+                else
+                {
                     Failsafe::AddFailure({.Message = "Registering wave file failed"});
                 }
-            }
 
-            else
-            {
-                Failsafe::AddFailure({.Message = "Registering wave file failed"});
+                esp_http_client_close(httpClientHandle);
             }
-
-            esp_http_client_close(httpClientHandle);
-        }
 #endif
+        }
+
+        else
+        {
+            Failsafe::AddFailure({.Message = "Sound value not valid", .Error = std::to_string(decibel)});
+        };
     }
 
-    else
-    {
-        Failsafe::AddFailure({.Message = "Sound value not valid", .Error = std::to_string(decibel)});
-    };
+    Output::Blink(DeviceConfig::LedY, 250, true);
+    vTaskDelay(pdMS_TO_TICKS(25));
 }
 
 double Sound::GetLevel()
