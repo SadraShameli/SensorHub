@@ -23,7 +23,7 @@
 #define SAMPLE_BITRATE (sizeof(SAMPLE_TYPE) * 8)
 
 static i2s_chan_handle_t i2sHandle = nullptr;
-static const double s_MicAmplitude = pow(10, MIC_SENSITIVITY / 20.0f) * ((1 << (SAMPLE_BITRATE - 1)) - 1);
+static const double micAmplitude = pow(10, MIC_SENSITIVITY / 20.0f) * ((1 << (SAMPLE_BITRATE - 1)) - 1);
 
 #ifdef UNIT_ENABLE_SOUND_RECORDING
 static esp_http_client_handle_t httpClient = nullptr;
@@ -137,7 +137,7 @@ void Sound::Update()
 #endif
 
         double rms = SoundFilter::CalculateRMS(wave.buffer, wave.buffer_count);
-        double decibel = 20.0f * log10(rms / s_MicAmplitude) + MIC_REF_DB + MIC_OFFSET_DB;
+        double decibel = 20.0f * log10(rms / micAmplitude) + MIC_REF_DB + MIC_OFFSET_DB;
 
         if (decibel >= MIC_NOISE_DB && decibel <= MIC_OVERLOAD_DB)
         {
@@ -188,9 +188,8 @@ void Sound::Update()
                     Output::Blink(DeviceConfig::Outputs::LedG, 250, true);
 
                     esp_http_client_write(httpClient, (char *)&wave.header, sizeof(wave_header_t));
-                    esp_http_client_write(httpClient, (char *)wave.buffer, wave.buffer_length);
 
-                    for (size_t byte_count = wave.header.data_length - wave.header.bytes_per_second; byte_count > 0; byte_count -= wave.buffer_length)
+                    for (size_t byte_count = wave.header.data_length; byte_count > 0; byte_count -= wave.buffer_length)
                     {
                         i2s_channel_read(i2sHandle, wave.buffer, wave.buffer_length, &i2sBytesRead, portMAX_DELAY);
                         esp_http_client_write(httpClient, (char *)wave.buffer, wave.buffer_length);
