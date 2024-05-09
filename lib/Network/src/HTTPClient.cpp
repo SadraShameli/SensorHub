@@ -38,7 +38,7 @@ static esp_err_t httpEventHandler(esp_http_client_event_t *evt)
 
         else if (err == MBEDTLS_ERR_SSL_ALLOC_FAILED)
         {
-            Failsafe::AddFailure({.Message = "HTTP request failed: Memory alloc failed"});
+            Failsafe::AddFailure({.Message = "HTTP request failed: Memory allocation failed"});
         }
     }
 
@@ -96,6 +96,8 @@ bool HTTP::GET(const char *url, std::string &payload)
     esp_http_client_set_method(httpClient, HTTP_METHOD_GET);
 
     esp_err_t err = esp_http_client_perform(httpClient);
+    int statusCode = esp_http_client_get_status_code(httpClient);
+
     esp_http_client_close(httpClient);
 
     if (err != ESP_OK)
@@ -104,10 +106,12 @@ bool HTTP::GET(const char *url, std::string &payload)
         return false;
     }
 
-    if (Backend::CheckResponse(httpPayload))
+    if (Backend::CheckResponseFailed(httpPayload, statusCode))
     {
-        payload = httpPayload;
+        return false;
     }
+
+    payload = httpPayload;
 
     return true;
 }
@@ -128,6 +132,8 @@ bool HTTP::POST(const char *url, std::string &payload)
     esp_http_client_set_post_field(httpClient, payload.c_str(), payload.length());
 
     esp_err_t err = esp_http_client_perform(httpClient);
+    int statusCode = esp_http_client_get_status_code(httpClient);
+
     esp_http_client_close(httpClient);
 
     if (err != ESP_OK)
@@ -136,10 +142,12 @@ bool HTTP::POST(const char *url, std::string &payload)
         return false;
     }
 
-    if (Backend::CheckResponse(httpPayload))
+    if (Backend::CheckResponseFailed(httpPayload, statusCode))
     {
-        payload = httpPayload;
+        return false;
     }
+
+    payload = httpPayload;
 
     return true;
 }

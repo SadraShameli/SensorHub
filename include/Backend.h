@@ -6,8 +6,8 @@
 #define UNIT_DISABLE_FAVICON
 
 #ifdef UNIT_SOUND
-#define UNIT_ENABLE_SOUND_REGISTERING
-// #define UNIT_ENABLE_SOUND_SAMPLING
+// #define UNIT_ENABLE_SOUND_REGISTERING
+#define UNIT_ENABLE_SOUND_RECORDING
 #endif
 
 #define UNIT_INPUT_PINS                \
@@ -70,8 +70,8 @@ public:
         GasResistance,
         AirPressure,
         Altitude,
-        RPM,
         Sound,
+        RPM,
         SensorCount
     };
 
@@ -85,7 +85,8 @@ public:
     };
 
 public:
-    static bool CheckResponse(std::string &);
+    static bool StatusOK(int);
+    static bool CheckResponseFailed(std::string &, int);
     static bool SetupConfiguration(std::string &);
     static bool GetConfiguration();
     static bool RegisterReadings();
@@ -94,7 +95,7 @@ public:
     inline static std::string SSID, Password, DeviceId, DeviceName, AuthKey, Address;
     inline static int LoudnessThreshold, RegisterInterval;
 
-    inline static const char *GetDevicePropertiesURL = "getDeviceProperties/";
-    inline static const char *RegisterReadingRecordURL = "registerReadingRecord/";
-    inline static const char *RegisterSoundSampleURL = "registerSoundSample/";
+    inline static const char *DeviceURL = "device/";
+    inline static const char *ReadingURL = "reading/";
+    inline static const char *SoundURL = "sound/";
 };

@@ -17,7 +17,7 @@
 #define MIC_OVERLOAD_DB 120.0f
 #define MIC_NOISE_DB 29
 
-#define RECORD_TIME 5000
+#define RECORD_TIME 5
 #define SAMPLE_RATE 48000
 #define SAMPLE_TYPE int16_t
 #define SAMPLE_BITRATE (sizeof(SAMPLE_TYPE) * 8)
@@ -25,9 +25,9 @@
 static i2s_chan_handle_t i2sHandle = nullptr;
 static const double s_MicAmplitude = pow(10, MIC_SENSITIVITY / 20.0f) * ((1 << (SAMPLE_BITRATE - 1)) - 1);
 
-#ifdef UNIT_ENABLE_SOUND_SAMPLING
-static esp_http_client_handle_t httpClientHandle = nullptr;
-static std::string httpPayload, endpointURL;
+#ifdef UNIT_ENABLE_SOUND_RECORDING
+static esp_http_client_handle_t httpClient = nullptr;
+static std::string httpPayload;
 #endif
 
 static const char *TAG = "Sound";
@@ -69,7 +69,7 @@ static void vTask(void *pvParameters)
 
     if (err != ESP_OK)
     {
-        ESP_LOGE(TAG, "I2S channel alloc failed: %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "I2S channel allocation failed: %s", esp_err_to_name(err));
         vTaskDelete(nullptr);
     }
 
@@ -77,7 +77,7 @@ static void vTask(void *pvParameters)
 
     if (err != ESP_OK)
     {
-        ESP_LOGE(TAG, "I2S channel init failed: %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "I2S channel initialization failed: %s", esp_err_to_name(err));
         vTaskDelete(nullptr);
     }
 
@@ -89,18 +89,18 @@ static void vTask(void *pvParameters)
         vTaskDelete(nullptr);
     }
 
-#ifdef UNIT_REGISTER_RECORDING
-    endpointURL = Backend::Address + Backend::RegisterSoundSampleURL + Backend::DeviceId;
+#ifdef UNIT_ENABLE_SOUND_RECORDING
+    Backend::Address.append(Backend::SoundURL + Backend::DeviceId);
 
     esp_http_client_config_t http_config = {
-        .url = endpointURL.c_str(),
-        .cert_pem = DeviceConfig::ServerCrt,
+        .url = Backend::Address.c_str(),
+        .cert_pem = DeviceConfig::WiFi::ServerCrt,
         .method = HTTP_METHOD_POST,
     };
 
-    httpClientHandle = esp_http_client_init(&http_config);
+    httpClient = esp_http_client_init(&http_config);
 
-    if (!httpClientHandle)
+    if (!httpClient)
     {
         ESP_LOGE(TAG, "Sound network initialization failed");
         vTaskDelete(nullptr);
@@ -174,67 +174,66 @@ void Sound::Update()
             }
 #endif
 
-#ifdef UNIT_ENABLE_SOUND_SAMPLING
+#ifdef UNIT_ENABLE_SOUND_RECORDING
             if (m_SoundLevel > Backend::LoudnessThreshold)
             {
-                ESP_LOGI(TAG, "Continuing recording - dB: %f, Threshold: %d", m_SoundLevel, Backend::LoudnessThreshold);
-                ESP_LOGI(TAG, "Stream request to URL: %s - Size: %u", endpointURL.c_str(), wave.total_size);
+                ESP_LOGI(TAG, "Continuing recording - dB: %f - threshold: %d", m_SoundLevel, Backend::LoudnessThreshold);
+                ESP_LOGI(TAG, "Post request to URL: %s - size: %u", Backend::Address.c_str(), wave.total_size);
                 UNIT_TIMER("Stream request");
 
-                Output::Toggle(DeviceConfig::Outputs::LedY, true);
-                esp_err_t err = esp_http_client_open(httpClientHandle, wave.total_size);
+                esp_err_t err = esp_http_client_open(httpClient, wave.total_size);
 
-                if (err != ESP_FAIL)
+                if (err == ESP_OK)
                 {
-                    esp_http_client_write(httpClientHandle, (char *)&wave.header, sizeof(wave_header_t));
-                    esp_http_client_write(httpClientHandle, (char *)wave.buffer, wave.buffer_length);
+                    Output::Blink(DeviceConfig::Outputs::LedG, 250, true);
+
+                    esp_http_client_write(httpClient, (char *)&wave.header, sizeof(wave_header_t));
+                    esp_http_client_write(httpClient, (char *)wave.buffer, wave.buffer_length);
 
                     for (size_t byte_count = wave.header.data_length - wave.header.bytes_per_second; byte_count > 0; byte_count -= wave.buffer_length)
                     {
                         i2s_channel_read(i2sHandle, wave.buffer, wave.buffer_length, &i2sBytesRead, portMAX_DELAY);
-                        esp_http_client_write(httpClientHandle, (char *)wave.buffer, wave.buffer_length);
+                        esp_http_client_write(httpClient, (char *)wave.buffer, wave.buffer_length);
                     }
 
-                    int length = esp_http_client_fetch_headers(httpClientHandle);
-                    int statusCode = esp_http_client_get_status_code(httpClientHandle);
+                    int length = esp_http_client_fetch_headers(httpClient);
+                    int statusCode = esp_http_client_get_status_code(httpClient);
 
-                    if (length > 0)
+                    Output::SetContinuity(DeviceConfig::Outputs::LedG, false);
+
+                    if (!Backend::StatusOK(statusCode))
                     {
-                        httpPayload.clear();
-                        httpPayload.resize(length);
+                        if (length > 0)
+                        {
+                            httpPayload.clear();
+                            httpPayload.resize(length);
 
-                        esp_http_client_read_response(httpClientHandle, httpPayload.data(), httpPayload.capacity());
+                            esp_http_client_read_response(httpClient, httpPayload.data(), httpPayload.capacity());
 
-                        ESP_LOGI(TAG, "HTTP Status: %d - Length: %d - Payload: %.*s", statusCode, httpPayload.length(), httpPayload.length(), httpPayload.c_str());
-                    }
+                            Failsafe::AddFailure({.Message = "Backend response failed - status code: " + std::to_string(statusCode) + " - error", .Error = httpPayload});
+                        }
 
-                    Output::Toggle(DeviceConfig::Outputs::LedY, false);
-
-                    if (statusCode == 200)
-                    {
-                        Output::Blink(DeviceConfig::Outputs::LedG, 1000);
-                    }
-
-                    else
-                    {
-                        Failsafe::AddFailure({.Message = "Registering wave file failed"});
+                        else
+                        {
+                            Failsafe::AddFailure({.Message = "Backend response failed - status code: " + statusCode});
+                        }
                     }
                 }
 
                 else
                 {
-                    Failsafe::AddFailure({.Message = "Registering wave file failed"});
+                    Failsafe::AddFailure({.Message = "Registering sound recording failed"});
                 }
 
-                esp_http_client_close(httpClientHandle);
+                esp_http_client_close(httpClient);
             }
 #endif
         }
 
         else
         {
-            Failsafe::AddFailure({.Message = "Sound value not valid", .Error = std::to_string(decibel)});
-        };
+            Failsafe::AddFailure({.Message = "Sound value not valid - dB: " + std::to_string(decibel)});
+        }
     }
 
     Output::Blink(DeviceConfig::LedY, 250, true);

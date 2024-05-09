@@ -329,7 +329,7 @@ void Storage::SetDeviceName(const std::string &str)
 
     else
     {
-        Failsafe::AddFailure({.Message = "DeviceName too long"});
+        Failsafe::AddFailure({.Message = "Device Name too long"});
     }
 }
 
@@ -343,7 +343,7 @@ void Storage::SetAuthKey(const std::string &str)
 
     else
     {
-        Failsafe::AddFailure({.Message = "AuthKey too long"});
+        Failsafe::AddFailure({.Message = "Auth Key too long"});
     }
 }
 
@@ -380,6 +380,6 @@ void Storage::SetEnabledSensors(Backend::Menus sensor, bool state)
 
 void Storage::SetConfigMode(bool configBool)
 {
-    ESP_LOGI(TAG, "Setting ConfigMode: %s", configBool == true ? "True" : "False");
+    ESP_LOGI(TAG, "Setting Config Mode: %s", configBool == true ? "True" : "False");
     m_StorageData.ConfigMode = configBool;
 }

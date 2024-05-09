@@ -10,11 +10,28 @@
 
 static const char *TAG = "Backend";
 
-bool Backend::CheckResponse(std::string &payload)
+bool Backend::StatusOK(int statusCode)
 {
-    if (!payload.length())
+    if (statusCode > 99 && statusCode < 400)
     {
+        return true;
+    }
+
+    return false;
+}
+
+bool Backend::CheckResponseFailed(std::string &payload, int statusCode)
+{
+    if (StatusOK(statusCode))
+    {
+        ESP_LOGI(TAG, "Backend response ok - status code: %d", statusCode);
         return false;
+    }
+
+    if (payload.empty())
+    {
+        Failsafe::AddFailure({.Message = "Backend response failed - status code: " + std::to_string(statusCode)});
+        return true;
     }
 
     ESP_LOGI(TAG, "Checking backend response");
@@ -25,15 +42,14 @@ bool Backend::CheckResponse(std::string &payload)
     if (error != DeserializationError::Ok)
     {
         Failsafe::AddFailure({.Message = "Deserializing response failed", .Error = error.c_str()});
-        return false;
+        return true;
     }
 
     const char *errorMsg = doc["error"];
 
     if (errorMsg)
     {
-        Failsafe::AddFailure({.Message = "Backend response failed", .Error = errorMsg});
-        return false;
+        Failsafe::AddFailure({.Message = "Backend response failed - status code: " + std::to_string(statusCode), .Error = errorMsg});
     }
 
     return true;
@@ -72,7 +88,7 @@ bool Backend::GetConfiguration()
 {
     ESP_LOGI(TAG, "Getting configuration");
 
-    std::string payload, url = Address + GetDevicePropertiesURL + DeviceId;
+    std::string payload, url = Address + DeviceURL + DeviceId;
 
     if (HTTP::GET(url.c_str(), payload))
     {
@@ -108,9 +124,9 @@ bool Backend::RegisterReadings()
         doc["device_id"] = Backend::DeviceId;
 
         JsonObject sensors = doc["sensors"].to<JsonObject>();
-        sensors[Backend::SensorTypes::Sound == 7 ? "7" : 0] = (int)Sound::GetMaxLevel();
+        sensors[Backend::SensorTypes::Sound == 6 ? "6" : 0] = (int)Sound::GetMaxLevel();
 
-        std::string payload, url = Address + Backend::RegisterReadingRecordURL;
+        std::string payload, url = Address + Backend::ReadingURL;
         serializeJson(doc, payload);
 
         if (HTTP::POST(url.c_str(), payload))
