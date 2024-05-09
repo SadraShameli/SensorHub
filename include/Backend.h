@@ -7,7 +7,7 @@
 
 #ifdef UNIT_SOUND
 #define UNIT_ENABLE_SOUND_REGISTERING
-// #define UNIT_ENABLE_SOUND_RECORDING
+// #define UNIT_ENABLE_SOUND_SAMPLING
 #endif
 
 #define UNIT_INPUT_PINS                \
@@ -94,7 +94,7 @@ public:
     inline static std::string SSID, Password, DeviceId, DeviceName, AuthKey, Address;
     inline static int LoudnessThreshold, RegisterInterval;
 
-    inline static const char *RegisterWaveFileURL = "registerWaveFile/";
-    inline static const char *RegisterReadingRecordURL = "registerReadingRecord/";
     inline static const char *GetDevicePropertiesURL = "getDeviceProperties/";
+    inline static const char *RegisterReadingRecordURL = "registerReadingRecord/";
+    inline static const char *RegisterSoundSampleURL = "registerSoundSample/";
 };

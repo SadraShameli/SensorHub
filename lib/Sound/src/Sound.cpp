@@ -25,7 +25,7 @@
 static i2s_chan_handle_t i2sHandle = nullptr;
 static const double s_MicAmplitude = pow(10, MIC_SENSITIVITY / 20.0f) * ((1 << (SAMPLE_BITRATE - 1)) - 1);
 
-#ifdef UNIT_ENABLE_SOUND_RECORDING
+#ifdef UNIT_ENABLE_SOUND_SAMPLING
 static esp_http_client_handle_t httpClientHandle = nullptr;
 static std::string httpPayload, endpointURL;
 #endif
@@ -90,7 +90,7 @@ static void vTask(void *pvParameters)
     }
 
 #ifdef UNIT_REGISTER_RECORDING
-    endpointURL = Backend::Address + Backend::RegisterWaveFileURL + Backend::DeviceId;
+    endpointURL = Backend::Address + Backend::RegisterSoundSampleURL + Backend::DeviceId;
 
     esp_http_client_config_t http_config = {
         .url = endpointURL.c_str(),
@@ -174,7 +174,7 @@ void Sound::Update()
             }
 #endif
 
-#ifdef UNIT_ENABLE_SOUND_RECORDING
+#ifdef UNIT_ENABLE_SOUND_SAMPLING
             if (m_SoundLevel > Backend::LoudnessThreshold)
             {
                 ESP_LOGI(TAG, "Continuing recording - dB: %f, Threshold: %d", m_SoundLevel, Backend::LoudnessThreshold);
