@@ -49,12 +49,12 @@ static esp_err_t httpEventHandler(esp_http_client_event_t *evt)
 
         if (httpPayload.length())
         {
-            ESP_LOGI(TAG, "HTTP Status: %d - Length: %d - Payload: %.*s", statusCode, httpPayload.length(), httpPayload.length(), httpPayload.c_str());
+            ESP_LOGI(TAG, "HTTP status code: %d - payload: %s", statusCode, httpPayload.c_str());
         }
 
         else
         {
-            ESP_LOGI(TAG, "HTTP Status: %d - Empty response", statusCode);
+            ESP_LOGI(TAG, "HTTP status code: %d - empty response", statusCode);
         }
     }
 #endif
