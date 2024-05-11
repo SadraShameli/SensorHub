@@ -57,7 +57,7 @@ bool Backend::CheckResponseFailed(std::string &payload, int statusCode)
 
 bool Backend::SetupConfiguration(std::string &payload)
 {
-    ESP_LOGI(TAG, "Setting up configuration - Payload: %s", payload.c_str());
+    ESP_LOGI(TAG, "Setting up configuration - payload: %s", payload.c_str());
 
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, payload);

@@ -123,7 +123,7 @@ bool HTTP::POST(const char *url, std::string &payload)
         return false;
     }
 
-    ESP_LOGI(TAG, "POST request to URL: %s - Payload: %s", url, payload.c_str());
+    ESP_LOGI(TAG, "POST request to URL: %s - payload: %s", url, payload.c_str());
     UNIT_TIMER("POST request");
 
     esp_http_client_set_url(httpClient, url);
