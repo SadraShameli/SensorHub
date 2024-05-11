@@ -34,7 +34,7 @@ struct wave_audio_t
     size_t total_size;
     size_t buffer_length;
     size_t buffer_count;
-    T buffer[sample_rate * buffer_time] = {0};
+    T buffer[sample_rate * sizeof(T) * buffer_time / 1000] = {0};
 
     wave_audio_t(uint32_t duration) : header(sample_rate, sizeof(T) * 8, duration)
     {

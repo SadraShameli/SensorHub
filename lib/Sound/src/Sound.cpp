@@ -22,17 +22,12 @@
 
 #ifdef UNIT_ENABLE_SOUND_RECORDING
 #define SAMPLE_RATE 48000
-#define RECORD_TIME 5
-
-#ifdef UNIT_DEBUG
-#define BUFFER_TIME 1
-#else
-#define BUFFER_TIME 2
-#endif
+#define RECORD_TIME 5000
+#define BUFFER_TIME 500
 
 #elif defined(UNIT_ENABLE_SOUND_REGISTERING)
 #define SAMPLE_RATE 16000
-#define RECORD_TIME 1
+#define RECORD_TIME 1000
 #endif
 
 static i2s_chan_handle_t i2sHandle;
