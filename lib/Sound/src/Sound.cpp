@@ -17,21 +17,33 @@
 #define MIC_OVERLOAD_DB 120.0f
 #define MIC_NOISE_DB 29
 
-#define RECORD_TIME 5
-#define SAMPLE_RATE 48000
 #define SAMPLE_TYPE int16_t
 #define SAMPLE_BITRATE (sizeof(SAMPLE_TYPE) * 8)
 
-static i2s_chan_handle_t i2sHandle = nullptr;
-static const double micAmplitude = pow(10, MIC_SENSITIVITY / 20.0f) * ((1 << (SAMPLE_BITRATE - 1)) - 1);
-
 #ifdef UNIT_ENABLE_SOUND_RECORDING
-static esp_http_client_handle_t httpClient = nullptr;
-static std::string httpPayload;
+#define SAMPLE_RATE 48000
+#define RECORD_TIME 5
+
+#ifdef UNIT_DEBUG
+#define BUFFER_TIME 1
+#else
+#define BUFFER_TIME 2
 #endif
 
+#elif defined(UNIT_ENABLE_SOUND_REGISTERING)
+#define SAMPLE_RATE 16000
+#define RECORD_TIME 1
+#endif
+
+static i2s_chan_handle_t i2sHandle;
+static const double micAmplitude = pow(10, MIC_SENSITIVITY / 20.0f) * ((1 << (SAMPLE_BITRATE - 1)) - 1);
+static wave_audio_t<SAMPLE_TYPE, SAMPLE_RATE, BUFFER_TIME> wave(RECORD_TIME);
+
+static esp_http_client_handle_t httpClient;
+static std::string httpPayload;
+
 static const char *TAG = "Sound";
-static TaskHandle_t xHandle = nullptr;
+static TaskHandle_t xHandle;
 
 static void vTask(void *pvParameters)
 {
@@ -122,8 +134,6 @@ void Sound::Init()
 
 void Sound::Update()
 {
-    static wave_audio_t<SAMPLE_TYPE> wave(SAMPLE_RATE, SAMPLE_BITRATE, RECORD_TIME);
-
     while (WiFi::IsConnected())
     {
         Output::SetContinuity(DeviceConfig::LedY, false);

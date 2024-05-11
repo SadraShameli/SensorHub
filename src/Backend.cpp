@@ -124,7 +124,7 @@ bool Backend::RegisterReadings()
         doc["device_id"] = Backend::DeviceId;
 
         JsonObject sensors = doc["sensors"].to<JsonObject>();
-        sensors[Backend::SensorTypes::Sound == 6 ? "6" : 0] = (int)Sound::GetMaxLevel();
+        sensors[std::to_string(Backend::SensorTypes::Sound)] = (int)Sound::GetMaxLevel();
 
         std::string payload, url = Address + Backend::ReadingURL;
         serializeJson(doc, payload);

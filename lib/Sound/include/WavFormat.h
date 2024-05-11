@@ -27,26 +27,19 @@ struct wave_header_t
     }
 };
 
-template <typename T>
+template <typename T, size_t sample_rate, size_t buffer_time>
 struct wave_audio_t
 {
     wave_header_t header;
     size_t total_size;
     size_t buffer_length;
     size_t buffer_count;
-    T *buffer;
+    T buffer[sample_rate * buffer_time] = {0};
 
-    wave_audio_t(uint32_t sample_rate, uint16_t sample_bits, uint32_t duration) : header(sample_rate, sample_bits, duration)
+    wave_audio_t(uint32_t duration) : header(sample_rate, sizeof(T) * 8, duration)
     {
         total_size = header.data_length + sizeof(wave_header_t);
         buffer_count = header.sample_rate;
-        buffer_length = buffer_count * sizeof(T);
-
-        buffer = (T *)aligned_alloc(sizeof(T), buffer_length);
-    }
-
-    ~wave_audio_t()
-    {
-        free(buffer);
+        buffer_length = buffer_count;
     }
 };
