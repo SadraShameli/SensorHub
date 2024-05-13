@@ -4,7 +4,7 @@
 
 #ifdef UNIT_ENABLE_SOUND_RECORDING
 #define SAMPLE_RATE 48000
-#define RECORD_TIME 5
+#define RECORD_TIME 10
 
 #elif defined(UNIT_ENABLE_SOUND_REGISTERING)
 #define SAMPLE_RATE 16000
@@ -18,8 +18,8 @@ public:
     {
         SampleRate = sampleRate;
         BitsPerSample = sampleBitrate * channelCount;
-        BytesPerSample = BitsPerSample * 8;
-        BytesPerSecond = SampleRate * BitsPerSample;
+        BytesPerSample = BitsPerSample / 8;
+        BytesPerSecond = SampleRate * BytesPerSample;
         DataLength = BytesPerSecond * duration;
         FileLength = DataLength + 36;
     }
@@ -43,22 +43,23 @@ class AudioFile
 {
 public:
     static const uint32_t SampleRate = SAMPLE_RATE;
-    static const uint32_t SampleBitrate = 2;
+    static const uint32_t SampleBitrate = 16;
     static const uint32_t RecordTime = RECORD_TIME;
-    static const uint32_t BufferTime = 500;
+    static const uint32_t BufferTime = 1000;
     static const uint32_t BufferCount = SampleRate * BufferTime / 1000;
-    static const uint32_t BufferLength = BufferCount * SampleBitrate;
+    static const uint32_t BufferLength = BufferCount * SampleBitrate / 8;
+    static const uint32_t TotalLength = SampleRate * SampleBitrate / 8 * RecordTime + sizeof(WaveHeader);
     inline static const WaveHeader Header = WaveHeader(SampleRate, SampleBitrate, 1, RecordTime);
-    inline static int16_t Buffer[BufferCount] = {0};
+    inline static int16_t Buffer[BufferCount] __attribute__((aligned(4))) = {0};
 };
 
 class MicInfo
 {
 public:
-    static constexpr float Sensitivity = -26.0f;
+    static constexpr float Sensitivity = 26.0f;
     static constexpr float RefDB = 94.0f;
     static constexpr float OffsetDB = 3.0f;
-    static constexpr float PeakDB = 94.0f;
+    static constexpr float PeakDB = 116.0f;
     static constexpr float FloorDB = 29.0f;
-    static constexpr double Amplitude = pow(10, MicInfo::Sensitivity / 20.0f) * ((1 << (AudioFile::SampleBitrate - 1)) - 1);
+    static constexpr double Amplitude = pow(10, -MicInfo::Sensitivity / 20.0f) * ((1 << (AudioFile::SampleBitrate - 1)) - 1);
 };
