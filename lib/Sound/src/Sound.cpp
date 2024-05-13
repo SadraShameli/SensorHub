@@ -103,6 +103,7 @@ static void vTask(void *pvParameters)
         .url = Backend::Address.c_str(),
         .cert_pem = DeviceConfig::WiFi::ServerCrt,
         .method = HTTP_METHOD_POST,
+        .max_redirection_count = INT_MAX,
     };
 
     httpClient = esp_http_client_init(&http_config);

@@ -67,6 +67,7 @@ bool HTTP::Init()
     esp_http_client_config_t http_config = {
         .url = Backend::Address.c_str(),
         .cert_pem = DeviceConfig::WiFi::ServerCrt,
+        .max_redirection_count = INT_MAX,
         .event_handler = httpEventHandler,
     };
 
