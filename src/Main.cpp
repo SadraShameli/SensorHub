@@ -15,22 +15,20 @@ extern "C" void app_main()
   if (Storage::GetConfigMode())
   {
     Network::Init();
+    return;
   }
 
-  else
-  {
-    Storage::GetSSID(Backend::SSID);
-    Storage::GetPassword(Backend::Password);
-    Storage::GetDeviceId(Backend::DeviceId);
-    Storage::GetDeviceName(Backend::DeviceName);
-    Storage::GetAuthKey(Backend::AuthKey);
-    Storage::GetAddress(Backend::Address);
-    Storage::GetLoudnessThreshold(Backend::LoudnessThreshold);
-    Storage::GetRegisterInterval(Backend::RegisterInterval);
+  Storage::GetSSID(Backend::SSID);
+  Storage::GetPassword(Backend::Password);
+  Storage::GetDeviceId(Backend::DeviceId);
+  Storage::GetDeviceName(Backend::DeviceName);
+  Storage::GetAuthKey(Backend::AuthKey);
+  Storage::GetAddress(Backend::Address);
+  Storage::GetLoudnessThreshold(Backend::LoudnessThreshold);
+  Storage::GetRegisterInterval(Backend::RegisterInterval);
 
-    WiFi::Init();
-    WiFi::StartStation();
-    HTTP::Init();
-    Sound::Init();
-  }
+  WiFi::Init();
+  WiFi::StartStation();
+  HTTP::Init();
+  Sound::Init();
 }

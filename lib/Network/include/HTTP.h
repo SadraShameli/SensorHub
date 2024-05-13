@@ -3,10 +3,30 @@
 class HTTP
 {
 public:
-  static bool Init();
-  static bool StartServer();
-  static bool StopServer();
-  static bool GET(const char *, std::string &);
-  static bool POST(const char *, std::string &);
-  static bool Stream(const char *, const char *);
+  static void Init();
+  static void StartServer();
+  static void StopServer();
+};
+
+class Request
+{
+public:
+  Request(const std::string &url) { m_URL = url; }
+  Request(const std::string &url, const std::string &payload)
+  {
+    m_URL = url;
+    m_Payload = payload;
+  }
+
+  bool GET();
+  bool POST();
+  bool Stream();
+
+  const std::string &GetURL() { return m_URL; }
+  const std::string &GetPayload() { return m_Payload; }
+  const std::string &GetResponse() { return m_Response; }
+
+private:
+  std::string m_URL, m_Payload, m_Response;
+  int m_Status;
 };

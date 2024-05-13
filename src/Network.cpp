@@ -50,8 +50,6 @@ void Network::Update()
 
         for (;;)
         {
-            Output::Blink(DeviceConfig::Outputs::LedY, 250, true);
-
             if (WiFi::IsConnected())
             {
                 if (Backend::GetConfiguration())
@@ -73,8 +71,6 @@ void Network::Update()
                 WiFi::StartAP();
                 break;
             }
-
-            vTaskDelay(pdMS_TO_TICKS(25));
         }
     }
 }

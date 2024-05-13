@@ -4,13 +4,7 @@
 class Failsafe
 {
 public:
-    struct Failure
-    {
-        std::string Message, Error;
-    };
-
-public:
     static void Init();
     static void Update();
-    static void AddFailure(const Failure &);
+    static void AddFailure(const std::string &);
 };

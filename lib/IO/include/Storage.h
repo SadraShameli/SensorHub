@@ -4,11 +4,11 @@
 class Storage
 {
 public:
-    static bool Init();
-    static bool MountSPIFFS(const char *, const char *);
+    static void Init();
+    static void MountSPIFFS(const char *, const char *);
 
-    static bool Commit();
-    static bool Reset();
+    static void Commit();
+    static void Reset();
 
     static void GetSSID(std::string &);
     static void GetPassword(std::string &);
@@ -33,7 +33,7 @@ public:
     static void SetConfigMode(bool);
 
 private:
-    static bool CalculateMask();
+    static void CalculateMask();
     static void EncryptText(uint32_t *, const std::string &);
     static void DecryptText(uint32_t *, std::string &);
 

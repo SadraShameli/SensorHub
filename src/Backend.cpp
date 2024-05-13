@@ -20,6 +20,16 @@ bool Backend::StatusOK(int statusCode)
     return false;
 }
 
+bool Backend::IsRedirect(int statusCode)
+{
+    if (statusCode == 300 || statusCode == 301 || statusCode == 302 || statusCode == 303 || statusCode == 307 || statusCode == 308)
+    {
+        return true;
+    }
+
+    return false;
+}
+
 bool Backend::CheckResponseFailed(std::string &payload, int statusCode)
 {
     if (StatusOK(statusCode))
@@ -30,7 +40,7 @@ bool Backend::CheckResponseFailed(std::string &payload, int statusCode)
 
     if (payload.empty())
     {
-        Failsafe::AddFailure({.Message = "Backend response failed - status code: " + std::to_string(statusCode)});
+        Failsafe::AddFailure("Backend response failed - status code: " + std::to_string(statusCode));
         return true;
     }
 
@@ -41,7 +51,7 @@ bool Backend::CheckResponseFailed(std::string &payload, int statusCode)
 
     if (error != DeserializationError::Ok)
     {
-        Failsafe::AddFailure({.Message = "Deserializing response failed", .Error = error.c_str()});
+        Failsafe::AddFailure("Deserializing response failed: " + std::string(error.c_str()) + " - status code: " + std::to_string(statusCode));
         return true;
     }
 
@@ -49,7 +59,7 @@ bool Backend::CheckResponseFailed(std::string &payload, int statusCode)
 
     if (errorMsg)
     {
-        Failsafe::AddFailure({.Message = "Backend response failed - status code: " + std::to_string(statusCode), .Error = errorMsg});
+        Failsafe::AddFailure("Backend response failed - status code: " + std::to_string(statusCode) + " - error: " + errorMsg);
     }
 
     return true;
@@ -64,7 +74,7 @@ bool Backend::SetupConfiguration(std::string &payload)
 
     if (error != DeserializationError::Ok)
     {
-        Failsafe::AddFailure({.Message = "Deserializing setup configuration failed", .Error = error.c_str()});
+        Failsafe::AddFailure("Deserializing setup configuration failed: " + std::string(error.c_str()));
         return false;
     }
 
@@ -76,8 +86,13 @@ bool Backend::SetupConfiguration(std::string &payload)
     Helpers::RemoveWhiteSpace(Backend::DeviceId);
     Helpers::RemoveWhiteSpace(Backend::Address);
 
-    ESP_LOGI(TAG, "Read Device Id from webpage: %s", Backend::DeviceId.c_str());
-    ESP_LOGI(TAG, "Read Address from webpage: %s", Backend::Address.c_str());
+    if (Backend::Address.back() != '/')
+    {
+        Backend::Address += "/";
+    }
+
+    ESP_LOGI(TAG, "Read Device Id: %s", Backend::DeviceId.c_str());
+    ESP_LOGI(TAG, "Read Address: %s", Backend::Address.c_str());
 
     Network::NotifyConfigSet();
 
@@ -88,16 +103,16 @@ bool Backend::GetConfiguration()
 {
     ESP_LOGI(TAG, "Getting configuration");
 
-    std::string payload, url = Address + DeviceURL + DeviceId;
+    Request request = Request(Address + DeviceURL + DeviceId);
 
-    if (HTTP::GET(url.c_str(), payload))
+    if (request.GET())
     {
         JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, payload);
+        DeserializationError error = deserializeJson(doc, request.GetResponse());
 
         if (error != DeserializationError::Ok)
         {
-            Failsafe::AddFailure({.Message = "Deserializing configuration failed", .Error = error.c_str()});
+            Failsafe::AddFailure("Deserializing configuration failed: " + std::string(error.c_str()));
             return false;
         }
 
@@ -126,15 +141,17 @@ bool Backend::RegisterReadings()
         JsonObject sensors = doc["sensors"].to<JsonObject>();
         sensors[std::to_string(Backend::SensorTypes::Sound)] = (int)Sound::GetMaxLevel();
 
-        std::string payload, url = Address + Backend::ReadingURL;
+        std::string payload;
         serializeJson(doc, payload);
 
-        if (HTTP::POST(url.c_str(), payload))
+        Request request = Request(Address + Backend::ReadingURL, payload);
+
+        if (request.POST())
         {
             return true;
         }
 
-        Failsafe::AddFailure({.Message = "Register readings failed"});
+        Failsafe::AddFailure("Registering readings failed");
     }
 
     return false;

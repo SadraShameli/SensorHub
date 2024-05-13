@@ -1,45 +1,64 @@
 #pragma once
+#include <cmath>
+#include "Backend.h"
 
-struct wave_header_t
+#ifdef UNIT_ENABLE_SOUND_RECORDING
+#define SAMPLE_RATE 48000
+#define RECORD_TIME 5
+
+#elif defined(UNIT_ENABLE_SOUND_REGISTERING)
+#define SAMPLE_RATE 16000
+#define RECORD_TIME 1
+#endif
+
+class WaveHeader
 {
-    uint8_t riff_tag[4] = {'R', 'I', 'F', 'F'};
-    uint32_t file_length;
-    uint8_t wave_tag[4] = {'W', 'A', 'V', 'E'};
-    uint8_t fmt_tag[4] = {'f', 'm', 't', ' '};
-    uint32_t chunk_size = 16;
-    uint16_t format_tag = 1;
-    uint16_t num_channels = 1;
-    uint32_t sample_rate;
-    uint32_t bytes_per_second;
-    uint16_t bytes_per_sample;
-    uint16_t bits_per_sample;
-    uint8_t data_tag[4] = {'d', 'a', 't', 'a'};
-    uint32_t data_length;
-
-    wave_header_t(uint32_t sample_rates, uint16_t sample_bits, uint32_t duration)
+public:
+    WaveHeader(uint32_t sampleRate, uint16_t sampleBitrate, uint16_t channelCount, uint32_t duration)
     {
-        sample_rate = sample_rates;
-        bits_per_sample = sample_bits;
-        bytes_per_sample = sample_bits * num_channels / 8;
-        bytes_per_second = sample_rates * bytes_per_sample;
-        data_length = bytes_per_second * duration;
-        file_length = data_length + 36;
+        SampleRate = sampleRate;
+        BitsPerSample = sampleBitrate * channelCount;
+        BytesPerSample = BitsPerSample * 8;
+        BytesPerSecond = SampleRate * BitsPerSample;
+        DataLength = BytesPerSecond * duration;
+        FileLength = DataLength + 36;
     }
+
+    uint8_t RiffTag[4] = {'R', 'I', 'F', 'F'};
+    uint32_t FileLength;
+    uint8_t WaveTag[4] = {'W', 'A', 'V', 'E'};
+    uint8_t FmtTag[4] = {'f', 'm', 't', ' '};
+    uint32_t ChunkSize = 16;
+    uint16_t FormatTag = 1;
+    uint16_t ChannelCount = 1;
+    uint32_t SampleRate;
+    uint32_t BytesPerSecond;
+    uint16_t BytesPerSample;
+    uint16_t BitsPerSample;
+    uint8_t DataTag[4] = {'d', 'a', 't', 'a'};
+    uint32_t DataLength;
 };
 
-template <typename T, size_t sample_rate, size_t buffer_time>
-struct wave_audio_t
+class AudioFile
 {
-    wave_header_t header;
-    size_t total_size;
-    size_t buffer_length;
-    size_t buffer_count;
-    T buffer[sample_rate * sizeof(T) * buffer_time / 1000] = {0};
+public:
+    static const uint32_t SampleRate = SAMPLE_RATE;
+    static const uint32_t SampleBitrate = 2;
+    static const uint32_t RecordTime = RECORD_TIME;
+    static const uint32_t BufferTime = 500;
+    static const uint32_t BufferCount = SampleRate * BufferTime / 1000;
+    static const uint32_t BufferLength = BufferCount * SampleBitrate;
+    inline static const WaveHeader Header = WaveHeader(SampleRate, SampleBitrate, 1, RecordTime);
+    inline static int16_t Buffer[BufferCount] = {0};
+};
 
-    wave_audio_t(uint32_t duration) : header(sample_rate, sizeof(T) * 8, duration)
-    {
-        total_size = header.data_length + sizeof(wave_header_t);
-        buffer_count = header.sample_rate;
-        buffer_length = buffer_count;
-    }
+class MicInfo
+{
+public:
+    static constexpr float Sensitivity = -26.0f;
+    static constexpr float RefDB = 94.0f;
+    static constexpr float OffsetDB = 3.0f;
+    static constexpr float PeakDB = 94.0f;
+    static constexpr float FloorDB = 29.0f;
+    static constexpr double Amplitude = pow(10, MicInfo::Sensitivity / 20.0f) * ((1 << (AudioFile::SampleBitrate - 1)) - 1);
 };

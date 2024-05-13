@@ -20,12 +20,10 @@ void Output::Init()
     for (auto &pin : inputPins)
     {
         gpio_set_direction(pin.PinNum, GPIO_MODE_OUTPUT);
+
         gpio_set_level(pin.PinNum, 0);
-
         vTaskDelay(pdMS_TO_TICKS(250));
-
         gpio_set_level(pin.PinNum, 1);
-
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 
@@ -45,7 +43,6 @@ void Output::Toggle(DeviceConfig::Outputs pinNumber, bool targetPinState)
         {
             pin.Interval = ULONG_MAX;
             gpio_set_level(pin.PinNum, targetPinState);
-
             return;
         }
     }
@@ -83,7 +80,6 @@ void Output::SetContinuity(DeviceConfig::Outputs pinNumber, bool continuousModeB
         {
             pin.UpdateTime = 0;
             pin.ContinuousMode = continuousModeBlinking;
-
             return;
         }
     }
