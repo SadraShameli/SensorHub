@@ -58,7 +58,7 @@ class MicInfo
 public:
     static constexpr float Sensitivity = 26.0f;
     static constexpr float RefDB = 94.0f;
-    static constexpr float OffsetDB = 3.0f;
+    static constexpr float OffsetDB = -3.0f;
     static constexpr float PeakDB = 116.0f;
     static constexpr float FloorDB = 29.0f;
     static constexpr double Amplitude = pow(10, -MicInfo::Sensitivity / 20.0f) * ((1 << (AudioFile::SampleBitrate - 1)) - 1);

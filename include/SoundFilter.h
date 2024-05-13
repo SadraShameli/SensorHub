@@ -2,7 +2,7 @@
 #include <cmath>
 #include <vector>
 
-void i2s_adc_data_scale(uint8_t *d_buff, uint8_t *s_buff, uint32_t len)
+void i2s_adc_data_scale(uint8_t *s_buff, uint8_t *d_buff, uint32_t len)
 {
     uint32_t j = 0;
     uint32_t dac_value = 0;

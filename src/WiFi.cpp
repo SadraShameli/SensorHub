@@ -54,7 +54,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
             {
                 return;
             }
-            
+
             if (status->reason == WIFI_REASON_NO_AP_FOUND || status->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT || status->reason == WIFI_REASON_HANDSHAKE_TIMEOUT)
             {
                 Failsafe::AddFailure("Failed to connect to SSID: " + Backend::SSID + " - Password: " + Backend::Password);
@@ -87,7 +87,6 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         s_IPAddress = buffer;
         s_RetriesAttempts = 0;
         xEventGroupSetBits(s_wifi_event_group, WiFi::State::Connected);
-
         Output::SetContinuity(DeviceConfig::Outputs::LedY, false);
     }
 }
