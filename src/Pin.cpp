@@ -36,7 +36,7 @@ void Pin::Update()
 {
     if (Input::GetPinState(DeviceConfig::Inputs::Up))
     {
-        Output::Blink(DeviceConfig::Outputs::LedY, 50);
+        Output::Blink(DeviceConfig::Outputs::LedY);
 
         if (Storage::GetConfigMode())
         {
@@ -66,6 +66,6 @@ void Pin::Update()
 
     else if (Input::GetPinState(DeviceConfig::Inputs::Down))
     {
-        Output::Blink(DeviceConfig::Outputs::LedY, 50);
+        Output::Blink(DeviceConfig::Outputs::LedY);
     }
 }

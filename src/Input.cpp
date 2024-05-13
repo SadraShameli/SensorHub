@@ -27,7 +27,6 @@ bool Input::GetPinState(DeviceConfig::Inputs pinNumber)
         if ((DeviceConfig::Inputs)pin.PinNum == pinNumber && pin.PinState)
         {
             pin.PinState = false;
-
             return true;
         }
     }

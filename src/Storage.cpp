@@ -9,42 +9,32 @@
 static const char *TAG = "Storage";
 static nvs_handle_t nvsHandle;
 
-bool Storage::Init()
+void Storage::Init()
 {
     size_t required_size = 0;
     m_StorageData.ConfigMode = true;
 
-    if (!CalculateMask())
-    {
-        return false;
-    }
+    CalculateMask();
+
+    ESP_LOGI(TAG, "Initializing NVS storage");
 
     esp_err_t err = nvs_flash_init();
-
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
-        ESP_LOGE(TAG, "NVS initialization failed");
+        ESP_LOGI(TAG, "NVS initialization failed");
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
 
     ESP_ERROR_CHECK(err);
+    ESP_ERROR_CHECK(nvs_open(TAG, NVS_READWRITE, &nvsHandle));
 
-    err = nvs_open(TAG, NVS_READWRITE, &nvsHandle);
-
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "NVS opening failed");
-        return false;
-    }
-
+    ESP_LOGI(TAG, "Getting NVS storage saved data");
     nvs_get_blob(nvsHandle, TAG, nullptr, &required_size);
     nvs_get_blob(nvsHandle, TAG, &m_StorageData, &required_size);
-
-    return true;
 }
 
-bool Storage::MountSPIFFS(const char *base_path, const char *partition_label)
+void Storage::MountSPIFFS(const char *base_path, const char *partition_label)
 {
     ESP_LOGI(TAG, "Mounting partition %s with base path: %s", base_path, partition_label);
 
@@ -55,86 +45,38 @@ bool Storage::MountSPIFFS(const char *base_path, const char *partition_label)
         .format_if_mount_failed = true,
     };
 
-    esp_err_t err = esp_vfs_spiffs_register(&storage_config);
-
-    if (err != ESP_OK)
-    {
-        if (err == ESP_FAIL)
-        {
-            ESP_LOGE(TAG, "Mounting or formatting failed");
-        }
-
-        else if (err == ESP_ERR_NOT_FOUND)
-        {
-            ESP_LOGE(TAG, "Finding partition failed");
-        }
-
-        else
-        {
-            ESP_LOGE(TAG, "Initialization failed");
-        }
-
-        return false;
-    }
+    ESP_ERROR_CHECK(esp_vfs_spiffs_register(&storage_config));
 
 #ifdef UNIT_DEBUG
-    ESP_LOGI(TAG, "Performing check");
+    ESP_LOGI(TAG, "Performing SPIFFS check");
 
-    err = esp_spiffs_check(storage_config.partition_label);
+    ESP_ERROR_CHECK(esp_spiffs_check(partition_label));
 
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Spiffs check failed: %s", esp_err_to_name(err));
-
-        return false;
-    }
-
-    ESP_LOGI(TAG, "Check successful");
+    ESP_LOGI(TAG, "SPIFFS Check successful");
 #endif
 
     size_t total = 0, used = 0;
-    err = esp_spiffs_info(storage_config.partition_label, &total, &used);
+    esp_err_t err = esp_spiffs_info(storage_config.partition_label, &total, &used);
 
     if (err != ESP_OK)
     {
         ESP_LOGE(TAG, "Getting partition information failed: %s - formatting", esp_err_to_name(err));
         esp_spiffs_format(storage_config.partition_label);
-
-        return false;
+        ESP_ERROR_CHECK(err);
     }
 
-    else
-    {
-        ESP_LOGI(TAG, "Partition info: Total: %u - Used: %u", total, used);
-    }
-
-    return true;
+    ESP_LOGI(TAG, "Partition info: Total: %u - used: %u", total, used);
 }
 
-bool Storage::Commit()
+void Storage::Commit()
 {
     ESP_LOGI(TAG, "Saving to storage blob");
 
-    esp_err_t err = nvs_set_blob(nvsHandle, TAG, &m_StorageData, sizeof(StorageData));
-
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "NVS setting blob failed");
-        return false;
-    }
-
-    err = nvs_commit(nvsHandle);
-
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "NVS committing blob failed");
-        return false;
-    }
-
-    return true;
+    ESP_ERROR_CHECK(nvs_set_blob(nvsHandle, TAG, &m_StorageData, sizeof(StorageData)));
+    ESP_ERROR_CHECK(nvs_commit(nvsHandle));
 }
 
-bool Storage::Reset()
+void Storage::Reset()
 {
     ESP_LOGI(TAG, "Resetting storage blob");
 
@@ -144,7 +86,7 @@ bool Storage::Reset()
     return Commit();
 }
 
-bool Storage::CalculateMask()
+void Storage::CalculateMask()
 {
     ESP_LOGI(TAG, "Calculating encryption mask");
 
@@ -159,11 +101,7 @@ bool Storage::CalculateMask()
         uint8_t ArrayRepresentation[6];
     } mac = {};
 
-    if (esp_efuse_mac_get_default(mac.ArrayRepresentation) != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Reading mac from efuse failed");
-        return false;
-    }
+    ESP_ERROR_CHECK(esp_efuse_mac_get_default(mac.ArrayRepresentation));
 
     mask2 = mac.NumberRepresentation;
 
@@ -190,8 +128,6 @@ bool Storage::CalculateMask()
         m_EncryptionMask *= 10;
         m_EncryptionMask += maskArray[i];
     }
-
-    return true;
 }
 
 void Storage::EncryptText(uint32_t *var, const std::string &str)
@@ -287,7 +223,7 @@ void Storage::SetSSID(const std::string &str)
 
     else
     {
-        Failsafe::AddFailure({.Message = "SSID too long"});
+        Failsafe::AddFailure("SSID too long");
     }
 }
 
@@ -301,7 +237,7 @@ void Storage::SetPassword(const std::string &str)
 
     else
     {
-        Failsafe::AddFailure({.Message = "Password too long"});
+        Failsafe::AddFailure("Password too long");
     }
 }
 
@@ -315,7 +251,7 @@ void Storage::SetDeviceId(const std::string &str)
 
     else
     {
-        Failsafe::AddFailure({.Message = "Device Id too long"});
+        Failsafe::AddFailure("Device Id too long");
     }
 }
 
@@ -329,7 +265,7 @@ void Storage::SetDeviceName(const std::string &str)
 
     else
     {
-        Failsafe::AddFailure({.Message = "Device Name too long"});
+        Failsafe::AddFailure("Device Name too long");
     }
 }
 
@@ -343,7 +279,7 @@ void Storage::SetAuthKey(const std::string &str)
 
     else
     {
-        Failsafe::AddFailure({.Message = "Auth Key too long"});
+        Failsafe::AddFailure("Auth Key too long");
     }
 }
 
@@ -357,7 +293,7 @@ void Storage::SetAddress(const std::string &str)
 
     else
     {
-        Failsafe::AddFailure({.Message = "Address too long"});
+        Failsafe::AddFailure("Address too long");
     }
 }
 

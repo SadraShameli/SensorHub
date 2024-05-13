@@ -8,7 +8,7 @@
 
 static const char *TAG = "Failsafe";
 static TaskHandle_t xHandle = nullptr;
-static std::stack<Failsafe::Failure> failures;
+static std::stack<std::string> failures;
 
 static void vTask(void *pvParameters)
 {
@@ -22,7 +22,7 @@ static void vTask(void *pvParameters)
     vTaskDelete(nullptr);
 }
 
-void Failsafe::AddFailure(const Failure &failure)
+void Failsafe::AddFailure(const std::string &failure)
 {
     if (failures.size() > 9)
     {
@@ -47,15 +47,7 @@ void Failsafe::Update()
 
     xTaskNotifyWait(0, DeviceConfig::Tasks::Notifications::NewFailsafe, &DeviceConfig::Tasks::Notifications::Notification, portMAX_DELAY);
 
-    if (failures.top().Error.length())
-    {
-        ESP_LOGE(TAG, "Failure received: %s - error: %s", failures.top().Message.c_str(), failures.top().Error.c_str());
-    }
+    ESP_LOGE(TAG, "Failure received: %s", failures.top().c_str());
 
-    else
-    {
-        ESP_LOGE(TAG, "Failure received: %s", failures.top().Message.c_str());
-    }
-
-    Output::Blink(DeviceConfig::Outputs::LedR, 5000, false);
+    Output::Blink(DeviceConfig::Outputs::LedR, 5000);
 }

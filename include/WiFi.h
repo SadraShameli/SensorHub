@@ -7,13 +7,20 @@
 class WiFi
 {
 public:
+    enum State
+    {
+        Connected = 1,
+        Disconnected,
+        Failed,
+    };
+
     struct ClientDetails
     {
         char IPAddress[IPV4_LEN];
         char MacAddress[MAC_LEN];
     };
 
-    const static int MaxClientCount = 4;
+    static const int MaxClientCount = 4;
 
 public:
     static void Init();
@@ -22,11 +29,11 @@ public:
     static bool IsConnected();
 
     static void SetMacAddress();
-
     static const std::string &GetIPAP();
-    static const std::string &GetIPStation();
-    static const std::string &GetMacAddress();
     static const std::vector<ClientDetails> GetClientDetails();
+
+    static const std::string &GetIPStation();
+    static const std::string &GetMacAddress() { return m_MacAddress; };
 
 private:
     inline static std::string m_MacAddress;

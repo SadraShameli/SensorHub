@@ -258,7 +258,7 @@ static esp_err_t config_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-bool HTTP::StartServer()
+void HTTP::StartServer()
 {
     ESP_LOGI(TAG, "Starting HTTP server at %s", WiFi::GetIPAP().c_str());
 
@@ -266,11 +266,7 @@ bool HTTP::StartServer()
 
     if (!server_data)
     {
-        if (!Storage::MountSPIFFS(FOLDER_PATH, PARTITION_NAME))
-        {
-            Failsafe::AddFailure({.Message = "Mounting HTTP server storage failed"});
-            return false;
-        }
+        Storage::MountSPIFFS(FOLDER_PATH, PARTITION_NAME);
 
         server_data = (file_server_data *)calloc(1, sizeof(file_server_data));
         strlcpy(server_data->base_path, FOLDER_PATH, sizeof(server_data->base_path));
@@ -279,11 +275,7 @@ bool HTTP::StartServer()
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.uri_match_fn = httpd_uri_match_wildcard;
 
-    if (httpd_start(&s_Server, &config) != ESP_OK)
-    {
-        ESP_LOGE(TAG, "HTTP server start failed");
-        return false;
-    }
+    ESP_ERROR_CHECK(httpd_start(&s_Server, &config));
 
     httpd_uri_t file_download = {
         .uri = "/*",
@@ -302,18 +294,14 @@ bool HTTP::StartServer()
     };
 
     httpd_register_uri_handler(s_Server, &config_download);
-
-    return true;
 }
 
-bool HTTP::StopServer()
+void HTTP::StopServer()
 {
     if (!s_Server)
     {
-        return false;
+        return;
     }
 
     httpd_stop(s_Server);
-
-    return true;
 }

@@ -6,8 +6,8 @@
 #define UNIT_DISABLE_FAVICON
 
 #ifdef UNIT_SOUND
-#define UNIT_ENABLE_SOUND_REGISTERING
-// #define UNIT_ENABLE_SOUND_RECORDING
+// #define UNIT_ENABLE_SOUND_REGISTERING
+#define UNIT_ENABLE_SOUND_RECORDING
 #endif
 
 #define UNIT_INPUT_PINS                \
@@ -86,6 +86,7 @@ public:
 
 public:
     static bool StatusOK(int);
+    static bool IsRedirect(int);
     static bool CheckResponseFailed(std::string &, int);
     static bool SetupConfiguration(std::string &);
     static bool GetConfiguration();
@@ -97,5 +98,5 @@ public:
 
     inline static const char *DeviceURL = "device/";
     inline static const char *ReadingURL = "reading/";
-    inline static const char *SoundURL = "sound/";
+    inline static const char *SoundURL = "recording/";
 };
