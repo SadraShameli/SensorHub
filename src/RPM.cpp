@@ -1,5 +1,5 @@
 #include <algorithm>
-#include "esp32-hal-timer.h"
+#include "esp_timer.h"
 #include "driver/gpio.h"
 #include "RPM.h"
 
@@ -14,45 +14,44 @@ static unsigned long FrequencyRaw;
 static unsigned long FrequencyReal;
 static unsigned long currentRPM;
 static unsigned long maxRPM;
-static unsigned int PulseCounter = 1;
-static unsigned long PeriodSum;
 static int64_t LastTimeCycleMeasure;
 static int64_t CurrentMicros;
-static unsigned int AmountOfReadings = 1;
 static unsigned int ZeroDebouncingExtra;
 static unsigned long readings[numReadings];
 static unsigned long readIndex;
 static unsigned long total;
 static unsigned long avgRPM;
+// static unsigned int PulseCounter = 1;
+// static unsigned long PeriodSum;
+// static unsigned int AmountOfReadings = 1;
 
-IRAM_ATTR void pulseEventHandler()
-{
-  PeriodBetweenPulses = esp_timer_get_time() - LastTimeWeMeasured;
-  LastTimeWeMeasured = esp_timer_get_time();
+// static void pulseEventHandler()
+// {
+//   PeriodBetweenPulses = esp_timer_get_time() - LastTimeWeMeasured;
+//   LastTimeWeMeasured = esp_timer_get_time();
 
-  if (PulseCounter >= AmountOfReadings)
-  {
-    PeriodAverage = PeriodSum / AmountOfReadings;
+//   if (PulseCounter >= AmountOfReadings)
+//   {
+//     PeriodAverage = PeriodSum / AmountOfReadings;
 
-    PulseCounter = 1;
-    PeriodSum = PeriodBetweenPulses;
+//     PulseCounter = 1;
+//     PeriodSum = PeriodBetweenPulses;
 
-    int RemapedAmountOfReadings = Helpers::MapValue(PeriodBetweenPulses, 40000, 5000, 1, 10);
-    RemapedAmountOfReadings = std::clamp(RemapedAmountOfReadings, 1, 10);
-    AmountOfReadings = RemapedAmountOfReadings;
-  }
-  else
-  {
-    PulseCounter++;
-    PeriodSum = PeriodSum + PeriodBetweenPulses;
-  }
-}
+//     int RemapedAmountOfReadings = Helpers::MapValue(PeriodBetweenPulses, 40000, 5000, 1, 10);
+//     RemapedAmountOfReadings = std::clamp(RemapedAmountOfReadings, 1, 10);
+//     AmountOfReadings = RemapedAmountOfReadings;
+//   }
+//   else
+//   {
+//     PulseCounter++;
+//     PeriodSum = PeriodSum + PeriodBetweenPulses;
+//   }
+// }
 
 void RPM::Init()
 {
   gpio_set_direction(rpm_pin, GPIO_MODE_INPUT);
   gpio_set_pull_mode(rpm_pin, GPIO_PULLUP_ONLY);
-  attachInterrupt(rpm_pin, pulseEventHandler, CHANGE);
 }
 
 void RPM::Update()
