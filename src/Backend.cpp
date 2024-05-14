@@ -80,10 +80,9 @@ bool Backend::SetupConfiguration(std::string &payload)
 
     Backend::SSID = doc["ssid"].as<const char *>();
     Backend::Password = doc["pass"].as<const char *>();
-    Backend::DeviceId = doc["deviceid"].as<const char *>();
     Backend::Address = doc["address"].as<const char *>();
+    Backend::DeviceId = doc["deviceid"];
 
-    Helpers::RemoveWhiteSpace(Backend::DeviceId);
     Helpers::RemoveWhiteSpace(Backend::Address);
 
     if (Backend::Address.back() != '/')
@@ -91,8 +90,8 @@ bool Backend::SetupConfiguration(std::string &payload)
         Backend::Address += "/";
     }
 
-    ESP_LOGI(TAG, "Read Device Id: %s", Backend::DeviceId.c_str());
     ESP_LOGI(TAG, "Read Address: %s", Backend::Address.c_str());
+    ESP_LOGI(TAG, "Read Device Id: %ld", Backend::DeviceId);
 
     Network::NotifyConfigSet();
 
@@ -103,7 +102,7 @@ bool Backend::GetConfiguration()
 {
     ESP_LOGI(TAG, "Getting configuration");
 
-    Request request = Request(Address + DeviceURL + DeviceId);
+    Request request = Request(Address + DeviceURL + std::to_string(Backend::DeviceId));
 
     if (request.GET())
     {
@@ -116,10 +115,14 @@ bool Backend::GetConfiguration()
             return false;
         }
 
-        DeviceId = std::to_string(doc["device_id"].as<int>());
         DeviceName = doc["name"].as<const char *>();
-        RegisterInterval = doc["register_interval"].as<int>();
-        LoudnessThreshold = doc["loudness_threshold"].as<int>();
+        DeviceId = doc["device_id"];
+        RegisterInterval = doc["register_interval"];
+        LoudnessThreshold = doc["loudness_threshold"];
+
+        JsonArray sensors = doc["sensors"].as<JsonArray>();
+        for (JsonVariant sensor : sensors)
+            Storage::SetEnabledSensors(sensor.as<Backend::SensorTypes>(), true);
 
         return true;
     }

@@ -77,7 +77,7 @@ bool Request::GET()
         return false;
     }
 
-    ESP_LOGI(TAG, "GET request to URL: %s", m_URL.c_str());
+    ESP_LOGI(TAG, "GET request to URL: %s - payload: %s", m_URL.c_str(), m_Payload.c_str());
     UNIT_TIMER("GET request");
 
     esp_http_client_set_url(httpClient, m_URL.c_str());
@@ -109,7 +109,7 @@ bool Request::POST()
         return false;
     }
 
-    ESP_LOGI(TAG, "POST request to URL: %s", m_URL.c_str());
+    ESP_LOGI(TAG, "POST request to URL: %s - payload: %s", m_URL.c_str(), m_Payload.c_str());
     UNIT_TIMER("POST request");
 
     esp_http_client_set_url(httpClient, m_URL.c_str());

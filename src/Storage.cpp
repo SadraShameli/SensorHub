@@ -162,13 +162,6 @@ void Storage::GetPassword(std::string &str)
     ESP_LOGI(TAG, "Reading Password: %s", str.c_str());
 }
 
-void Storage::GetDeviceId(std::string &str)
-{
-    str.reserve(UUIDLength);
-    DecryptText(m_StorageData.DeviceId, str);
-    ESP_LOGI(TAG, "Reading Device Id: %s", str.c_str());
-}
-
 void Storage::GetDeviceName(std::string &str)
 {
     str.reserve(UUIDLength);
@@ -190,20 +183,27 @@ void Storage::GetAddress(std::string &str)
     ESP_LOGI(TAG, "Reading Address: %s", str.c_str());
 }
 
-void Storage::GetLoudnessThreshold(int &threshold)
+void Storage::GetDeviceId(uint32_t &device_id)
+{
+    device_id = m_StorageData.DeviceId;
+    ESP_LOGI(TAG, "Reading Device Id: %ld", m_StorageData.DeviceId);
+}
+
+void Storage::GetLoudnessThreshold(uint32_t &threshold)
 {
     threshold = m_StorageData.LoudnessThreshold;
-    ESP_LOGI(TAG, "Loudness Threshold: %d", m_StorageData.LoudnessThreshold);
+    ESP_LOGI(TAG, "Loudness Threshold: %ld", m_StorageData.LoudnessThreshold);
 }
 
-void Storage::GetRegisterInterval(int &interval)
+void Storage::GetRegisterInterval(uint32_t &interval)
 {
     interval = m_StorageData.RegisterInterval;
-    ESP_LOGI(TAG, "Register Interval: %d", m_StorageData.RegisterInterval);
+    ESP_LOGI(TAG, "Register Interval: %ld", m_StorageData.RegisterInterval);
 }
 
-bool Storage::GetEnabledSensors(Backend::Menus sensor)
+bool Storage::GetEnabledSensors(Backend::SensorTypes sensor)
 {
+    ESP_LOGI(TAG, "Sensor %d - state: %s", (int)sensor, m_StorageData.EnabledSensors[sensor] ? "true" : "false");
     return m_StorageData.EnabledSensors[sensor];
 }
 
@@ -238,20 +238,6 @@ void Storage::SetPassword(const std::string &str)
     else
     {
         Failsafe::AddFailure("Password too long");
-    }
-}
-
-void Storage::SetDeviceId(const std::string &str)
-{
-    if (str.length() <= UUIDLength)
-    {
-        ESP_LOGI(TAG, "Setting Device Id: %s", str.c_str());
-        EncryptText(m_StorageData.DeviceId, str);
-    }
-
-    else
-    {
-        Failsafe::AddFailure("Device Id too long");
     }
 }
 
@@ -297,20 +283,27 @@ void Storage::SetAddress(const std::string &str)
     }
 }
 
-void Storage::SetLoudnessThreshold(int threshold)
+void Storage::SetDeviceId(uint32_t device_id)
 {
-    ESP_LOGI(TAG, "Setting Loudness Threshold: %d", threshold);
+    ESP_LOGI(TAG, "Setting Device Id: %ld", device_id);
+    m_StorageData.DeviceId = device_id;
+}
+
+void Storage::SetLoudnessThreshold(uint32_t threshold)
+{
+    ESP_LOGI(TAG, "Setting Loudness Threshold: %ld", threshold);
     m_StorageData.LoudnessThreshold = threshold;
 }
 
-void Storage::SetRegisterInterval(int interval)
+void Storage::SetRegisterInterval(uint32_t interval)
 {
-    ESP_LOGI(TAG, "Setting Register Interval: %d", interval);
+    ESP_LOGI(TAG, "Setting Register Interval: %ld", interval);
     m_StorageData.RegisterInterval = interval;
 }
 
-void Storage::SetEnabledSensors(Backend::Menus sensor, bool state)
+void Storage::SetEnabledSensors(Backend::SensorTypes sensor, bool state)
 {
+    ESP_LOGI(TAG, "Setting Sensor %d - state:  %s", (int)sensor, state ? "true" : "false");
     m_StorageData.EnabledSensors[sensor] = state;
 }
 

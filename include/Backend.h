@@ -6,8 +6,8 @@
 #define UNIT_DISABLE_FAVICON
 
 #ifdef UNIT_SOUND
-// #define UNIT_ENABLE_SOUND_REGISTERING
-#define UNIT_ENABLE_SOUND_RECORDING
+#define UNIT_ENABLE_SOUND_REGISTERING
+// #define UNIT_ENABLE_SOUND_RECORDING
 #endif
 
 #define UNIT_INPUT_PINS                \
@@ -93,10 +93,10 @@ public:
     static bool RegisterReadings();
 
 public:
-    inline static std::string SSID, Password, DeviceId, DeviceName, AuthKey, Address;
-    inline static int LoudnessThreshold, RegisterInterval;
+    inline static std::string SSID, Password, DeviceName, AuthKey, Address;
+    inline static uint32_t DeviceId, LoudnessThreshold, RegisterInterval;
 
-    inline static const char *DeviceURL = "device/";
-    inline static const char *ReadingURL = "reading/";
-    inline static const char *SoundURL = "recording/";
+    inline static std::string DeviceURL = "device/";
+    inline static std::string ReadingURL = "reading/";
+    inline static std::string SoundURL = "recording/";
 };

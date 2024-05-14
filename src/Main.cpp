@@ -30,5 +30,9 @@ extern "C" void app_main()
   WiFi::Init();
   WiFi::StartStation();
   HTTP::Init();
-  Sound::Init();
+
+  if (Storage::GetEnabledSensors(Backend::SensorTypes::Sound))
+  {
+    Sound::Init();
+  }
 }

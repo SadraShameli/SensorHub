@@ -12,24 +12,24 @@ public:
 
     static void GetSSID(std::string &);
     static void GetPassword(std::string &);
-    static void GetDeviceId(std::string &);
     static void GetDeviceName(std::string &);
     static void GetAuthKey(std::string &);
     static void GetAddress(std::string &);
-    static void GetLoudnessThreshold(int &);
-    static void GetRegisterInterval(int &);
-    static bool GetEnabledSensors(Backend::Menus);
+    static void GetDeviceId(uint32_t &);
+    static void GetLoudnessThreshold(uint32_t &);
+    static void GetRegisterInterval(uint32_t &);
+    static bool GetEnabledSensors(Backend::SensorTypes);
     static bool GetConfigMode();
 
     static void SetSSID(const std::string &);
     static void SetPassword(const std::string &);
-    static void SetDeviceId(const std::string &);
     static void SetDeviceName(const std::string &);
     static void SetAuthKey(const std::string &);
     static void SetAddress(const std::string &);
-    static void SetLoudnessThreshold(int);
-    static void SetRegisterInterval(int);
-    static void SetEnabledSensors(Backend::Menus, bool);
+    static void SetDeviceId(uint32_t);
+    static void SetLoudnessThreshold(uint32_t);
+    static void SetRegisterInterval(uint32_t);
+    static void SetEnabledSensors(Backend::SensorTypes, bool);
     static void SetConfigMode(bool);
 
 private:
@@ -46,13 +46,13 @@ private:
     {
         uint32_t SSID[SSIDLength];
         uint32_t Password[PasswordLength];
-        uint32_t DeviceId[UUIDLength];
         uint32_t DeviceName[UUIDLength];
         uint32_t AuthKey[UUIDLength];
         uint32_t Address[EndpointLength];
-        int LoudnessThreshold;
-        int RegisterInterval;
-        bool EnabledSensors[Backend::Menus::Config];
+        uint32_t DeviceId;
+        uint32_t LoudnessThreshold;
+        uint32_t RegisterInterval;
+        bool EnabledSensors[Backend::SensorTypes::SensorCount - 1];
         bool ConfigMode;
     };
 
