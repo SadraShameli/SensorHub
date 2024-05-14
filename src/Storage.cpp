@@ -203,13 +203,13 @@ void Storage::GetRegisterInterval(uint32_t &interval)
 
 bool Storage::GetEnabledSensors(Backend::SensorTypes sensor)
 {
-    ESP_LOGI(TAG, "Sensor %d - state: %s", (int)sensor, m_StorageData.EnabledSensors[sensor] ? "true" : "false");
+    ESP_LOGI(TAG, "Sensor %d - state: %s", (int)sensor, m_StorageData.EnabledSensors[sensor] ? "enabled" : "disabled");
     return m_StorageData.EnabledSensors[sensor];
 }
 
 bool Storage::GetConfigMode()
 {
-    ESP_LOGI(TAG, "Config Mode: %s", m_StorageData.ConfigMode == true ? "True" : "False");
+    ESP_LOGI(TAG, "Config Mode: %s", m_StorageData.ConfigMode == true ? "true" : "false");
     return m_StorageData.ConfigMode;
 }
 
@@ -303,12 +303,12 @@ void Storage::SetRegisterInterval(uint32_t interval)
 
 void Storage::SetEnabledSensors(Backend::SensorTypes sensor, bool state)
 {
-    ESP_LOGI(TAG, "Setting Sensor %d - state:  %s", (int)sensor, state ? "true" : "false");
+    ESP_LOGI(TAG, "Setting Sensor %d - state:  %s", (int)sensor, state ? "enabled" : "disabled");
     m_StorageData.EnabledSensors[sensor] = state;
 }
 
 void Storage::SetConfigMode(bool configBool)
 {
-    ESP_LOGI(TAG, "Setting Config Mode: %s", configBool == true ? "True" : "False");
+    ESP_LOGI(TAG, "Setting Config Mode: %s", configBool == true ? "true" : "false");
     m_StorageData.ConfigMode = configBool;
 }

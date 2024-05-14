@@ -57,7 +57,7 @@ static void vTask(void *pvParameters)
     ESP_ERROR_CHECK(i2s_channel_enable(i2sHandle));
 
 #ifdef UNIT_ENABLE_SOUND_RECORDING
-    Backend::Address.append(Backend::SoundURL + Backend::DeviceId);
+    Backend::Address.append(Backend::SoundURL + std::to_string(Backend::DeviceId));
     ESP_LOGI(TAG, "Sound registering address: %s", Backend::Address.c_str());
 
     esp_http_client_config_t http_config = {
@@ -109,9 +109,10 @@ void Sound::Update()
 #ifdef UNIT_ENABLE_SOUND_RECORDING
         if (ReadSound())
         {
-            ESP_LOGI(TAG, "Continuing recording - dB: %d - threshold: %d", (int)m_SoundLevel, Backend::LoudnessThreshold);
+            ESP_LOGI(TAG, "Continuing recording - dB: %d - threshold: %ld", (int)m_SoundLevel, Backend::LoudnessThreshold);
             ESP_LOGI(TAG, "Post request to URL: %s - size: %ld", Backend::Address.c_str(), AudioFile::TotalLength);
             UNIT_TIMER("Post request");
+            Helpers::PrintFreeHeap();
 
             esp_err_t err = esp_http_client_open(httpClient, AudioFile::TotalLength);
             if (err != ESP_OK)
