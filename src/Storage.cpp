@@ -69,23 +69,23 @@ void Storage::Init()
     ESP_LOGI(TAG, "Config Mode: %s", m_StorageData.ConfigMode == true ? "true" : "false");
     if (!m_StorageData.ConfigMode)
     {
-        m_SSID.resize(SSIDLength);
+        m_SSID.reserve(SSIDLength);
         DecryptText(m_StorageData.SSID, m_SSID);
         ESP_LOGI(TAG, "Decrypted SSID: %s", m_SSID.c_str());
 
-        m_Password.resize(PasswordLength);
+        m_Password.reserve(PasswordLength);
         DecryptText(m_StorageData.Password, m_Password);
         ESP_LOGI(TAG, "Decrypted Password: %s", m_Password.c_str());
 
-        m_Address.resize(EndpointLength);
+        m_Address.reserve(EndpointLength);
         DecryptText(m_StorageData.Address, m_Address);
         ESP_LOGI(TAG, "Decrypted Address: %s", m_Address.c_str());
 
-        m_AuthKey.resize(UUIDLength);
+        m_AuthKey.reserve(UUIDLength);
         DecryptText(m_StorageData.AuthKey, m_AuthKey);
         ESP_LOGI(TAG, "Decrypted Auth Key: %s", m_AuthKey.c_str());
 
-        m_DeviceName.resize(UUIDLength);
+        m_DeviceName.reserve(UUIDLength);
         DecryptText(m_StorageData.DeviceName, m_DeviceName);
         ESP_LOGI(TAG, "Decrypted Device Name: %s", m_DeviceName.c_str());
 
