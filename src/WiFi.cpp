@@ -57,7 +57,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
 
             if (status->reason == WIFI_REASON_NO_AP_FOUND || status->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT || status->reason == WIFI_REASON_HANDSHAKE_TIMEOUT)
             {
-                Failsafe::AddFailure("Failed to connect to SSID: " + Backend::SSID + " - Password: " + Backend::Password);
+                Failsafe::AddFailure("Failed to connect to SSID: " + Storage::GetSSID() + " - Password: " + Storage::GetPassword());
             }
 
             if (s_RetriesAttempts < DeviceConfig::WiFi::ConnectionRetries)
@@ -82,7 +82,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         char buffer[4 * 4 + 1] = {};
         snprintf(buffer, sizeof(buffer), IPSTR, IP2STR(&event.ip_info.ip));
 
-        ESP_LOGI(TAG, "Connected to WiFi - SSID: %s - Password: %s - IP: %s", Backend::SSID.c_str(), Backend::Password.c_str(), buffer);
+        ESP_LOGI(TAG, "Connected to WiFi - SSID: %s - Password: %s - IP: %s", Storage::GetSSID().c_str(), Storage::GetPassword().c_str(), buffer);
 
         s_IPAddress = buffer;
         s_RetriesAttempts = 0;
@@ -141,7 +141,7 @@ void WiFi::StartAP()
     };
 
     size_t ssidLength = strlen(DeviceConfig::WiFi::SSID);
-    size_t passLength = strlen(DeviceConfig::WiFi::PASS);
+    size_t passLength = strlen(DeviceConfig::WiFi::Password);
 
     if (ssidLength <= 32)
     {
@@ -156,7 +156,7 @@ void WiFi::StartAP()
 
     if (passLength >= 8 && passLength <= 64)
     {
-        memcpy(wifi_config.ap.password, DeviceConfig::WiFi::PASS, passLength);
+        memcpy(wifi_config.ap.password, DeviceConfig::WiFi::Password, passLength);
         wifi_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
         wifi_config.ap.pairwise_cipher = WIFI_CIPHER_TYPE_CCMP;
     }
@@ -200,9 +200,9 @@ void WiFi::StartStation()
         },
     };
 
-    if (Backend::SSID.length() <= 32)
+    if (Storage::GetSSID().length() <= 32)
     {
-        memcpy(wifi_config.sta.ssid, Backend::SSID.c_str(), Backend::SSID.length());
+        memcpy(wifi_config.sta.ssid, Storage::GetSSID().c_str(), Storage::GetSSID().length());
     }
 
     else
@@ -212,9 +212,9 @@ void WiFi::StartStation()
         return;
     }
 
-    if (Backend::Password.length() >= 8 && Backend::Password.length() <= 64)
+    if (Storage::GetPassword().length() >= 8 && Storage::GetPassword().length() <= 64)
     {
-        memcpy(wifi_config.sta.password, Backend::Password.c_str(), Backend::Password.length());
+        memcpy(wifi_config.sta.password, Storage::GetPassword().c_str(), Storage::GetPassword().length());
         wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
     }
 

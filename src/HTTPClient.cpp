@@ -4,6 +4,7 @@
 #include "Definitions.h"
 #include "Backend.h"
 #include "Failsafe.h"
+#include "Storage.h"
 #include "WiFi.h"
 #include "HTTP.h"
 
@@ -60,7 +61,7 @@ static esp_err_t httpEventHandler(esp_http_client_event_t *evt)
 void HTTP::Init()
 {
     esp_http_client_config_t http_config = {
-        .url = Backend::Address.c_str(),
+        .url = Storage::GetAddress().c_str(),
         .cert_pem = DeviceConfig::WiFi::ServerCrt,
         .max_redirection_count = INT_MAX,
         .event_handler = httpEventHandler,
@@ -77,7 +78,7 @@ bool Request::GET()
         return false;
     }
 
-    ESP_LOGI(TAG, "GET request to URL: %s - payload: %s", m_URL.c_str(), m_Payload.c_str());
+    ESP_LOGI(TAG, "GET request to URL: %s", m_URL.c_str());
     UNIT_TIMER("GET request");
 
     esp_http_client_set_url(httpClient, m_URL.c_str());

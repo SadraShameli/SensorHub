@@ -2,15 +2,6 @@
 #include <cmath>
 #include "Backend.h"
 
-#ifdef UNIT_ENABLE_SOUND_RECORDING
-#define SAMPLE_RATE 48000
-#define RECORD_TIME 10
-
-#elif defined(UNIT_ENABLE_SOUND_REGISTERING)
-#define SAMPLE_RATE 16000
-#define RECORD_TIME 1
-#endif
-
 class WaveHeader
 {
 public:
@@ -42,24 +33,22 @@ public:
 class AudioFile
 {
 public:
-    static const uint32_t SampleRate = SAMPLE_RATE;
-    static const uint32_t SampleBitrate = 16;
-    static const uint32_t RecordTime = RECORD_TIME;
-    static const uint32_t BufferTime = 1000;
-    static const uint32_t BufferCount = SampleRate * BufferTime / 1000;
-    static const uint32_t BufferLength = BufferCount * SampleBitrate / 8;
-    static const uint32_t TotalLength = SampleRate * SampleBitrate / 8 * RecordTime + sizeof(WaveHeader);
-    inline static const WaveHeader Header = WaveHeader(SampleRate, SampleBitrate, 1, RecordTime);
-    inline static int16_t Buffer[BufferCount] __attribute__((aligned(4))) = {0};
+    AudioFile(uint32_t sampleRate, uint32_t sampleBitrate, uint32_t bufferTime, uint32_t duration) : Header(sampleRate, sampleBitrate, 1, duration)
+    {
+        BufferCount = sampleRate * bufferTime / 1000;
+        BufferLength = BufferCount * 16 / 8;
+        TotalLength = Header.DataLength + sizeof(WaveHeader);
+        Buffer = new uint8_t[BufferLength];
+    }
+
+    uint8_t *Buffer;
+    WaveHeader Header;
+    uint32_t BufferCount, BufferLength, TotalLength;
 };
 
 class MicInfo
 {
 public:
-    static constexpr float Sensitivity = 26.0f;
-    static constexpr float RefDB = 94.0f;
-    static constexpr float OffsetDB = -3.0f;
-    static constexpr float PeakDB = 116.0f;
-    static constexpr float FloorDB = 29.0f;
-    static constexpr double Amplitude = pow(10, -MicInfo::Sensitivity / 20.0f) * ((1 << (AudioFile::SampleBitrate - 1)) - 1);
+    static constexpr float Sensitivity = 26.0f, RefDB = 94.0f, OffsetDB = -3.0f, PeakDB = 116.0f, FloorDB = 29.0f;
+    static constexpr double Amplitude = pow(10, -MicInfo::Sensitivity / 20.0f) * ((1 << (16 - 1)) - 1);
 };

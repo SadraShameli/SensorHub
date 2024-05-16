@@ -18,20 +18,11 @@ extern "C" void app_main()
     return;
   }
 
-  Storage::GetSSID(Backend::SSID);
-  Storage::GetPassword(Backend::Password);
-  Storage::GetDeviceId(Backend::DeviceId);
-  Storage::GetDeviceName(Backend::DeviceName);
-  Storage::GetAuthKey(Backend::AuthKey);
-  Storage::GetAddress(Backend::Address);
-  Storage::GetLoudnessThreshold(Backend::LoudnessThreshold);
-  Storage::GetRegisterInterval(Backend::RegisterInterval);
-
   WiFi::Init();
   WiFi::StartStation();
   HTTP::Init();
 
-  if (Storage::GetEnabledSensors(Backend::SensorTypes::Sound))
+  if (Storage::GetDeviceType() == Backend::DeviceTypes::Recording || Storage::GetEnabledSensors(Backend::SensorTypes::Sound))
   {
     Sound::Init();
   }

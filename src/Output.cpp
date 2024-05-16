@@ -20,15 +20,11 @@ void Output::Init()
     for (auto &pin : inputPins)
     {
         gpio_set_direction(pin.PinNum, GPIO_MODE_OUTPUT);
-
-        gpio_set_level(pin.PinNum, 0);
-        vTaskDelay(pdMS_TO_TICKS(250));
         gpio_set_level(pin.PinNum, 1);
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(250));
     }
 
     vTaskDelay(pdMS_TO_TICKS(250));
-
     for (auto &pin : inputPins)
     {
         gpio_set_level(pin.PinNum, 0);

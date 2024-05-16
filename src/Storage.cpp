@@ -9,31 +9,6 @@
 static const char *TAG = "Storage";
 static nvs_handle_t nvsHandle;
 
-void Storage::Init()
-{
-    size_t required_size = 0;
-    m_StorageData.ConfigMode = true;
-
-    CalculateMask();
-
-    ESP_LOGI(TAG, "Initializing NVS storage");
-
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        ESP_LOGI(TAG, "NVS initialization failed");
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        err = nvs_flash_init();
-    }
-
-    ESP_ERROR_CHECK(err);
-    ESP_ERROR_CHECK(nvs_open(TAG, NVS_READWRITE, &nvsHandle));
-
-    ESP_LOGI(TAG, "Getting NVS storage saved data");
-    nvs_get_blob(nvsHandle, TAG, nullptr, &required_size);
-    nvs_get_blob(nvsHandle, TAG, &m_StorageData, &required_size);
-}
-
 void Storage::MountSPIFFS(const char *base_path, const char *partition_label)
 {
     ESP_LOGI(TAG, "Mounting partition %s with base path: %s", base_path, partition_label);
@@ -68,10 +43,122 @@ void Storage::MountSPIFFS(const char *base_path, const char *partition_label)
     ESP_LOGI(TAG, "Partition info: Total: %u - used: %u", total, used);
 }
 
+void Storage::Init()
+{
+    size_t required_size = 0;
+    m_StorageData.ConfigMode = true;
+
+    CalculateMask();
+    ESP_LOGI(TAG, "Initializing NVS storage");
+
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_LOGI(TAG, "NVS initialization failed");
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+
+    ESP_ERROR_CHECK(err);
+    ESP_ERROR_CHECK(nvs_open(TAG, NVS_READWRITE, &nvsHandle));
+
+    ESP_LOGI(TAG, "Getting NVS storage saved data");
+    nvs_get_blob(nvsHandle, TAG, nullptr, &required_size);
+    nvs_get_blob(nvsHandle, TAG, &m_StorageData, &required_size);
+
+    ESP_LOGI(TAG, "Config Mode: %s", m_StorageData.ConfigMode == true ? "true" : "false");
+    if (!m_StorageData.ConfigMode)
+    {
+        m_SSID.resize(SSIDLength);
+        DecryptText(m_StorageData.SSID, m_SSID);
+        ESP_LOGI(TAG, "Decrypted SSID: %s", m_SSID.c_str());
+
+        m_Password.resize(PasswordLength);
+        DecryptText(m_StorageData.Password, m_Password);
+        ESP_LOGI(TAG, "Decrypted Password: %s", m_Password.c_str());
+
+        m_Address.resize(EndpointLength);
+        DecryptText(m_StorageData.Address, m_Address);
+        ESP_LOGI(TAG, "Decrypted Address: %s", m_Address.c_str());
+
+        m_AuthKey.resize(UUIDLength);
+        DecryptText(m_StorageData.AuthKey, m_AuthKey);
+        ESP_LOGI(TAG, "Decrypted Auth Key: %s", m_AuthKey.c_str());
+
+        m_DeviceName.resize(UUIDLength);
+        DecryptText(m_StorageData.DeviceName, m_DeviceName);
+        ESP_LOGI(TAG, "Decrypted Device Name: %s", m_DeviceName.c_str());
+
+        ESP_LOGI(TAG, "Device Type: %ld", m_StorageData.DeviceType);
+        ESP_LOGI(TAG, "Device Id: %ld", m_StorageData.DeviceId);
+        ESP_LOGI(TAG, "Loudness Threshold: %ld", m_StorageData.LoudnessThreshold);
+        ESP_LOGI(TAG, "Register Interval: %ld", m_StorageData.RegisterInterval);
+
+        for (int i = 0; i < (Backend::SensorTypes::SensorCount - 1); i++)
+        {
+            ESP_LOGI(TAG, "Sensor %d - state: %s", i + 1, m_StorageData.Sensors[i] ? "enabled" : "disabled");
+        }
+    }
+}
+
 void Storage::Commit()
 {
-    ESP_LOGI(TAG, "Saving to storage blob");
+    if (m_SSID.length() > SSIDLength)
+    {
+        Failsafe::AddFailure("SSID too long");
+        return;
+    }
 
+    if (m_Password.length() > PasswordLength)
+    {
+        Failsafe::AddFailure("Password too long");
+        return;
+    }
+
+    if (m_Address.length() > EndpointLength)
+    {
+        Failsafe::AddFailure("Address too long");
+        return;
+    }
+
+    if (m_AuthKey.length() > UUIDLength)
+    {
+        Failsafe::AddFailure("Auth Key too long");
+        return;
+    }
+
+    if (m_DeviceName.length() > UUIDLength)
+    {
+        Failsafe::AddFailure("Device Name too long");
+        return;
+    }
+
+    ESP_LOGI(TAG, "Encrypting SSID: %s", m_SSID.c_str());
+    EncryptText(m_StorageData.SSID, m_SSID);
+
+    ESP_LOGI(TAG, "Encrypting Password: %s", m_Password.c_str());
+    EncryptText(m_StorageData.Password, m_Password);
+
+    ESP_LOGI(TAG, "Encrypting Address: %s", m_Address.c_str());
+    EncryptText(m_StorageData.Address, m_Address);
+
+    ESP_LOGI(TAG, "Encrypting Auth Key: %s", m_AuthKey.c_str());
+    EncryptText(m_StorageData.AuthKey, m_AuthKey);
+
+    ESP_LOGI(TAG, "Encrypting Device Name: %s", m_DeviceName.c_str());
+    EncryptText(m_StorageData.DeviceName, m_DeviceName);
+
+    ESP_LOGI(TAG, "Device Type: %ld", m_StorageData.DeviceType);
+    ESP_LOGI(TAG, "Device Id: %ld", m_StorageData.DeviceId);
+    ESP_LOGI(TAG, "Loudness Threshold: %ld", m_StorageData.LoudnessThreshold);
+    ESP_LOGI(TAG, "Register Interval: %ld", m_StorageData.RegisterInterval);
+
+    for (int i = 0; i < (Backend::SensorTypes::SensorCount - 1); i++)
+    {
+        ESP_LOGI(TAG, "Sensor %d - state: %s", i + 1, m_StorageData.Sensors[i] ? "enabled" : "disabled");
+    }
+
+    ESP_LOGI(TAG, "Saving to storage blob");
     ESP_ERROR_CHECK(nvs_set_blob(nvsHandle, TAG, &m_StorageData, sizeof(StorageData)));
     ESP_ERROR_CHECK(nvs_commit(nvsHandle));
 }
@@ -146,169 +233,4 @@ void Storage::DecryptText(uint32_t *var, std::string &str)
     {
         str.push_back(*(var++) ^ m_EncryptionMask);
     }
-}
-
-void Storage::GetSSID(std::string &str)
-{
-    str.reserve(SSIDLength);
-    DecryptText(m_StorageData.SSID, str);
-    ESP_LOGI(TAG, "Reading SSID: %s", str.c_str());
-}
-
-void Storage::GetPassword(std::string &str)
-{
-    str.reserve(PasswordLength);
-    DecryptText(m_StorageData.Password, str);
-    ESP_LOGI(TAG, "Reading Password: %s", str.c_str());
-}
-
-void Storage::GetDeviceName(std::string &str)
-{
-    str.reserve(UUIDLength);
-    DecryptText(m_StorageData.DeviceName, str);
-    ESP_LOGI(TAG, "Reading Device Name: %s", str.c_str());
-}
-
-void Storage::GetAuthKey(std::string &str)
-{
-    str.reserve(UUIDLength);
-    DecryptText(m_StorageData.AuthKey, str);
-    ESP_LOGI(TAG, "Reading Auth Key: %s", str.c_str());
-}
-
-void Storage::GetAddress(std::string &str)
-{
-    str.reserve(EndpointLength);
-    DecryptText(m_StorageData.Address, str);
-    ESP_LOGI(TAG, "Reading Address: %s", str.c_str());
-}
-
-void Storage::GetDeviceId(uint32_t &device_id)
-{
-    device_id = m_StorageData.DeviceId;
-    ESP_LOGI(TAG, "Reading Device Id: %ld", m_StorageData.DeviceId);
-}
-
-void Storage::GetLoudnessThreshold(uint32_t &threshold)
-{
-    threshold = m_StorageData.LoudnessThreshold;
-    ESP_LOGI(TAG, "Loudness Threshold: %ld", m_StorageData.LoudnessThreshold);
-}
-
-void Storage::GetRegisterInterval(uint32_t &interval)
-{
-    interval = m_StorageData.RegisterInterval;
-    ESP_LOGI(TAG, "Register Interval: %ld", m_StorageData.RegisterInterval);
-}
-
-bool Storage::GetEnabledSensors(Backend::SensorTypes sensor)
-{
-    ESP_LOGI(TAG, "Sensor %d - state: %s", (int)sensor, m_StorageData.EnabledSensors[sensor] ? "enabled" : "disabled");
-    return m_StorageData.EnabledSensors[sensor];
-}
-
-bool Storage::GetConfigMode()
-{
-    ESP_LOGI(TAG, "Config Mode: %s", m_StorageData.ConfigMode == true ? "true" : "false");
-    return m_StorageData.ConfigMode;
-}
-
-void Storage::SetSSID(const std::string &str)
-{
-    if (str.length() <= SSIDLength)
-    {
-        ESP_LOGI(TAG, "Setting SSID: %s", str.c_str());
-        EncryptText(m_StorageData.SSID, str);
-    }
-
-    else
-    {
-        Failsafe::AddFailure("SSID too long");
-    }
-}
-
-void Storage::SetPassword(const std::string &str)
-{
-    if (str.length() <= PasswordLength)
-    {
-        ESP_LOGI(TAG, "Setting Password: %s", str.c_str());
-        EncryptText(m_StorageData.Password, str);
-    }
-
-    else
-    {
-        Failsafe::AddFailure("Password too long");
-    }
-}
-
-void Storage::SetDeviceName(const std::string &str)
-{
-    if (str.length() <= UUIDLength)
-    {
-        ESP_LOGI(TAG, "Setting Device Name: %s", str.c_str());
-        EncryptText(m_StorageData.DeviceName, str);
-    }
-
-    else
-    {
-        Failsafe::AddFailure("Device Name too long");
-    }
-}
-
-void Storage::SetAuthKey(const std::string &str)
-{
-    if (str.length() <= UUIDLength)
-    {
-        ESP_LOGI(TAG, "Setting Auth Key: %s", str.c_str());
-        EncryptText(m_StorageData.AuthKey, str);
-    }
-
-    else
-    {
-        Failsafe::AddFailure("Auth Key too long");
-    }
-}
-
-void Storage::SetAddress(const std::string &str)
-{
-    if (str.length() <= EndpointLength)
-    {
-        ESP_LOGI(TAG, "Setting Address: %s", str.c_str());
-        EncryptText(m_StorageData.Address, str);
-    }
-
-    else
-    {
-        Failsafe::AddFailure("Address too long");
-    }
-}
-
-void Storage::SetDeviceId(uint32_t device_id)
-{
-    ESP_LOGI(TAG, "Setting Device Id: %ld", device_id);
-    m_StorageData.DeviceId = device_id;
-}
-
-void Storage::SetLoudnessThreshold(uint32_t threshold)
-{
-    ESP_LOGI(TAG, "Setting Loudness Threshold: %ld", threshold);
-    m_StorageData.LoudnessThreshold = threshold;
-}
-
-void Storage::SetRegisterInterval(uint32_t interval)
-{
-    ESP_LOGI(TAG, "Setting Register Interval: %ld", interval);
-    m_StorageData.RegisterInterval = interval;
-}
-
-void Storage::SetEnabledSensors(Backend::SensorTypes sensor, bool state)
-{
-    ESP_LOGI(TAG, "Setting Sensor %d - state:  %s", (int)sensor, state ? "enabled" : "disabled");
-    m_StorageData.EnabledSensors[sensor] = state;
-}
-
-void Storage::SetConfigMode(bool configBool)
-{
-    ESP_LOGI(TAG, "Setting Config Mode: %s", configBool == true ? "true" : "false");
-    m_StorageData.ConfigMode = configBool;
 }

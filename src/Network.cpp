@@ -52,22 +52,7 @@ void Network::Update()
         {
             if (WiFi::IsConnected())
             {
-                if (Backend::GetConfiguration())
-                {
-                    Storage::SetSSID(Backend::SSID);
-                    Storage::SetPassword(Backend::Password);
-                    Storage::SetDeviceId(Backend::DeviceId);
-                    Storage::SetDeviceName(Backend::DeviceName);
-                    Storage::SetAuthKey(Backend::AuthKey);
-                    Storage::SetAddress(Backend::Address);
-                    Storage::SetLoudnessThreshold(Backend::LoudnessThreshold);
-                    Storage::SetRegisterInterval(Backend::RegisterInterval);
-                    Storage::SetConfigMode(false);
-                    Storage::Commit();
-
-                    esp_restart();
-                }
-
+                Backend::GetConfiguration();
                 WiFi::StartAP();
                 break;
             }

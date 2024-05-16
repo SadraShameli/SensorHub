@@ -78,31 +78,27 @@ bool Backend::SetupConfiguration(std::string &payload)
         return false;
     }
 
-    Backend::SSID = doc["ssid"].as<const char *>();
-    Backend::Password = doc["pass"].as<const char *>();
-    Backend::Address = doc["address"].as<const char *>();
-    Backend::DeviceId = doc["deviceid"];
-
-    Helpers::RemoveWhiteSpace(Backend::Address);
-
-    if (Backend::Address.back() != '/')
+    std::string address = doc["address"].as<const char *>();
+    Helpers::RemoveWhiteSpace(address);
+    if (address.back() != '/')
     {
-        Backend::Address += "/";
+        address += "/";
     }
 
-    ESP_LOGI(TAG, "Read Address: %s", Backend::Address.c_str());
-    ESP_LOGI(TAG, "Read Device Id: %ld", Backend::DeviceId);
-
+    Storage::SetSSID(doc["ssid"].as<const char *>());
+    Storage::SetPassword(doc["pass"].as<const char *>());
+    Storage::SetAddress(address);
+    Storage::SetDeviceId(doc["deviceid"]);
     Network::NotifyConfigSet();
 
     return true;
 }
 
-bool Backend::GetConfiguration()
+void Backend::GetConfiguration()
 {
     ESP_LOGI(TAG, "Getting configuration");
 
-    Request request = Request(Address + DeviceURL + std::to_string(Backend::DeviceId));
+    Request request = Request(Storage::GetAddress() + DeviceURL + std::to_string(Storage::GetDeviceId()));
 
     if (request.GET())
     {
@@ -112,24 +108,25 @@ bool Backend::GetConfiguration()
         if (error != DeserializationError::Ok)
         {
             Failsafe::AddFailure("Deserializing configuration failed: " + std::string(error.c_str()));
-            return false;
+            return;
         }
 
-        DeviceName = doc["name"].as<const char *>();
-        DeviceId = doc["device_id"];
-        RegisterInterval = doc["register_interval"];
-        LoudnessThreshold = doc["loudness_threshold"];
+        Storage::SetDeviceName(doc["name"].as<const char *>());
+        Storage::SetDeviceType(doc["type_id"]);
+        Storage::SetDeviceId(doc["device_id"]);
+        Storage::SetRegisterInterval(doc["register_interval"]);
+        Storage::SetLoudnessThreshold(doc["loudness_threshold"]);
 
         JsonArray sensors = doc["sensors"].as<JsonArray>();
         for (JsonVariant sensor : sensors)
             Storage::SetEnabledSensors(sensor.as<Backend::SensorTypes>(), true);
 
-        return true;
+        Storage::SetConfigMode(false);
+        Storage::Commit();
+        esp_restart();
     }
 
     ESP_LOGE(TAG, "Getting configuration failed");
-
-    return false;
 }
 
 bool Backend::RegisterReadings()
@@ -139,7 +136,7 @@ bool Backend::RegisterReadings()
         ESP_LOGI(TAG, "Registering readings");
 
         JsonDocument doc;
-        doc["device_id"] = Backend::DeviceId;
+        doc["device_id"] = Storage::GetDeviceId();
 
         JsonObject sensors = doc["sensors"].to<JsonObject>();
         sensors[std::to_string(Backend::SensorTypes::Sound)] = (int)Sound::GetMaxLevel();
@@ -147,8 +144,7 @@ bool Backend::RegisterReadings()
         std::string payload;
         serializeJson(doc, payload);
 
-        Request request = Request(Address + Backend::ReadingURL, payload);
-
+        Request request = Request(Storage::GetAddress() + Backend::ReadingURL, payload);
         if (request.POST())
         {
             return true;

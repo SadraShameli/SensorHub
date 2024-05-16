@@ -1,14 +1,7 @@
 #pragma once
 #include <string>
 
-// #define UNIT_SENSOR
-#define UNIT_SOUND
 #define UNIT_DISABLE_FAVICON
-
-#ifdef UNIT_SOUND
-#define UNIT_ENABLE_SOUND_REGISTERING
-// #define UNIT_ENABLE_SOUND_RECORDING
-#endif
 
 #define UNIT_INPUT_PINS                \
     {                                  \
@@ -39,8 +32,7 @@ namespace DeviceConfig
 
     namespace WiFi
     {
-        static const char SSID[] = "Unit";
-        static const char PASS[] = "";
+        static const char SSID[] = "Unit", Password[] = "";
         static const int ConnectionRetries = 10;
         extern const char ServerCrt[] asm("_binary_cer_crt_start");
     }
@@ -63,6 +55,12 @@ namespace DeviceConfig
 class Backend
 {
 public:
+    enum DeviceTypes
+    {
+        Recording = 1,
+        Reading,
+    };
+
     enum SensorTypes
     {
         Temperature = 1,
@@ -89,14 +87,9 @@ public:
     static bool IsRedirect(int);
     static bool CheckResponseFailed(std::string &, int);
     static bool SetupConfiguration(std::string &);
-    static bool GetConfiguration();
+    static void GetConfiguration();
     static bool RegisterReadings();
 
 public:
-    inline static std::string SSID, Password, DeviceName, AuthKey, Address;
-    inline static uint32_t DeviceId, LoudnessThreshold, RegisterInterval;
-
-    inline static std::string DeviceURL = "device/";
-    inline static std::string ReadingURL = "reading/";
-    inline static std::string SoundURL = "recording/";
+    inline static std::string DeviceURL = "device/", ReadingURL = "reading/", RecordingURL = "recording/";
 };
