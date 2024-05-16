@@ -1,5 +1,6 @@
 #include "esp_log.h"
 #include "esp_http_client.h"
+#include "esp_tls.h"
 #include "driver/i2s_std.h"
 
 #include "Sound.h"
@@ -47,7 +48,7 @@ static void vTask(void *pvParameters)
     const i2s_chan_config_t chan_cfg = {
         .id = I2S_NUM_0,
         .role = I2S_ROLE_MASTER,
-        .dma_desc_num = 5,
+        .dma_desc_num = 12,
         .dma_frame_num = 2046,
         .auto_clear = true,
     };
@@ -86,128 +87,44 @@ void Sound::Init()
 
 void Sound::Update()
 {
-    if (WiFi::IsConnected())
-    {
-
 #ifdef UNIT_ENABLE_SOUND_REGISTERING
-        static clock_t previousTime = 0;
-        clock_t currentTime = clock();
+    static clock_t previousTime = 0;
+    clock_t currentTime = clock();
 
-        ReadSound();
-        if ((currentTime - previousTime) > Backend::RegisterInterval * 1000)
+    ReadSound();
+    if ((currentTime - previousTime) > Backend::RegisterInterval * 1000)
+    {
+        previousTime = currentTime;
+
+        if (Backend::RegisterReadings())
         {
-            previousTime = currentTime;
-
-            if (Backend::RegisterReadings())
-            {
-                ResetLevels();
-                Output::Blink(DeviceConfig::Outputs::LedG, 1000);
-            }
+            ResetLevels();
+            Output::Blink(DeviceConfig::Outputs::LedG, 1000);
         }
+    }
 #endif
 
 #ifdef UNIT_ENABLE_SOUND_RECORDING
-        if (ReadSound())
+    if (ReadSound())
+    {
+        ESP_LOGI(TAG, "Continuing recording - dB: %d - threshold: %ld", (int)m_SoundLevel, Backend::LoudnessThreshold);
+        ESP_LOGI(TAG, "Post request to URL: %s - size: %ld", Backend::Address.c_str(), AudioFile::TotalLength);
+        UNIT_TIMER("Post request");
+        Helpers::PrintFreeHeap();
+
+        esp_err_t err = esp_http_client_open(httpClient, AudioFile::TotalLength);
+        if (err != ESP_OK)
         {
-            ESP_LOGI(TAG, "Continuing recording - dB: %d - threshold: %ld", (int)m_SoundLevel, Backend::LoudnessThreshold);
-            ESP_LOGI(TAG, "Post request to URL: %s - size: %ld", Backend::Address.c_str(), AudioFile::TotalLength);
-            UNIT_TIMER("Post request");
-            Helpers::PrintFreeHeap();
-
-            esp_err_t err = esp_http_client_open(httpClient, AudioFile::TotalLength);
-            if (err != ESP_OK)
-            {
-                Failsafe::AddFailure("Registering sound recording failed");
-                return;
-            }
-
-            Output::Blink(DeviceConfig::Outputs::LedG, 250, true);
-            int length = esp_http_client_write(httpClient, (char *)&AudioFile::Header, sizeof(WaveHeader));
-            if (length < 0)
-            {
-                Failsafe::AddFailure("Writing wav header failed");
-                esp_http_client_close(httpClient);
-                return;
-            }
-
-            i2s_adc_data_scale((uint8_t *)AudioFile::Buffer, (uint8_t *)AudioFile::Buffer, AudioFile::BufferLength);
-            length = esp_http_client_write(httpClient, (char *)AudioFile::Buffer, AudioFile::BufferLength);
-            if (length < 0)
-            {
-                Failsafe::AddFailure("Writing wav bytes failed");
-                esp_http_client_close(httpClient);
-                return;
-            }
-
-            else if (length < AudioFile::BufferLength)
-            {
-                ESP_LOGE(TAG, "Writing partially complete - buffer length: %ld - transfered length: %d", AudioFile::BufferLength, length);
-                esp_http_client_close(httpClient);
-                return;
-            }
-
-            for (size_t byte_count = AudioFile::Header.DataLength - AudioFile::BufferLength; byte_count > 0; byte_count -= AudioFile::BufferLength)
-            {
-                i2s_channel_read(i2sHandle, AudioFile::Buffer, AudioFile::BufferLength, nullptr, portMAX_DELAY);
-                i2s_adc_data_scale((uint8_t *)AudioFile::Buffer, (uint8_t *)AudioFile::Buffer, AudioFile::BufferLength);
-
-                length = esp_http_client_write(httpClient, (char *)AudioFile::Buffer, AudioFile::BufferLength);
-                if (length < 0)
-                {
-                    Failsafe::AddFailure("Writing wav bytes failed");
-                    esp_http_client_close(httpClient);
-                    return;
-                }
-
-                else if (length < AudioFile::BufferLength)
-                {
-                    ESP_LOGE(TAG, "Writing partially complete - buffer length: %ld - transfered length: %d", AudioFile::BufferLength, length);
-                    esp_http_client_close(httpClient);
-                    return;
-                }
-            }
-
-            ESP_LOGI(TAG, "Writing wav bytes complete");
-
-            length = esp_http_client_fetch_headers(httpClient);
-            if (length >= 0)
-            {
-                int statusCode = esp_http_client_get_status_code(httpClient);
-                if (Backend::StatusOK(statusCode))
-                {
-                    ESP_LOGI(TAG, "Backend response ok - status code: %d", statusCode);
-                }
-
-                else
-                {
-                    httpPayload.clear();
-                    httpPayload.resize(length);
-
-                    length = esp_http_client_read(httpClient, httpPayload.data(), length);
-                    esp_http_client_close(httpClient);
-                    if (length > 0)
-                    {
-                        httpPayload[length] = 0;
-                        Failsafe::AddFailure("Backend response failed - status code: " + std::to_string(statusCode) + " - error: " + httpPayload);
-                    }
-
-                    else
-                    {
-                        Failsafe::AddFailure("Backend response failed - status code: " + statusCode);
-                    }
-                }
-            }
-
-            else
-            {
-                Failsafe::AddFailure("Error fetching data from backend");
-                esp_http_client_close(httpClient);
-            }
-
-            Output::SetContinuity(DeviceConfig::Outputs::LedG, false);
+            Failsafe::AddFailure("Registering sound recording failed");
+            return;
         }
-#endif
+
+        Output::Blink(DeviceConfig::Outputs::LedG, 250, true);
+        RegisterRecordings();
+        esp_http_client_close(httpClient);
+        Output::SetContinuity(DeviceConfig::Outputs::LedG, false);
     }
+#endif
 }
 
 bool Sound::ReadSound()
@@ -231,8 +148,6 @@ bool Sound::ReadSound()
             m_MinLevel = m_SoundLevel;
         }
 
-        ESP_LOGI(TAG, "dB: %d", (int)m_SoundLevel);
-
         if (m_SoundLevel > Backend::LoudnessThreshold)
         {
             return true;
@@ -243,4 +158,79 @@ bool Sound::ReadSound()
 
     Failsafe::AddFailure("Sound value not valid - dB: " + std::to_string(decibel));
     return false;
+}
+
+void Sound::RegisterRecordings()
+{
+#ifdef UNIT_ENABLE_SOUND_RECORDING
+    int length = esp_http_client_write(httpClient, (char *)&AudioFile::Header, sizeof(WaveHeader));
+    if (length < 0)
+    {
+        Failsafe::AddFailure("Writing wav header failed");
+        return;
+    }
+
+    i2s_adc_data_scale((uint8_t *)AudioFile::Buffer, (uint8_t *)AudioFile::Buffer, AudioFile::BufferLength);
+
+    length = esp_http_client_write(httpClient, (char *)AudioFile::Buffer, AudioFile::BufferLength);
+    if (length < 0)
+    {
+        Failsafe::AddFailure("Writing wav bytes failed");
+        return;
+    }
+
+    else if (length < AudioFile::BufferLength)
+    {
+        ESP_LOGE(TAG, "Writing partially complete - buffer length: %ld - transfered length: %d", AudioFile::BufferLength, length);
+        return;
+    }
+
+    for (size_t byte_count = AudioFile::Header.DataLength - AudioFile::BufferLength; byte_count > 0; byte_count -= AudioFile::BufferLength)
+    {
+        i2s_channel_read(i2sHandle, AudioFile::Buffer, AudioFile::BufferLength, nullptr, portMAX_DELAY);
+        i2s_adc_data_scale((uint8_t *)AudioFile::Buffer, (uint8_t *)AudioFile::Buffer, AudioFile::BufferLength);
+
+        length = esp_http_client_write(httpClient, (char *)AudioFile::Buffer, AudioFile::BufferLength);
+        if (length < 0)
+        {
+            Failsafe::AddFailure("Writing wav bytes failed");
+            return;
+        }
+
+        else if (length < AudioFile::BufferLength)
+        {
+            ESP_LOGE(TAG, "Writing partially complete - buffer length: %ld - transfered length: %d", AudioFile::BufferLength, length);
+            return;
+        }
+    }
+
+    length = esp_http_client_fetch_headers(httpClient);
+    if (length < 0)
+    {
+        Failsafe::AddFailure("Getting backend response failed");
+        return;
+    }
+    int statusCode = esp_http_client_get_status_code(httpClient);
+
+    if (esp_http_client_is_chunked_response(httpClient))
+    {
+        httpPayload.clear();
+        httpPayload.resize(DEFAULT_HTTP_BUF_SIZE);
+    }
+
+    else if (length > 0)
+    {
+        httpPayload.clear();
+        httpPayload.resize(length);
+    }
+
+    else
+    {
+        Failsafe::AddFailure("Error fetching data from backend - status code: " + statusCode);
+        return;
+    }
+
+    esp_http_client_read(httpClient, httpPayload.data(), httpPayload.capacity());
+    Backend::CheckResponseFailed(httpPayload, statusCode);
+#endif
 }

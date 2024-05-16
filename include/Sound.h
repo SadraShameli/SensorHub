@@ -6,6 +6,7 @@ public:
     static void Init();
     static void Update();
     static bool ReadSound();
+    static void RegisterRecordings();
 
     static double GetLevel() { return m_SoundLevel; };
     static double GetMaxLevel() { return m_MaxLevel; };

@@ -46,7 +46,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
         {
             ESP_LOGI(TAG, "Disconnected from wifi");
-            xEventGroupSetBits(s_wifi_event_group, WiFi::State::Disconnected);
+            xEventGroupClearBits(s_wifi_event_group, WiFi::State::Connected);
             s_IPAddress = "0.0.0.0";
 
             wifi_event_sta_disconnected_t *status = (wifi_event_sta_disconnected_t *)event_data;
@@ -87,6 +87,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         s_IPAddress = buffer;
         s_RetriesAttempts = 0;
         xEventGroupSetBits(s_wifi_event_group, WiFi::State::Connected);
+        xEventGroupClearBits(s_wifi_event_group, WiFi::State::Failed);
         Output::SetContinuity(DeviceConfig::Outputs::LedY, false);
     }
 }

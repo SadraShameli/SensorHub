@@ -40,7 +40,7 @@ bool Backend::CheckResponseFailed(std::string &payload, int statusCode)
 
     if (payload.empty())
     {
-        Failsafe::AddFailure("Backend response failed - status code: " + std::to_string(statusCode));
+        Failsafe::AddFailure("Backend response failed - empty response - status code: " + std::to_string(statusCode));
         return true;
     }
 

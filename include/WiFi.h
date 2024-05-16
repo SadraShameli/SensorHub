@@ -10,7 +10,6 @@ public:
     enum State
     {
         Connected = 1,
-        Disconnected,
         Failed,
     };
 
