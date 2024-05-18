@@ -22,7 +22,7 @@ static std::string address, httpPayload;
 
 static bool init()
 {
-    if (Storage::GetDeviceType() == Backend::DeviceTypes::Recording)
+    if (Storage::GetEnabledSensors(Backend::SensorTypes::Recording))
     {
         audio = new AudioFile(48000, 16, 1000, 10);
         if (audio == nullptr)
@@ -117,10 +117,20 @@ static void vTask(void *pvParameters)
 
     if (init())
     {
-        for (;;)
+        if (Storage::GetEnabledSensors(Backend::SensorTypes::Recording))
         {
-            Sound::Update();
-            taskYIELD();
+            for (;;)
+            {
+                Sound::UpdateRecording();
+            }
+        }
+
+        else
+        {
+            for (;;)
+            {
+                Sound::Update();
+            }
         }
     }
 
@@ -135,14 +145,14 @@ void Sound::Init()
 void Sound::Update()
 {
     WiFi::WaitForConnection();
-    bool isLoud = ReadSound();
+    ReadSound();
+}
 
-    if (Storage::GetDeviceType() == Backend::DeviceTypes::Reading)
-    {
-        return;
-    }
+void Sound::UpdateRecording()
+{
+    WiFi::WaitForConnection();
 
-    else if (isLoud)
+    if (ReadSound())
     {
         ESP_LOGI(TAG, "Continuing recording - dB: %d - threshold: %ld", (int)m_SoundLevel, Storage::GetLoudnessThreshold());
         ESP_LOGI(TAG, "Post request to URL: %s - size: %ld", address.c_str(), audio->TotalLength);

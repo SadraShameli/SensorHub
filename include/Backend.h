@@ -28,12 +28,6 @@ namespace DeviceConfig
 class Backend
 {
 public:
-    enum DeviceTypes
-    {
-        Recording = 1,
-        Reading,
-    };
-
     enum SensorTypes
     {
         Temperature = 1,
@@ -41,7 +35,8 @@ public:
         AirPressure,
         GasResistance,
         Altitude,
-        Sound,
+        Loudness,
+        Recording,
         RPM,
         SensorCount
     };

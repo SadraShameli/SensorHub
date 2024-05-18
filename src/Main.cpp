@@ -23,14 +23,14 @@ extern "C" void app_main()
     return;
   }
 
-  if (Storage::GetDeviceType() == Backend::DeviceTypes::Reading)
+  if (Storage::GetEnabledSensors(Backend::SensorTypes::Recording))
   {
-    Network::Init();
-    Climate::Init();
+    WiFi::StartStation();
     Sound::Init();
     return;
   }
 
-  WiFi::StartStation();
+  Network::Init();
+  Climate::Init();
   Sound::Init();
 }

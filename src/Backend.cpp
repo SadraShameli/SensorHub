@@ -118,7 +118,6 @@ void Backend::GetConfiguration()
         }
 
         Storage::SetDeviceName(doc["name"].as<const char *>());
-        Storage::SetDeviceType(doc["type_id"]);
         Storage::SetDeviceId(doc["device_id"]);
         Storage::SetRegisterInterval(doc["register_interval"]);
         Storage::SetLoudnessThreshold(doc["loudness_threshold"]);
@@ -171,9 +170,9 @@ bool Backend::RegisterReadings()
             sensors[std::to_string(Backend::SensorTypes::Altitude)] = (int)Climate::GetAltitude().GetCurrent();
         }
 
-        if (Storage::GetEnabledSensors(SensorTypes::Sound))
+        if (Storage::GetEnabledSensors(SensorTypes::Loudness))
         {
-            sensors[std::to_string(Backend::SensorTypes::Sound)] = (int)Sound::GetMaxLevel();
+            sensors[std::to_string(Backend::SensorTypes::Loudness)] = (int)Sound::GetMaxLevel();
         }
 
         // if (Storage::GetEnabledSensors(SensorTypes::RPM))

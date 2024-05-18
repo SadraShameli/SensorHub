@@ -14,7 +14,6 @@ public:
     static const std::string &GetAddress() { return m_Address; }
     static const std::string &GetAuthKey() { return m_AuthKey; }
     static const std::string &GetDeviceName() { return m_DeviceName; }
-    static Backend::DeviceTypes GetDeviceType() { return (Backend::DeviceTypes)m_StorageData.DeviceType; }
     static uint32_t GetDeviceId() { return m_StorageData.DeviceId; }
     static uint32_t GetLoudnessThreshold() { return m_StorageData.LoudnessThreshold; }
     static uint32_t GetRegisterInterval() { return m_StorageData.RegisterInterval; }
@@ -26,7 +25,6 @@ public:
     static void SetAddress(const std::string &str) { m_Address = str; }
     static void SetAuthKey(const std::string &str) { m_AuthKey = str; }
     static void SetDeviceName(const std::string &str) { m_DeviceName = str; }
-    static void SetDeviceType(Backend::DeviceTypes type) { m_StorageData.DeviceType = (uint32_t)type; }
     static void SetDeviceId(uint32_t num) { m_StorageData.DeviceId = num; }
     static void SetLoudnessThreshold(uint32_t num) { m_StorageData.LoudnessThreshold = num; }
     static void SetRegisterInterval(uint32_t num) { m_StorageData.RegisterInterval = num; }
@@ -42,7 +40,6 @@ private:
         uint32_t Address[EndpointLength];
         uint32_t AuthKey[UUIDLength];
         uint32_t DeviceName[UUIDLength];
-        uint32_t DeviceType;
         uint32_t DeviceId;
         uint32_t LoudnessThreshold;
         uint32_t RegisterInterval;

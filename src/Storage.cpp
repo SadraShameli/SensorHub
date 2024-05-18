@@ -63,8 +63,8 @@ void Storage::Init()
     ESP_ERROR_CHECK(nvs_open(TAG, NVS_READWRITE, &nvsHandle));
 
     ESP_LOGI(TAG, "Getting NVS storage saved data");
-    ESP_ERROR_CHECK(nvs_get_blob(nvsHandle, TAG, nullptr, &required_size));
-    ESP_ERROR_CHECK(nvs_get_blob(nvsHandle, TAG, &m_StorageData, &required_size));
+    nvs_get_blob(nvsHandle, TAG, nullptr, &required_size);
+    nvs_get_blob(nvsHandle, TAG, &m_StorageData, &required_size);
 
     ESP_LOGI(TAG, "Config Mode: %s", m_StorageData.ConfigMode == true ? "true" : "false");
     if (!m_StorageData.ConfigMode)
@@ -89,7 +89,6 @@ void Storage::Init()
         DecryptText(m_StorageData.DeviceName, m_DeviceName);
         ESP_LOGI(TAG, "Decrypted Device Name: %s", m_DeviceName.c_str());
 
-        ESP_LOGI(TAG, "Device Type: %ld", m_StorageData.DeviceType);
         ESP_LOGI(TAG, "Device Id: %ld", m_StorageData.DeviceId);
         ESP_LOGI(TAG, "Loudness Threshold: %ld", m_StorageData.LoudnessThreshold);
         ESP_LOGI(TAG, "Register Interval: %ld", m_StorageData.RegisterInterval);
@@ -148,7 +147,6 @@ void Storage::Commit()
     ESP_LOGI(TAG, "Encrypting Device Name: %s", m_DeviceName.c_str());
     EncryptText(m_StorageData.DeviceName, m_DeviceName);
 
-    ESP_LOGI(TAG, "Device Type: %ld", m_StorageData.DeviceType);
     ESP_LOGI(TAG, "Device Id: %ld", m_StorageData.DeviceId);
     ESP_LOGI(TAG, "Loudness Threshold: %ld", m_StorageData.LoudnessThreshold);
     ESP_LOGI(TAG, "Register Interval: %ld", m_StorageData.RegisterInterval);

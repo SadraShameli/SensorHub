@@ -5,6 +5,7 @@ class Sound
 public:
     static void Init();
     static void Update();
+    static void UpdateRecording();
     static bool ReadSound();
     static void RegisterRecordings();
 
