@@ -8,7 +8,7 @@
 #include "WiFi.h"
 #include "HTTP.h"
 
-static const char *TAG = "HTTPClient";
+static const char *TAG = "HTTP Client";
 static esp_http_client_handle_t httpClient = nullptr;
 static std::string httpBuffer;
 
@@ -34,7 +34,7 @@ static esp_err_t httpEventHandler(esp_http_client_event_t *evt)
 
         if (err == ESP_ERR_ESP_TLS_CANNOT_RESOLVE_HOSTNAME)
         {
-            Failsafe::AddFailure("HTTP request failed: URL not found");
+            Failsafe::AddFailure(TAG, "HTTP request failed: URL not found");
         }
     }
 
@@ -78,6 +78,11 @@ bool Request::GET()
         return false;
     }
 
+    if (m_URL.back() == '/')
+    {
+        m_URL.pop_back();
+    }
+
     ESP_LOGI(TAG, "GET request to URL: %s", m_URL.c_str());
     UNIT_TIMER("GET request");
 
@@ -89,7 +94,7 @@ bool Request::GET()
 
     if (err != ESP_OK)
     {
-        Failsafe::AddFailure((std::string) "GET request failed: " + esp_err_to_name(err));
+        Failsafe::AddFailure(TAG, (std::string) "GET request failed: " + esp_err_to_name(err));
         return false;
     }
 
@@ -110,6 +115,11 @@ bool Request::POST()
         return false;
     }
 
+    if (m_URL.back() == '/')
+    {
+        m_URL.pop_back();
+    }
+
     ESP_LOGI(TAG, "POST request to URL: %s - payload: %s", m_URL.c_str(), m_Payload.c_str());
     UNIT_TIMER("POST request");
 
@@ -123,7 +133,7 @@ bool Request::POST()
 
     if (err != ESP_OK)
     {
-        Failsafe::AddFailure((std::string) "POST request failed: " + esp_err_to_name(err));
+        Failsafe::AddFailure(TAG, (std::string) "POST request failed: " + esp_err_to_name(err));
         return false;
     }
 
@@ -145,6 +155,11 @@ bool Request::Stream()
     {
         static const int streamSize = 8192;
         static char streamBuffer[streamSize] = {0};
+
+        if (m_URL.back() == '/')
+        {
+            m_URL.pop_back();
+        }
 
         ESP_LOGI(TAG, "Stream request to URL: %s - file: %s", m_URL.c_str(), m_Payload.c_str());
         UNIT_TIMER("Stream request");
@@ -171,11 +186,31 @@ bool Request::Stream()
 
         else
         {
-            Failsafe::AddFailure(std::string("Stream request failed: ") + esp_err_to_name(err));
+            Failsafe::AddFailure(TAG, std::string("Stream request failed: ") + esp_err_to_name(err));
         }
 
         esp_http_client_close(httpClient);
     }
 
     return status;
+}
+
+bool Request::StatusOK(int statusCode)
+{
+    if (statusCode > 99 && statusCode < 400)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool Request::IsRedirect(int statusCode)
+{
+    if (statusCode == 300 || statusCode == 301 || statusCode == 302 || statusCode == 303 || statusCode == 307 || statusCode == 308)
+    {
+        return true;
+    }
+
+    return false;
 }

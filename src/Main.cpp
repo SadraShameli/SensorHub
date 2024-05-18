@@ -1,15 +1,20 @@
-#include "Pin.h"
+#include "esp_log.h"
+#include "Definitions.h"
 #include "Failsafe.h"
 #include "Storage.h"
+#include "Pin.h"
 #include "WiFi.h"
-#include "HTTP.h"
 #include "Network.h"
+#include "Climate.h"
 #include "Sound.h"
 
 extern "C" void app_main()
 {
+  UNIT_TIMER("Main");
+
   Failsafe::Init();
   Storage::Init();
+  WiFi::Init();
   Pin::Init();
 
   if (Storage::GetConfigMode())
@@ -18,12 +23,14 @@ extern "C" void app_main()
     return;
   }
 
-  WiFi::Init();
-  WiFi::StartStation();
-  HTTP::Init();
-
-  if (Storage::GetDeviceType() == Backend::DeviceTypes::Recording || Storage::GetEnabledSensors(Backend::SensorTypes::Sound))
+  if (Storage::GetDeviceType() == Backend::DeviceTypes::Reading)
   {
+    Network::Init();
+    Climate::Init();
     Sound::Init();
+    return;
   }
+
+  WiFi::StartStation();
+  Sound::Init();
 }

@@ -22,6 +22,9 @@ public:
   const std::string &GetPayload() { return m_Payload; }
   const std::string &GetResponse() { return m_Response; }
 
+  static bool StatusOK(int);
+  static bool IsRedirect(int);
+
 private:
   std::string m_URL, m_Payload, m_Response;
   int m_Status;

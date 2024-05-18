@@ -11,6 +11,7 @@
 #include "WiFi.h"
 #include "HTTP.h"
 
+#define UNIT_DISABLE_FAVICON
 #define PARTITION_NAME "web"
 #define FOLDER_PATH "/" PARTITION_NAME
 #define FILE_PATH "_binary_"
@@ -26,7 +27,7 @@ struct file_server_data
     char scratch[SCRATCH_BUFSIZE];
 };
 
-static const char *TAG = "HTTPServer";
+static const char *TAG = "HTTP Server";
 static httpd_handle_t s_Server = nullptr;
 
 static const char *get_path_from_uri(char *dest, const char *base_path, const char *uri, size_t destsize)
@@ -260,7 +261,7 @@ static esp_err_t config_handler(httpd_req_t *req)
 
 void HTTP::StartServer()
 {
-    ESP_LOGI(TAG, "Starting HTTP server at %s", WiFi::GetIPAP().c_str());
+    ESP_LOGI(TAG, "Starting HTTP server on IP %s", WiFi::GetIPAP().c_str());
 
     static struct file_server_data *server_data = nullptr;
 

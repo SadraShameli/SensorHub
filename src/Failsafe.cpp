@@ -8,21 +8,22 @@
 
 static const char *TAG = "Failsafe";
 static TaskHandle_t xHandle = nullptr;
-static std::stack<std::string> failures;
+static std::stack<Failsafe::Failure> failures;
 
 static void vTask(void *pvParameters)
 {
-    ESP_LOGI(TAG, "Initializing %s task", TAG);
+    ESP_LOGI(TAG, "Initializing task");
 
     for (;;)
     {
         Failsafe::Update();
+        taskYIELD();
     }
 
     vTaskDelete(nullptr);
 }
 
-void Failsafe::AddFailure(const std::string &failure)
+void Failsafe::AddFailure(const char *caller, const std::string &failure)
 {
     if (failures.size() > 9)
     {
@@ -30,7 +31,7 @@ void Failsafe::AddFailure(const std::string &failure)
         ESP_LOGI(TAG, "Popped failure");
     }
 
-    failures.push(failure);
+    failures.push(Failsafe::Failure(caller, failure));
     ESP_LOGI(TAG, "Pushed failure - current size: %d", failures.size());
 
     xTaskNotify(xHandle, DeviceConfig::Tasks::Notifications::NewFailsafe, eSetBits);
@@ -47,7 +48,8 @@ void Failsafe::Update()
 
     xTaskNotifyWait(0, DeviceConfig::Tasks::Notifications::NewFailsafe, &DeviceConfig::Tasks::Notifications::Notification, portMAX_DELAY);
 
-    ESP_LOGE(TAG, "Failure received: %s", failures.top().c_str());
+    const Failsafe::Failure &topFailure = failures.top();
+    ESP_LOGE(TAG, "Failure received from %s: %s", topFailure.Caller, topFailure.Message.c_str());
 
-    Output::Blink(DeviceConfig::Outputs::LedR, 5000);
+    Output::Blink(Output::LedR, 5000);
 }

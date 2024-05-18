@@ -1,11 +1,13 @@
 #include <ctime>
+#include <vector>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "driver/gpio.h"
 #include "esp_log.h"
+#include "Pin.h"
+#include "Storage.h"
 #include "Input.h"
 #include "Output.h"
-#include "Storage.h"
-#include "Pin.h"
 
 static const char *TAG = "Pin";
 static TaskHandle_t xHandle = nullptr;
@@ -22,6 +24,7 @@ static void vTask(void *pvParameters)
         Input::Update();
         Output::Update();
         Pin::Update();
+        taskYIELD();
     }
 
     vTaskDelete(nullptr);
@@ -34,9 +37,9 @@ void Pin::Init()
 
 void Pin::Update()
 {
-    if (Input::GetPinState(DeviceConfig::Inputs::Up))
+    if (Input::GetPinState(Input::Inputs::Up))
     {
-        Output::Blink(DeviceConfig::Outputs::LedY);
+        Output::Blink(Output::LedY);
 
         if (Storage::GetConfigMode())
         {
@@ -50,12 +53,7 @@ void Pin::Update()
                 Input::Update();
                 Output::Update();
 
-                if (Input::GetPinState(DeviceConfig::Inputs::Up))
-                {
-                    break;
-                }
-
-                if (Input::GetPinState(DeviceConfig::Inputs::Down))
+                if (Input::GetPinState(Input::Inputs::Down))
                 {
                     Storage::Reset();
                     esp_restart();
@@ -64,8 +62,8 @@ void Pin::Update()
         }
     }
 
-    else if (Input::GetPinState(DeviceConfig::Inputs::Down))
+    else if (Input::GetPinState(Input::Inputs::Down))
     {
-        Output::Blink(DeviceConfig::Outputs::LedY);
+        Output::Blink(Output::LedY);
     }
 }

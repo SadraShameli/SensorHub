@@ -1,35 +1,8 @@
 #pragma once
 #include <string>
 
-#define UNIT_DISABLE_FAVICON
-
-#define UNIT_INPUT_PINS                \
-    {                                  \
-        DeviceConfig::Inputs::Up,      \
-            DeviceConfig::Inputs::Down \
-    }
-#define UNIT_OUTPUT_PINS                 \
-    {                                    \
-        DeviceConfig::Outputs::LedR,     \
-            DeviceConfig::Outputs::LedY, \
-            DeviceConfig::Outputs::LedG  \
-    }
-
 namespace DeviceConfig
 {
-    enum Inputs
-    {
-        Up = 27,
-        Down = 26
-    };
-
-    enum Outputs
-    {
-        LedR = 32,
-        LedY = 33,
-        LedG = 25
-    };
-
     namespace WiFi
     {
         static const char SSID[] = "Unit", Password[] = "";
@@ -65,8 +38,8 @@ public:
     {
         Temperature = 1,
         Humidity,
-        GasResistance,
         AirPressure,
+        GasResistance,
         Altitude,
         Sound,
         RPM,
@@ -83,8 +56,6 @@ public:
     };
 
 public:
-    static bool StatusOK(int);
-    static bool IsRedirect(int);
     static bool CheckResponseFailed(std::string &, int);
     static bool SetupConfiguration(std::string &);
     static void GetConfiguration();

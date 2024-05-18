@@ -26,6 +26,7 @@ public:
     static void StartAP();
     static void StartStation();
     static bool IsConnected();
+    static void WaitForConnection();
 
     static void SetMacAddress();
     static const std::string &GetIPAP();

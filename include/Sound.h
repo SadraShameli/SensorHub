@@ -10,9 +10,8 @@ public:
 
     static double GetLevel() { return m_SoundLevel; };
     static double GetMaxLevel() { return m_MaxLevel; };
-    static double GetMinLevel() { return m_MinLevel; };
-    static void ResetLevels() { m_MaxLevel = m_MinLevel = m_SoundLevel; };
+    static void ResetLevels() { m_MaxLevel = m_SoundLevel; };
 
 private:
-    inline static double m_SoundLevel = 0.0f, m_MaxLevel = 0.0f, m_MinLevel = 120.0f;
+    inline static double m_SoundLevel = 0, m_MaxLevel = 0;
 };

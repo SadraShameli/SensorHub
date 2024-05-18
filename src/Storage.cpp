@@ -63,8 +63,8 @@ void Storage::Init()
     ESP_ERROR_CHECK(nvs_open(TAG, NVS_READWRITE, &nvsHandle));
 
     ESP_LOGI(TAG, "Getting NVS storage saved data");
-    nvs_get_blob(nvsHandle, TAG, nullptr, &required_size);
-    nvs_get_blob(nvsHandle, TAG, &m_StorageData, &required_size);
+    ESP_ERROR_CHECK(nvs_get_blob(nvsHandle, TAG, nullptr, &required_size));
+    ESP_ERROR_CHECK(nvs_get_blob(nvsHandle, TAG, &m_StorageData, &required_size));
 
     ESP_LOGI(TAG, "Config Mode: %s", m_StorageData.ConfigMode == true ? "true" : "false");
     if (!m_StorageData.ConfigMode)
@@ -105,31 +105,31 @@ void Storage::Commit()
 {
     if (m_SSID.length() > SSIDLength)
     {
-        Failsafe::AddFailure("SSID too long");
+        Failsafe::AddFailure(TAG, "SSID too long");
         return;
     }
 
     if (m_Password.length() > PasswordLength)
     {
-        Failsafe::AddFailure("Password too long");
+        Failsafe::AddFailure(TAG, "Password too long");
         return;
     }
 
     if (m_Address.length() > EndpointLength)
     {
-        Failsafe::AddFailure("Address too long");
+        Failsafe::AddFailure(TAG, "Address too long");
         return;
     }
 
     if (m_AuthKey.length() > UUIDLength)
     {
-        Failsafe::AddFailure("Auth Key too long");
+        Failsafe::AddFailure(TAG, "Auth Key too long");
         return;
     }
 
     if (m_DeviceName.length() > UUIDLength)
     {
-        Failsafe::AddFailure("Device Name too long");
+        Failsafe::AddFailure(TAG, "Device Name too long");
         return;
     }
 
@@ -170,7 +170,8 @@ void Storage::Reset()
     m_StorageData = {};
     m_StorageData.ConfigMode = true;
 
-    return Commit();
+    ESP_ERROR_CHECK(nvs_set_blob(nvsHandle, TAG, &m_StorageData, sizeof(StorageData)));
+    ESP_ERROR_CHECK(nvs_commit(nvsHandle));
 }
 
 void Storage::CalculateMask()

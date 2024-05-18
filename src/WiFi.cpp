@@ -11,7 +11,7 @@
 #include "HTTP.h"
 #include "Network.h"
 
-static const char *TAG = "Wifi";
+static const char *TAG = "WiFi";
 static esp_netif_t *sta_netif, *ap_netif;
 static wifi_mode_t wifi_mode;
 static EventBits_t event_bits;
@@ -40,7 +40,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         {
             esp_wifi_connect();
 
-            Output::Blink(DeviceConfig::Outputs::LedY, 250, true);
+            Output::Blink(Output::LedY, 250, true);
         }
 
         else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
@@ -55,9 +55,14 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
                 return;
             }
 
-            if (status->reason == WIFI_REASON_NO_AP_FOUND || status->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT || status->reason == WIFI_REASON_HANDSHAKE_TIMEOUT)
+            if (status->reason == WIFI_REASON_NO_AP_FOUND || status->reason == WIFI_REASON_NO_AP_FOUND_W_COMPATIBLE_SECURITY || status->reason == WIFI_REASON_NO_AP_FOUND_IN_AUTHMODE_THRESHOLD || status->reason == WIFI_REASON_NO_AP_FOUND_IN_RSSI_THRESHOLD)
             {
-                Failsafe::AddFailure("Failed to connect to SSID: " + Storage::GetSSID() + " - Password: " + Storage::GetPassword());
+                Failsafe::AddFailure(TAG, "Can't find SSID: " + Storage::GetSSID());
+            }
+
+            else if (status->reason == WIFI_REASON_AUTH_EXPIRE || status->reason == WIFI_REASON_AUTH_FAIL || status->reason == WIFI_REASON_ASSOC_EXPIRE || status->reason == WIFI_REASON_HANDSHAKE_TIMEOUT || status->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT)
+            {
+                Failsafe::AddFailure(TAG, "Password: " + Storage::GetPassword() + " for SSID: " + Storage::GetSSID() + " is not correct.");
             }
 
             if (s_RetriesAttempts < DeviceConfig::WiFi::ConnectionRetries)
@@ -69,7 +74,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
 
             else
             {
-                Failsafe::AddFailure("Can't connect to the WiFi");
+                Failsafe::AddFailure(TAG, "Can't connect to the WiFi");
                 xEventGroupSetBits(s_wifi_event_group, WiFi::State::Failed);
             }
         }
@@ -88,7 +93,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         s_RetriesAttempts = 0;
         xEventGroupSetBits(s_wifi_event_group, WiFi::State::Connected);
         xEventGroupClearBits(s_wifi_event_group, WiFi::State::Failed);
-        Output::SetContinuity(DeviceConfig::Outputs::LedY, false);
+        Output::SetContinuity(Output::LedY, false);
     }
 }
 
@@ -150,8 +155,8 @@ void WiFi::StartAP()
 
     else
     {
-        ESP_LOGW(TAG, "SSID longer than 32 characters");
-        strcpy((char *)wifi_config.ap.ssid, "Blue Star Planning");
+        Failsafe::AddFailure(TAG, "SSID longer than 32 characters");
+        strcpy((char *)wifi_config.ap.ssid, "Unit");
     }
 
     if (passLength >= 8 && passLength <= 64)
@@ -163,7 +168,7 @@ void WiFi::StartAP()
 
     else if (passLength != 0)
     {
-        ESP_LOGW(TAG, "Password too long or too short");
+        Failsafe::AddFailure(TAG, "Password too long or too short");
     }
 
     if (wifi_mode == WIFI_MODE_STA)
@@ -207,8 +212,7 @@ void WiFi::StartStation()
 
     else
     {
-        ESP_LOGW(TAG, "SSID longer than 32 characters");
-
+        Failsafe::AddFailure(TAG, "SSID longer than 32 characters");
         return;
     }
 
@@ -220,19 +224,18 @@ void WiFi::StartStation()
 
     else
     {
-        ESP_LOGW(TAG, "Password too long or too short");
+        Failsafe::AddFailure(TAG, "Password too long or too short");
+        return;
     }
 
     if (wifi_mode == WIFI_MODE_AP)
     {
         ESP_LOGI(TAG, "Wifi mode AP, switching to Station");
-
         ESP_ERROR_CHECK(esp_wifi_stop());
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
     }
 
     wifi_mode = WIFI_MODE_STA;
-
     ESP_ERROR_CHECK(esp_wifi_set_mode(wifi_mode));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
@@ -240,8 +243,13 @@ void WiFi::StartStation()
 
 bool WiFi::IsConnected()
 {
-    event_bits = xEventGroupWaitBits(s_wifi_event_group, WiFi::State::Connected, pdFALSE, pdFALSE, pdMS_TO_TICKS(25));
+    event_bits = xEventGroupWaitBits(s_wifi_event_group, WiFi::State::Connected, pdFALSE, pdFALSE, 0);
     return event_bits & WiFi::State::Connected;
+}
+
+void WiFi::WaitForConnection()
+{
+    xEventGroupWaitBits(s_wifi_event_group, WiFi::State::Connected, pdFALSE, pdFALSE, portMAX_DELAY);
 }
 
 void WiFi::SetMacAddress()

@@ -3,42 +3,28 @@
 
 struct InputPin
 {
-    gpio_num_t PinNum = GPIO_NUM_NC;
+    gpio_num_t PinNumber = GPIO_NUM_NC;
     bool PinState = false, IsLocked = false;
 
-    InputPin(int pin) : PinNum((gpio_num_t)pin) {}
+    InputPin(Input::Inputs _PinNumber) : PinNumber((gpio_num_t)_PinNumber) {}
 };
 
-static InputPin inputPins[] UNIT_INPUT_PINS;
+static InputPin inputPins[] = {Input::Up, Input::Down};
 
 void Input::Init()
 {
     for (auto &pin : inputPins)
     {
-        gpio_set_direction(pin.PinNum, GPIO_MODE_INPUT);
-        gpio_set_pull_mode(pin.PinNum, GPIO_PULLUP_ONLY);
+        gpio_set_direction(pin.PinNumber, GPIO_MODE_INPUT);
+        gpio_set_pull_mode(pin.PinNumber, GPIO_PULLUP_ONLY);
     }
-}
-
-bool Input::GetPinState(DeviceConfig::Inputs pinNumber)
-{
-    for (auto &pin : inputPins)
-    {
-        if ((DeviceConfig::Inputs)pin.PinNum == pinNumber && pin.PinState)
-        {
-            pin.PinState = false;
-            return true;
-        }
-    }
-
-    return false;
 }
 
 void Input::Update()
 {
     for (auto &pin : inputPins)
     {
-        bool pinPinState = gpio_get_level(pin.PinNum);
+        bool pinPinState = gpio_get_level(pin.PinNumber);
 
         if (pinPinState && pin.IsLocked)
         {
@@ -52,4 +38,18 @@ void Input::Update()
             pin.PinState = true;
         }
     }
+}
+
+bool Input::GetPinState(Inputs pinNumber)
+{
+    for (auto &pin : inputPins)
+    {
+        if ((Inputs)pin.PinNumber == pinNumber && pin.PinState)
+        {
+            pin.PinState = false;
+            return true;
+        }
+    }
+
+    return false;
 }
