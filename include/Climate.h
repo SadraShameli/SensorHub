@@ -48,10 +48,10 @@ private:
     inline static Values m_GasResistance = {0, 0, 10000};
     inline static Values m_Altitude = {0, 0, 10000};
 
-    static const int TemperatureOffset = -3;
-    static const int HumidityOffset = 0;
-    static const int AirPressureOffset = 0;
+    static const int TemperatureOffset = -9;
+    static const int HumidityOffset = 5;
+    static const int AirPressureOffset = 1;
     static const int GasResistanceOffset = 0;
-    static const int AltitudeOffset = 0;
-    static const int SeaLevelPressure = 1013.25;
+    static const int AltitudeOffset = 15;
+    static const int SeaLevelPressure = 1011;
 };

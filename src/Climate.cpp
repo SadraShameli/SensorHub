@@ -42,7 +42,7 @@ static bool init()
         .osr_temperature = BME680_OSR_8X,
         .osr_pressure = BME680_OSR_4X,
         .osr_humidity = BME680_OSR_2X,
-        .filter_size = BME680_IIR_SIZE_7,
+        .filter_size = BME680_IIR_SIZE_127,
     };
 
     bme680_set_oversampling_rates(dev, sensor_settings.osr_temperature, sensor_settings.osr_pressure, sensor_settings.osr_humidity);
@@ -91,6 +91,8 @@ void Climate::Update()
             m_AirPressure.Update(values.pressure + AirPressureOffset);
             m_GasResistance.Update(values.gas_resistance + GasResistanceOffset);
             m_Altitude.Update(44330.0 * (1.0 - pow(values.pressure / SeaLevelPressure, 0.1903)) + AltitudeOffset);
+
+            // ESP_LOGI(TAG, "Temp: %f, Humidity: %f, Air Pressure: %f, Gas Resistance: %f, Altitude: %f", m_Temperature.GetCurrent(), m_Humidity.GetCurrent(), m_AirPressure.GetCurrent(), m_GasResistance.GetCurrent(), m_Altitude.GetCurrent());
         }
     }
 }

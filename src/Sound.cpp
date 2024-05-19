@@ -179,6 +179,8 @@ bool Sound::ReadSound()
     double rms = SoundFilter::CalculateRMS((int16_t *)audio->Buffer, audio->BufferCount);
     double decibel = 20.0f * log10(rms / MicInfo::Amplitude) + MicInfo::RefDB + MicInfo::OffsetDB;
 
+    // ESP_LOGI(TAG, "Loudness: %fdB", decibel);
+
     if (decibel > MicInfo::FloorDB && decibel < MicInfo::PeakDB)
     {
         m_SoundLevel = decibel;
