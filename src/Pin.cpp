@@ -58,6 +58,8 @@ void Pin::Update()
                     Storage::Reset();
                     esp_restart();
                 }
+
+                vTaskDelay(pdMS_TO_TICKS(10));
             }
         }
     }
