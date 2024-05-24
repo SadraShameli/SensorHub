@@ -15,4 +15,5 @@ public:
 
 private:
     inline static double m_SoundLevel = 0, m_MaxLevel = 0;
+    static const int soundOffset = -5;
 };

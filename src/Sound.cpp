@@ -183,7 +183,7 @@ bool Sound::ReadSound()
 
     if (decibel > MicInfo::FloorDB && decibel < MicInfo::PeakDB)
     {
-        m_SoundLevel = decibel;
+        m_SoundLevel = decibel + soundOffset;
 
         if (m_SoundLevel > m_MaxLevel)
         {
