@@ -24,7 +24,7 @@ static void vTask(void *pvParameters)
         for (;;)
         {
             Network::UpdateConfig();
-            taskYIELD();
+            vTaskDelay(pdMS_TO_TICKS(10));
         }
     }
 
@@ -36,7 +36,7 @@ static void vTask(void *pvParameters)
         for (;;)
         {
             Network::Update();
-            taskYIELD();
+            vTaskDelay(pdMS_TO_TICKS(10));
         }
     }
 

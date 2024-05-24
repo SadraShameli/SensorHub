@@ -168,7 +168,6 @@ void Sound::UpdateRecording()
 
         Output::Blink(Output::LedG, 250, true);
         RegisterRecordings();
-        esp_http_client_close(httpClient);
         Output::SetContinuity(Output::LedG, false);
     }
 }
@@ -208,6 +207,7 @@ void Sound::RegisterRecordings()
     if (length < 0)
     {
         Failsafe::AddFailure(TAG, "Writing wav header failed");
+        esp_http_client_close(httpClient);
         return;
     }
 
@@ -217,12 +217,14 @@ void Sound::RegisterRecordings()
     if (length < 0)
     {
         Failsafe::AddFailure(TAG, "Writing wav bytes failed");
+        esp_http_client_close(httpClient);
         return;
     }
 
     else if (length < audio->BufferLength)
     {
         ESP_LOGE(TAG, "Writing partially complete - buffer length: %ld - transfered length: %d", audio->BufferLength, length);
+        esp_http_client_close(httpClient);
         return;
     }
 
@@ -235,12 +237,14 @@ void Sound::RegisterRecordings()
         if (length < 0)
         {
             Failsafe::AddFailure(TAG, "Writing wav bytes failed");
+            esp_http_client_close(httpClient);
             return;
         }
 
         else if (length < audio->BufferLength)
         {
             ESP_LOGE(TAG, "Writing partially complete - buffer length: %ld - transfered length: %d", audio->BufferLength, length);
+            esp_http_client_close(httpClient);
             return;
         }
     }
@@ -249,6 +253,7 @@ void Sound::RegisterRecordings()
     if (length < 0)
     {
         Failsafe::AddFailure(TAG, "Getting backend response failed");
+        esp_http_client_close(httpClient);
         return;
     }
     int statusCode = esp_http_client_get_status_code(httpClient);
@@ -268,9 +273,12 @@ void Sound::RegisterRecordings()
     else
     {
         Failsafe::AddFailure(TAG, "Error fetching data from backend - status code: " + statusCode);
+        esp_http_client_close(httpClient);
         return;
     }
 
     esp_http_client_read(httpClient, httpPayload.data(), httpPayload.capacity());
+    esp_http_client_close(httpClient);
+
     Backend::CheckResponseFailed(httpPayload, statusCode);
 }

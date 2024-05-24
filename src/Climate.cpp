@@ -65,7 +65,7 @@ static void vTask(void *pvParameters)
         for (;;)
         {
             Climate::Update();
-            taskYIELD();
+            vTaskDelay(pdMS_TO_TICKS(10));
         }
     }
 

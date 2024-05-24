@@ -24,7 +24,7 @@ static void vTask(void *pvParameters)
         Input::Update();
         Output::Update();
         Pin::Update();
-        taskYIELD();
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 
     vTaskDelete(nullptr);
