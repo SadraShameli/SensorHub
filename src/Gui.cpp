@@ -93,7 +93,7 @@ void Gui::Update()
 
     default:
     {
-        if (Climate::Initialized())
+        if (Climate::IsOK())
         {
             switch (Display::GetMenu())
             {
@@ -128,11 +128,11 @@ void Gui::Update()
             }
 
             default:
-                return;
+                break;
             }
         }
 
-        if (Sound::Initialized())
+        if (Sound::IsOK())
         {
             if (Display::GetMenu() == Configuration::Menus::Loudness)
                 Display::PrintLoudness();
@@ -140,6 +140,7 @@ void Gui::Update()
 
         // if (Display::GetMenu() == Configuration::Menus::RPM)
         //     Display::PrintRPM();
+
         return;
     }
     }

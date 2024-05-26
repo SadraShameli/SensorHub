@@ -7,7 +7,7 @@ class Climate
 public:
     static void Init();
     static void Update();
-    static bool Initialized();
+    static bool IsOK();
 
     static void ResetValues(Configuration::Sensors::Sensor);
     static const Reading &GetTemperature() { return m_Temperature; }

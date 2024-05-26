@@ -146,7 +146,7 @@ bool Backend::RegisterReadings()
 
         JsonObject sensors = doc["sensors"].to<JsonObject>();
 
-        if (Climate::Initialized())
+        if (Climate::IsOK())
         {
             if (Storage::GetEnabledSensors(Configuration::Sensors::Temperature))
                 sensors[std::to_string(Configuration::Sensors::Temperature)] = (int)Climate::GetTemperature().GetCurrent();
@@ -164,7 +164,7 @@ bool Backend::RegisterReadings()
                 sensors[std::to_string(Configuration::Sensors::Altitude)] = (int)Climate::GetAltitude().GetCurrent();
         }
 
-        if (Sound::Initialized())
+        if (Sound::IsOK())
         {
             if (Storage::GetEnabledSensors(Configuration::Sensors::Loudness))
                 sensors[std::to_string(Configuration::Sensors::Loudness)] = (int)Sound::GetLoudness().GetCurrent();

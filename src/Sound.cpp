@@ -19,7 +19,7 @@ static AudioFile *audio;
 static i2s_chan_handle_t i2sHandle;
 static esp_http_client_handle_t httpClient;
 static std::string address, httpPayload;
-static bool initialized = false;
+static bool isOK = false;
 
 static bool init()
 {
@@ -121,7 +121,7 @@ static void vTask(void *pvParameters)
 
     if (init())
     {
-        initialized = true;
+        isOK = true;
 
         if (Storage::GetEnabledSensors(Configuration::Sensors::Recording))
         {
@@ -177,9 +177,9 @@ void Sound::UpdateRecording()
     }
 }
 
-bool Sound::Initialized()
+bool Sound::IsOK()
 {
-    return initialized;
+    return isOK;
 }
 
 bool Sound::ReadSound()
@@ -202,7 +202,10 @@ bool Sound::ReadSound()
         return false;
     }
 
-    Failsafe::AddFailure(TAG, "Sound value not valid - dB: " + std::to_string(decibel));
+    isOK = false;
+    Failsafe::AddFailure(TAG, "Loudness not valid - dB: " + std::to_string(decibel));
+    vTaskDelay(pdMS_TO_TICKS(5000));
+
     return false;
 }
 

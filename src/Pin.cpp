@@ -77,7 +77,12 @@ void Pin::Update()
         Display::ResetScreenSaver();
 
         if (Storage::GetConfigMode())
-            esp_restart();
+        {
+            if (Display::GetMenu() != Configuration::Menus::Failsafe)
+                esp_restart();
+
+            Failsafe::PopFailure();
+        }
 
         switch (Display::GetMenu())
         {

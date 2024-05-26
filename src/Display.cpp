@@ -117,37 +117,33 @@ void Display::NextMenu()
 
     else
     {
-        if (m_CurrentMenu >= Menus::Failsafe)
+        switch (m_CurrentMenu)
         {
+        case Menus::Failsafe:
             m_CurrentMenu = Menus::Main;
             return;
-        }
 
-        for (int i = m_CurrentMenu + 1; i < Menus::Config; i++)
-        {
-            if (Storage::GetEnabledSensors((Configuration::Sensors::Sensor)i))
+        default:
+            for (int i = m_CurrentMenu + 1; i < Menus::Failsafe; i++)
             {
-                if (i >= Configuration::Sensors::Temperature && i <= Configuration::Sensors::Altitude && Climate::Initialized())
+                if (Storage::GetEnabledSensors((Configuration::Sensors::Sensor)i))
                 {
-                    m_CurrentMenu = (Menus::Menu)i;
-                    return;
-                }
+                    if (i >= Configuration::Sensors::Temperature && i <= Configuration::Sensors::Altitude && Climate::IsOK())
+                    {
+                        m_CurrentMenu = (Menus::Menu)i;
+                        return;
+                    }
 
-                if (i == Configuration::Sensors::Loudness && Sound::Initialized())
-                {
-                    m_CurrentMenu = (Menus::Menu)i;
-                    return;
+                    if (i == Configuration::Sensors::Loudness && Sound::IsOK())
+                    {
+                        m_CurrentMenu = (Menus::Menu)i;
+                        return;
+                    }
                 }
             }
-        }
 
-        if (m_CurrentMenu == Menus::Failsafe)
-        {
-            m_CurrentMenu = Menus::Main;
-            return;
+            m_CurrentMenu = Menus::Failsafe;
         }
-
-        m_CurrentMenu = Menus::Failsafe;
     }
 }
 
@@ -183,7 +179,7 @@ void Display::PrintMain()
 
     Print(0, 0, deviceName.c_str());
 
-    if (Climate::Initialized())
+    if (Climate::IsOK())
     {
         sprintf(buff, "Temperature: %dc", (int)temperature.GetCurrent());
         Print(0, 13, buff);
@@ -192,7 +188,7 @@ void Display::PrintMain()
         Print(0, 26, buff);
     }
 
-    if (Sound::Initialized())
+    if (Sound::IsOK())
     {
         sprintf(buff, "Loudness: %ddB", (int)loudness.GetCurrent());
         Print(0, 39, buff);

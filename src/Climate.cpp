@@ -13,7 +13,7 @@ static TaskHandle_t xHandle = nullptr;
 
 static bme680_sensor_t *dev = nullptr;
 static uint32_t duration = 0;
-static bool initialized = false;
+static bool isOK = false;
 
 static bool init()
 {
@@ -40,7 +40,7 @@ static void vTask(void *pvParameters)
 
     if (init())
     {
-        initialized = true;
+        isOK = true;
 
         for (;;)
         {
@@ -74,12 +74,26 @@ void Climate::Update()
 
             // ESP_LOGI(TAG, "Temp: %f, Humidity: %f, Air Pressure: %f, Gas Resistance: %f, Altitude: %f", m_Temperature.GetCurrent(), m_Humidity.GetCurrent(), m_AirPressure.GetCurrent(), m_GasResistance.GetCurrent(), m_Altitude.GetCurrent());
         }
+
+        else
+        {
+            isOK = false;
+            Failsafe::AddFailure(TAG, "Getting result failed");
+            vTaskDelay(pdMS_TO_TICKS(5000));
+        }
+    }
+
+    else
+    {
+        isOK = false;
+        Failsafe::AddFailure(TAG, "Starting measurement failed");
+        vTaskDelete(nullptr);
     }
 }
 
-bool Climate::Initialized()
+bool Climate::IsOK()
 {
-    return initialized;
+    return isOK;
 }
 
 void Climate::ResetValues(Configuration::Sensors::Sensor sensor)

@@ -7,7 +7,7 @@ public:
     static void Init();
     static void Update();
     static void UpdateRecording();
-    static bool Initialized();
+    static bool IsOK();
 
     static bool ReadSound();
     static void RegisterRecordings();
