@@ -3,6 +3,7 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "esp_spiffs.h"
+#include "Configuration.h"
 #include "Failsafe.h"
 #include "Storage.h"
 
@@ -93,7 +94,7 @@ void Storage::Init()
         ESP_LOGI(TAG, "Loudness Threshold: %ld", m_StorageData.LoudnessThreshold);
         ESP_LOGI(TAG, "Register Interval: %ld", m_StorageData.RegisterInterval);
 
-        for (int i = 0; i < (Backend::SensorTypes::SensorCount - 1); i++)
+        for (int i = 0; i < (Configuration::Sensors::SensorCount - 1); i++)
         {
             ESP_LOGI(TAG, "Sensor %d - state: %s", i + 1, m_StorageData.Sensors[i] ? "enabled" : "disabled");
         }
@@ -151,7 +152,7 @@ void Storage::Commit()
     ESP_LOGI(TAG, "Loudness Threshold: %ld", m_StorageData.LoudnessThreshold);
     ESP_LOGI(TAG, "Register Interval: %ld", m_StorageData.RegisterInterval);
 
-    for (int i = 0; i < (Backend::SensorTypes::SensorCount - 1); i++)
+    for (int i = 0; i < (Configuration::Sensors::SensorCount - 1); i++)
     {
         ESP_LOGI(TAG, "Sensor %d - state: %s", i + 1, m_StorageData.Sensors[i] ? "enabled" : "disabled");
     }

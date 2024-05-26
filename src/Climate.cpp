@@ -6,50 +6,30 @@
 #include "bme680.h"
 #include "Climate.h"
 #include "Failsafe.h"
+#include "Gui.h"
 
 static const char *TAG = "Climate";
 static TaskHandle_t xHandle = nullptr;
-static bme680_t *dev = nullptr;
+
+static bme680_sensor_t *dev = nullptr;
 static uint32_t duration = 0;
+static bool initialized = false;
 
 static bool init()
 {
-    esp_err_t err = i2cdev_init();
-    if (err != ESP_OK)
+    dev = bme680_init_sensor(I2C_NUM_0, BME680_I2C_ADDRESS_2, 0);
+
+    if (!dev)
     {
-        Failsafe ::AddFailure(TAG, "Failed to initialize i2c driver");
+        Failsafe ::AddFailure(TAG, "Failed to initialize sensor");
         return false;
     }
 
-    dev = new bme680_t;
-    memset(dev, 0, sizeof(bme680_t));
-
-    err = bme680_init_desc(dev, BME680_I2C_ADDR_1, I2C_NUM_0, GPIO_NUM_21, GPIO_NUM_22);
-    if (err != ESP_OK)
-    {
-        Failsafe ::AddFailure(TAG, "Failed to initialize driver");
-        return false;
-    }
-
-    err = bme680_init_sensor(dev);
-    if (err != ESP_OK)
-    {
-        Failsafe ::AddFailure(TAG, "Failed to initialize BME680");
-        return false;
-    }
-
-    bme680_settings_t sensor_settings = {
-        .osr_temperature = BME680_OSR_8X,
-        .osr_pressure = BME680_OSR_4X,
-        .osr_humidity = BME680_OSR_2X,
-        .filter_size = BME680_IIR_SIZE_127,
-    };
-
-    bme680_set_oversampling_rates(dev, sensor_settings.osr_temperature, sensor_settings.osr_pressure, sensor_settings.osr_humidity);
-    bme680_set_filter_size(dev, sensor_settings.filter_size);
+    bme680_set_oversampling_rates(dev, osr_8x, osr_4x, osr_2x);
+    bme680_set_filter_size(dev, iir_size_7);
     bme680_set_heater_profile(dev, 0, 320, 150);
     bme680_use_heater_profile(dev, 0);
-    bme680_get_measurement_duration(dev, &duration);
+    duration = bme680_get_measurement_duration(dev);
 
     return true;
 }
@@ -60,7 +40,7 @@ static void vTask(void *pvParameters)
 
     if (init())
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        initialized = true;
 
         for (;;)
         {
@@ -74,17 +54,17 @@ static void vTask(void *pvParameters)
 
 void Climate::Init()
 {
-    xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY, &xHandle);
+    xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY + 2, &xHandle);
 }
 
 void Climate::Update()
 {
     static bme680_values_float_t values = {0};
 
-    if (bme680_force_measurement(dev) == ESP_OK)
+    if (bme680_force_measurement(dev))
     {
         vTaskDelay(duration);
-        if (bme680_get_results_float(dev, &values) == ESP_OK)
+        if (bme680_get_results_float(dev, &values))
         {
             m_Temperature.Update(values.temperature + TemperatureOffset);
             m_Humidity.Update(values.humidity + HumidityOffset);
@@ -97,23 +77,28 @@ void Climate::Update()
     }
 }
 
-void Climate::ResetValues(Backend::SensorTypes sensor)
+bool Climate::Initialized()
+{
+    return initialized;
+}
+
+void Climate::ResetValues(Configuration::Sensors::Sensor sensor)
 {
     switch (sensor)
     {
-    case Backend::SensorTypes::Temperature:
+    case Configuration::Sensors::Temperature:
         m_Temperature.Reset();
         break;
-    case Backend::SensorTypes::Humidity:
+    case Configuration::Sensors::Humidity:
         m_Humidity.Reset();
         break;
-    case Backend::SensorTypes::GasResistance:
+    case Configuration::Sensors::GasResistance:
         m_GasResistance.Reset();
         break;
-    case Backend::SensorTypes::AirPressure:
+    case Configuration::Sensors::AirPressure:
         m_AirPressure.Reset();
         break;
-    case Backend::SensorTypes::Altitude:
+    case Configuration::Sensors::Altitude:
         m_Altitude.Reset();
         break;
     default:

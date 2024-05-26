@@ -23,7 +23,6 @@ void Output::Init()
         vTaskDelay(pdMS_TO_TICKS(250));
     }
 
-    vTaskDelay(pdMS_TO_TICKS(250));
     for (auto &pin : outputPins)
     {
         gpio_set_level(pin.PinNum, 0);

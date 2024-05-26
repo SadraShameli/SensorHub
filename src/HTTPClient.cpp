@@ -3,6 +3,7 @@
 #include "ArduinoJson.h"
 #include "Definitions.h"
 #include "Backend.h"
+#include "Configuration.h"
 #include "Failsafe.h"
 #include "Storage.h"
 #include "WiFi.h"
@@ -62,13 +63,12 @@ void HTTP::Init()
 {
     esp_http_client_config_t http_config = {
         .url = Storage::GetAddress().c_str(),
-        .cert_pem = DeviceConfig::WiFi::ServerCrt,
+        .cert_pem = Configuration::WiFi::ServerCrt,
         .max_redirection_count = INT_MAX,
         .event_handler = httpEventHandler,
     };
 
     httpClient = esp_http_client_init(&http_config);
-    assert(httpClient);
 }
 
 bool Request::GET()

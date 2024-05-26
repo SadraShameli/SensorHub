@@ -4,6 +4,7 @@
 #include "esp_wifi.h"
 #include "esp_wifi_ap_get_sta_list.h"
 #include "Backend.h"
+#include "Configuration.h"
 #include "Storage.h"
 #include "Failsafe.h"
 #include "Output.h"
@@ -18,7 +19,7 @@ static EventBits_t event_bits;
 static EventGroupHandle_t s_wifi_event_group;
 
 static int s_RetriesAttempts;
-static std::string s_IPAddress = "0.0.0.0";
+static std::string s_IPAddress;
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -45,27 +46,21 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
 
         else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
         {
-            ESP_LOGI(TAG, "Disconnected from wifi");
             xEventGroupClearBits(s_wifi_event_group, WiFi::State::Connected);
             s_IPAddress = "0.0.0.0";
 
             wifi_event_sta_disconnected_t *status = (wifi_event_sta_disconnected_t *)event_data;
+            ESP_LOGW(TAG, "Disconnected from wifi - reason: %d", status->reason);
+
             if (status->reason == WIFI_REASON_ASSOC_LEAVE)
-            {
                 return;
-            }
 
-            if (status->reason == WIFI_REASON_NO_AP_FOUND || status->reason == WIFI_REASON_NO_AP_FOUND_W_COMPATIBLE_SECURITY || status->reason == WIFI_REASON_NO_AP_FOUND_IN_AUTHMODE_THRESHOLD || status->reason == WIFI_REASON_NO_AP_FOUND_IN_RSSI_THRESHOLD)
-            {
-                Failsafe::AddFailure(TAG, "Can't find SSID: " + Storage::GetSSID());
-            }
-
-            else if (status->reason == WIFI_REASON_AUTH_EXPIRE || status->reason == WIFI_REASON_AUTH_FAIL || status->reason == WIFI_REASON_ASSOC_EXPIRE || status->reason == WIFI_REASON_HANDSHAKE_TIMEOUT || status->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT)
+            else if (status->reason == WIFI_REASON_AUTH_FAIL || status->reason == WIFI_REASON_ASSOC_EXPIRE || status->reason == WIFI_REASON_HANDSHAKE_TIMEOUT || status->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT)
             {
                 Failsafe::AddFailure(TAG, "Password: " + Storage::GetPassword() + " for SSID: " + Storage::GetSSID() + " is not correct.");
             }
 
-            if (s_RetriesAttempts < DeviceConfig::WiFi::ConnectionRetries)
+            if (s_RetriesAttempts < Configuration::WiFi::ConnectionRetries)
             {
                 esp_wifi_connect();
                 s_RetriesAttempts++;
@@ -74,6 +69,12 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
 
             else
             {
+                if (status->reason == WIFI_REASON_NO_AP_FOUND || status->reason == WIFI_REASON_NO_AP_FOUND_W_COMPATIBLE_SECURITY || status->reason == WIFI_REASON_NO_AP_FOUND_IN_AUTHMODE_THRESHOLD || status->reason == WIFI_REASON_NO_AP_FOUND_IN_RSSI_THRESHOLD)
+                {
+                    Failsafe::AddFailure(TAG, "Can't find SSID: " + Storage::GetSSID());
+                    return;
+                }
+
                 Failsafe::AddFailure(TAG, "Can't connect to the WiFi");
                 xEventGroupSetBits(s_wifi_event_group, WiFi::State::Failed);
             }
@@ -101,21 +102,21 @@ void WiFi::Init()
 {
     SetMacAddress();
 
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    esp_netif_init();
+    esp_event_loop_create_default();
 
     s_wifi_event_group = xEventGroupCreate();
     configASSERT(s_wifi_event_group);
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    esp_wifi_init(&cfg);
     esp_wifi_set_storage(WIFI_STORAGE_RAM);
 
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, nullptr, nullptr));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, nullptr, nullptr));
+    esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, nullptr, nullptr);
+    esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, nullptr, nullptr);
 
     sta_netif = esp_netif_create_default_wifi_sta();
-    esp_err_t err = esp_netif_set_hostname(sta_netif, DeviceConfig::WiFi::SSID);
+    esp_err_t err = esp_netif_set_hostname(sta_netif, Configuration::WiFi::SSID);
 
     if (err != ESP_OK)
     {
@@ -125,7 +126,7 @@ void WiFi::Init()
     if (Storage::GetConfigMode())
     {
         ap_netif = esp_netif_create_default_wifi_ap();
-        err = esp_netif_set_hostname(ap_netif, DeviceConfig::WiFi::SSID);
+        err = esp_netif_set_hostname(ap_netif, Configuration::WiFi::SSID);
 
         if (err != ESP_OK)
         {
@@ -136,7 +137,7 @@ void WiFi::Init()
 
 void WiFi::StartAP()
 {
-    ESP_LOGI(TAG, "Starting Wifi as access point");
+    ESP_LOGI(TAG, "Starting as access point");
 
     wifi_config_t wifi_config = {
         .ap = {
@@ -145,12 +146,12 @@ void WiFi::StartAP()
         },
     };
 
-    size_t ssidLength = strlen(DeviceConfig::WiFi::SSID);
-    size_t passLength = strlen(DeviceConfig::WiFi::Password);
+    size_t ssidLength = strlen(Configuration::WiFi::SSID);
+    size_t passLength = strlen(Configuration::WiFi::Password);
 
     if (ssidLength <= 32)
     {
-        memcpy(wifi_config.ap.ssid, DeviceConfig::WiFi::SSID, ssidLength);
+        memcpy(wifi_config.ap.ssid, Configuration::WiFi::SSID, ssidLength);
     }
 
     else
@@ -161,7 +162,7 @@ void WiFi::StartAP()
 
     if (passLength >= 8 && passLength <= 64)
     {
-        memcpy(wifi_config.ap.password, DeviceConfig::WiFi::Password, passLength);
+        memcpy(wifi_config.ap.password, Configuration::WiFi::Password, passLength);
         wifi_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
         wifi_config.ap.pairwise_cipher = WIFI_CIPHER_TYPE_CCMP;
     }
@@ -175,33 +176,27 @@ void WiFi::StartAP()
     {
         ESP_LOGI(TAG, "Wifi mode Station, switching to AP");
 
-        ESP_ERROR_CHECK(esp_wifi_disconnect());
-        ESP_ERROR_CHECK(esp_wifi_stop());
-        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+        esp_wifi_disconnect();
+        esp_wifi_stop();
+        esp_wifi_set_mode(WIFI_MODE_NULL);
     }
 
     wifi_mode = WIFI_MODE_AP;
 
-    ESP_ERROR_CHECK(esp_wifi_set_mode(wifi_mode));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
+    esp_wifi_set_mode(wifi_mode);
+    esp_wifi_set_config(WIFI_IF_AP, &wifi_config);
+    esp_wifi_start();
 
     HTTP::StartServer();
 }
 
 void WiFi::StartStation()
 {
-    ESP_LOGI(TAG, "Starting Wifi as station");
+    ESP_LOGI(TAG, "Starting as station");
 
     wifi_config_t wifi_config = {
         .sta = {
-            .scan_method = WIFI_ALL_CHANNEL_SCAN,
-            .threshold = {
-                .rssi = -127,
-            },
-            .pmf_cfg = {
-                .capable = true,
-            },
+            .scan_method = WIFI_FAST_SCAN,
         },
     };
 
@@ -231,14 +226,14 @@ void WiFi::StartStation()
     if (wifi_mode == WIFI_MODE_AP)
     {
         ESP_LOGI(TAG, "Wifi mode AP, switching to Station");
-        ESP_ERROR_CHECK(esp_wifi_stop());
-        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+        esp_wifi_stop();
+        esp_wifi_set_mode(WIFI_MODE_NULL);
     }
 
     wifi_mode = WIFI_MODE_STA;
-    ESP_ERROR_CHECK(esp_wifi_set_mode(wifi_mode));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
+    esp_wifi_set_mode(wifi_mode);
+    esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
+    esp_wifi_start();
 }
 
 bool WiFi::IsConnected()

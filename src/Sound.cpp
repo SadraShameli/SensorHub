@@ -5,7 +5,7 @@
 #include "Sound.h"
 #include "WavFormat.h"
 #include "SoundFilter.h"
-#include "Backend.h"
+#include "Configuration.h"
 #include "Definitions.h"
 #include "Failsafe.h"
 #include "Storage.h"
@@ -13,16 +13,17 @@
 #include "WiFi.h"
 
 static const char *TAG = "Sound";
-static TaskHandle_t xHandle;
+static TaskHandle_t xHandle = nullptr;
 
 static AudioFile *audio;
 static i2s_chan_handle_t i2sHandle;
 static esp_http_client_handle_t httpClient;
 static std::string address, httpPayload;
+static bool initialized = false;
 
 static bool init()
 {
-    if (Storage::GetEnabledSensors(Backend::SensorTypes::Recording))
+    if (Storage::GetEnabledSensors(Configuration::Sensors::Recording))
     {
         audio = new AudioFile(48000, 16, 1000, 10);
         if (audio == nullptr)
@@ -36,7 +37,7 @@ static bool init()
 
         esp_http_client_config_t http_config = {
             .url = address.c_str(),
-            .cert_pem = DeviceConfig::WiFi::ServerCrt,
+            .cert_pem = Configuration::WiFi::ServerCrt,
             .method = HTTP_METHOD_POST,
             .max_redirection_count = INT_MAX,
         };
@@ -108,6 +109,9 @@ static bool init()
         return false;
     }
 
+    for (int i = 0; i < 4; i++)
+        i2s_channel_read(i2sHandle, audio->Buffer, audio->BufferLength, nullptr, portMAX_DELAY);
+
     return true;
 }
 
@@ -117,7 +121,9 @@ static void vTask(void *pvParameters)
 
     if (init())
     {
-        if (Storage::GetEnabledSensors(Backend::SensorTypes::Recording))
+        initialized = true;
+
+        if (Storage::GetEnabledSensors(Configuration::Sensors::Recording))
         {
             for (;;)
             {
@@ -139,12 +145,11 @@ static void vTask(void *pvParameters)
 
 void Sound::Init()
 {
-    xTaskCreate(&vTask, TAG, 8192, nullptr, configMAX_PRIORITIES - 4, &xHandle);
+    xTaskCreate(&vTask, TAG, 8192, nullptr, tskIDLE_PRIORITY + 4, &xHandle);
 }
 
 void Sound::Update()
 {
-    WiFi::WaitForConnection();
     ReadSound();
 }
 
@@ -154,7 +159,7 @@ void Sound::UpdateRecording()
 
     if (ReadSound())
     {
-        ESP_LOGI(TAG, "Continuing recording - dB: %d - threshold: %ld", (int)m_SoundLevel, Storage::GetLoudnessThreshold());
+        ESP_LOGI(TAG, "Continuing recording - dB: %d - threshold: %ld", (int)m_Loudness.GetCurrent(), Storage::GetLoudnessThreshold());
         ESP_LOGI(TAG, "Post request to URL: %s - size: %ld", address.c_str(), audio->TotalLength);
         UNIT_TIMER("Post request");
         Helpers::PrintFreeHeap();
@@ -172,6 +177,11 @@ void Sound::UpdateRecording()
     }
 }
 
+bool Sound::Initialized()
+{
+    return initialized;
+}
+
 bool Sound::ReadSound()
 {
     i2s_channel_read(i2sHandle, audio->Buffer, audio->BufferLength, nullptr, portMAX_DELAY);
@@ -182,14 +192,9 @@ bool Sound::ReadSound()
 
     if (decibel > MicInfo::FloorDB && decibel < MicInfo::PeakDB)
     {
-        m_SoundLevel = decibel + soundOffset;
+        m_Loudness.Update(decibel + soundOffset);
 
-        if (m_SoundLevel > m_MaxLevel)
-        {
-            m_MaxLevel = m_SoundLevel;
-        }
-
-        if (m_SoundLevel > Storage::GetLoudnessThreshold())
+        if (m_Loudness.GetCurrent() > Storage::GetLoudnessThreshold())
         {
             return true;
         }

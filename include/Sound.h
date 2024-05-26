@@ -1,4 +1,5 @@
 #pragma once
+#include "Definitions.h"
 
 class Sound
 {
@@ -6,14 +7,15 @@ public:
     static void Init();
     static void Update();
     static void UpdateRecording();
+    static bool Initialized();
+
     static bool ReadSound();
     static void RegisterRecordings();
 
-    static double GetLevel() { return m_SoundLevel; };
-    static double GetMaxLevel() { return m_MaxLevel; };
-    static void ResetLevels() { m_MaxLevel = m_SoundLevel; };
+    static void ResetLevels() { m_Loudness.Reset(); };
+    static const Reading &GetLoudness() { return m_Loudness; }
 
 private:
-    inline static double m_SoundLevel = 0, m_MaxLevel = 0;
+    inline static Reading m_Loudness = {0, 94, 29};
     static const int soundOffset = -5;
 };

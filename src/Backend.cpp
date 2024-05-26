@@ -1,6 +1,7 @@
 #include "ArduinoJson.h"
 #include "Definitions.h"
 #include "Backend.h"
+#include "Configuration.h"
 #include "Failsafe.h"
 #include "Storage.h"
 #include "WiFi.h"
@@ -124,7 +125,7 @@ void Backend::GetConfiguration()
 
         JsonArray sensors = doc["sensors"].as<JsonArray>();
         for (JsonVariant sensor : sensors)
-            Storage::SetEnabledSensors(sensor.as<Backend::SensorTypes>(), true);
+            Storage::SetEnabledSensors(sensor.as<Configuration::Sensors::Sensor>(), true);
 
         Storage::SetConfigMode(false);
         Storage::Commit();
@@ -145,40 +146,32 @@ bool Backend::RegisterReadings()
 
         JsonObject sensors = doc["sensors"].to<JsonObject>();
 
-        if (Storage::GetEnabledSensors(SensorTypes::Temperature))
+        if (Climate::Initialized())
         {
-            sensors[std::to_string(Backend::SensorTypes::Temperature)] = (int)Climate::GetTemperature().GetCurrent();
+            if (Storage::GetEnabledSensors(Configuration::Sensors::Temperature))
+                sensors[std::to_string(Configuration::Sensors::Temperature)] = (int)Climate::GetTemperature().GetCurrent();
+
+            if (Storage::GetEnabledSensors(Configuration::Sensors::Humidity))
+                sensors[std::to_string(Configuration::Sensors::Humidity)] = (int)Climate::GetHumidity().GetCurrent();
+
+            if (Storage::GetEnabledSensors(Configuration::Sensors::AirPressure))
+                sensors[std::to_string(Configuration::Sensors::AirPressure)] = (int)Climate::GetAirPressure().GetCurrent();
+
+            if (Storage::GetEnabledSensors(Configuration::Sensors::GasResistance))
+                sensors[std::to_string(Configuration::Sensors::GasResistance)] = (int)Climate::GetGasResistance().GetCurrent();
+
+            if (Storage::GetEnabledSensors(Configuration::Sensors::Altitude))
+                sensors[std::to_string(Configuration::Sensors::Altitude)] = (int)Climate::GetAltitude().GetCurrent();
         }
 
-        if (Storage::GetEnabledSensors(SensorTypes::Humidity))
+        if (Sound::Initialized())
         {
-            sensors[std::to_string(Backend::SensorTypes::Humidity)] = (int)Climate::GetHumidity().GetCurrent();
+            if (Storage::GetEnabledSensors(Configuration::Sensors::Loudness))
+                sensors[std::to_string(Configuration::Sensors::Loudness)] = (int)Sound::GetLoudness().GetCurrent();
         }
 
-        if (Storage::GetEnabledSensors(SensorTypes::AirPressure))
-        {
-            sensors[std::to_string(Backend::SensorTypes::AirPressure)] = (int)Climate::GetAirPressure().GetCurrent();
-        }
-
-        if (Storage::GetEnabledSensors(SensorTypes::GasResistance))
-        {
-            sensors[std::to_string(Backend::SensorTypes::GasResistance)] = (int)Climate::GetGasResistance().GetCurrent();
-        }
-
-        if (Storage::GetEnabledSensors(SensorTypes::Altitude))
-        {
-            sensors[std::to_string(Backend::SensorTypes::Altitude)] = (int)Climate::GetAltitude().GetCurrent();
-        }
-
-        if (Storage::GetEnabledSensors(SensorTypes::Loudness))
-        {
-            sensors[std::to_string(Backend::SensorTypes::Loudness)] = (int)Sound::GetMaxLevel();
-        }
-
-        // if (Storage::GetEnabledSensors(SensorTypes::RPM))
-        // {
-        //     sensors[std::to_string(Backend::SensorTypes::RPM)] = (int)RPM::GetRPM();
-        // }
+        // if (Storage::GetEnabledSensors(Configuration::Sensors::RPM))
+        //     sensors[std::to_string(Configuration::Sensors::RPM)] = (int)RPM::GetRPM();
 
         std::string payload;
         serializeJson(doc, payload);

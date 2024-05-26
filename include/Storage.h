@@ -1,5 +1,6 @@
 #pragma once
-#include "Backend.h"
+#include <string>
+#include "Configuration.h"
 
 class Storage
 {
@@ -17,7 +18,7 @@ public:
     static uint32_t GetDeviceId() { return m_StorageData.DeviceId; }
     static uint32_t GetLoudnessThreshold() { return m_StorageData.LoudnessThreshold; }
     static uint32_t GetRegisterInterval() { return m_StorageData.RegisterInterval; }
-    static bool GetEnabledSensors(Backend::SensorTypes sensor) { return m_StorageData.Sensors[sensor - 1]; }
+    static bool GetEnabledSensors(Configuration::Sensors::Sensor sensor) { return m_StorageData.Sensors[(int)sensor - 1]; }
     static bool GetConfigMode() { return m_StorageData.ConfigMode; };
 
     static void SetSSID(const std::string &str) { m_SSID = str; }
@@ -28,7 +29,7 @@ public:
     static void SetDeviceId(uint32_t num) { m_StorageData.DeviceId = num; }
     static void SetLoudnessThreshold(uint32_t num) { m_StorageData.LoudnessThreshold = num; }
     static void SetRegisterInterval(uint32_t num) { m_StorageData.RegisterInterval = num; }
-    static void SetEnabledSensors(Backend::SensorTypes sensor, bool state) { m_StorageData.Sensors[sensor - 1] = state; }
+    static void SetEnabledSensors(Configuration::Sensors::Sensor sensor, bool state) { m_StorageData.Sensors[(int)sensor - 1] = state; }
     static void SetConfigMode(bool config) { m_StorageData.ConfigMode = config; }
 
 private:
@@ -43,7 +44,7 @@ private:
         uint32_t DeviceId;
         uint32_t LoudnessThreshold;
         uint32_t RegisterInterval;
-        bool Sensors[Backend::SensorTypes::SensorCount - 1];
+        bool Sensors[Configuration::Sensors::Sensor::SensorCount - 1];
         bool ConfigMode;
     };
 
