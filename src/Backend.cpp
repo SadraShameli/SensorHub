@@ -125,7 +125,7 @@ void Backend::GetConfiguration()
 
         JsonArray sensors = doc["sensors"].as<JsonArray>();
         for (JsonVariant sensor : sensors)
-            Storage::SetEnabledSensors(sensor.as<Configuration::Sensors::Sensor>(), true);
+            Storage::SetSensorState(sensor.as<Configuration::Sensors::Sensor>(), true);
 
         Storage::SetConfigMode(false);
         Storage::Commit();
@@ -148,29 +148,29 @@ bool Backend::RegisterReadings()
 
         if (Climate::IsOK())
         {
-            if (Storage::GetEnabledSensors(Configuration::Sensors::Temperature))
+            if (Storage::GetSensorState(Configuration::Sensors::Temperature))
                 sensors[std::to_string(Configuration::Sensors::Temperature)] = (int)Climate::GetTemperature().GetCurrent();
 
-            if (Storage::GetEnabledSensors(Configuration::Sensors::Humidity))
+            if (Storage::GetSensorState(Configuration::Sensors::Humidity))
                 sensors[std::to_string(Configuration::Sensors::Humidity)] = (int)Climate::GetHumidity().GetCurrent();
 
-            if (Storage::GetEnabledSensors(Configuration::Sensors::AirPressure))
+            if (Storage::GetSensorState(Configuration::Sensors::AirPressure))
                 sensors[std::to_string(Configuration::Sensors::AirPressure)] = (int)Climate::GetAirPressure().GetCurrent();
 
-            if (Storage::GetEnabledSensors(Configuration::Sensors::GasResistance))
+            if (Storage::GetSensorState(Configuration::Sensors::GasResistance))
                 sensors[std::to_string(Configuration::Sensors::GasResistance)] = (int)Climate::GetGasResistance().GetCurrent();
 
-            if (Storage::GetEnabledSensors(Configuration::Sensors::Altitude))
+            if (Storage::GetSensorState(Configuration::Sensors::Altitude))
                 sensors[std::to_string(Configuration::Sensors::Altitude)] = (int)Climate::GetAltitude().GetCurrent();
         }
 
         if (Sound::IsOK())
         {
-            if (Storage::GetEnabledSensors(Configuration::Sensors::Loudness))
+            if (Storage::GetSensorState(Configuration::Sensors::Loudness))
                 sensors[std::to_string(Configuration::Sensors::Loudness)] = (int)Sound::GetLoudness().GetCurrent();
         }
 
-        // if (Storage::GetEnabledSensors(Configuration::Sensors::RPM))
+        // if (Storage::GetSensorState(Configuration::Sensors::RPM))
         //     sensors[std::to_string(Configuration::Sensors::RPM)] = (int)RPM::GetRPM();
 
         std::string payload;

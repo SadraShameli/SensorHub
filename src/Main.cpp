@@ -19,7 +19,7 @@ extern "C" void app_main()
   WiFi::Init();
   Pin::Init();
 
-  if (!Storage::GetConfigMode() && Storage::GetEnabledSensors(Configuration::Sensors::Recording))
+  if (!Storage::GetConfigMode() && Storage::GetSensorState(Configuration::Sensors::Recording))
   {
     WiFi::StartStation();
     Sound::Init();

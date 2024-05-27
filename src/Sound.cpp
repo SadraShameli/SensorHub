@@ -23,7 +23,7 @@ static bool isOK = false;
 
 static bool init()
 {
-    if (Storage::GetEnabledSensors(Configuration::Sensors::Recording))
+    if (Storage::GetSensorState(Configuration::Sensors::Recording))
     {
         audio = new AudioFile(48000, 16, 1000, 10);
         if (audio == nullptr)
@@ -123,7 +123,7 @@ static void vTask(void *pvParameters)
     {
         isOK = true;
 
-        if (Storage::GetEnabledSensors(Configuration::Sensors::Recording))
+        if (Storage::GetSensorState(Configuration::Sensors::Recording))
         {
             for (;;)
             {

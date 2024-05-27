@@ -58,7 +58,7 @@ namespace Configuration
             ConfigSet,
         };
 
-        static bool Get(Notification notification) { return (Notification & notification); }
+        static bool Get(Notification notification) { return Notification & notification; }
         static void Set(uint32_t notification) { Notification |= notification; }
         inline static uint32_t Notification = 0;
     };

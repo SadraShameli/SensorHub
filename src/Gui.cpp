@@ -87,7 +87,7 @@ void Gui::Update()
 
     case Configuration::Menus::Reset:
     {
-        Display::PrintText("Configuration", "Press bottom button  to confirm. Press topbutton    after   5  seconds to cancel.");
+        Display::PrintText("Configuration", "Press bottom button  to reset device");
         return;
     }
 

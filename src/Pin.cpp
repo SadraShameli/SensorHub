@@ -45,30 +45,40 @@ void Pin::Update()
     if (Input::GetPinState(Input::Inputs::Up))
     {
         Output::Blink(Output::LedY);
-        Display::NextMenu();
         Display::ResetScreenSaver();
 
-        static bool resetCanceled = false;
-        while (!resetCanceled && !Storage::GetConfigMode() && clock() < 10000)
+        if (!Storage::GetConfigMode())
         {
-            Display::SetMenu(Configuration::Menus::Reset);
-            Input::Update();
-            Output::Update();
-
-            if (Input::GetPinState(Input::Up))
+            static bool resetCanceled = false;
+            while (!resetCanceled && clock() < 10000)
             {
+                Display::SetMenu(Configuration::Menus::Reset);
+                Input::Update();
+                Output::Update();
+
+                if (Input::GetPinState(Input::Up))
+                {
+                    resetCanceled = true;
+                    return;
+                }
+
+                if (Input::GetPinState(Input::Inputs::Down))
+                {
+                    Storage::Reset();
+                    esp_restart();
+                }
+
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
+
+            if (!resetCanceled)
+            {
+                Display::SetMenu(Configuration::Menus::Main);
                 resetCanceled = true;
-                return;
             }
-
-            if (Input::GetPinState(Input::Inputs::Down))
-            {
-                Storage::Reset();
-                esp_restart();
-            }
-
-            vTaskDelay(pdMS_TO_TICKS(10));
         }
+
+        Display::NextMenu();
     }
 
     else if (Input::GetPinState(Input::Inputs::Down))

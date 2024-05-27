@@ -66,6 +66,9 @@ void Display::Refresh()
 
 void Display::ResetScreenSaver()
 {
+    if (Storage::GetSensorState(Configuration::Sensors::Recording))
+        return;
+ 
     m_PrevTime = clock();
     ssd1306_display_on(dev);
     Gui::Resume();
@@ -78,6 +81,9 @@ void Display::Print(uint8_t x, uint8_t y, const char *text, uint8_t size)
 
 void Display::NextMenu()
 {
+    if (Storage::GetSensorState(Configuration::Sensors::Recording))
+        return;
+
     using Menus = Configuration::Menus;
 
     if (Storage::GetConfigMode())
@@ -120,13 +126,14 @@ void Display::NextMenu()
         switch (m_CurrentMenu)
         {
         case Menus::Failsafe:
+        case Menus::Reset:
             m_CurrentMenu = Menus::Main;
             return;
 
         default:
             for (int i = m_CurrentMenu + 1; i < Menus::Failsafe; i++)
             {
-                if (Storage::GetEnabledSensors((Configuration::Sensors::Sensor)i))
+                if (Storage::GetSensorState((Configuration::Sensors::Sensor)i))
                 {
                     if (i >= Configuration::Sensors::Temperature && i <= Configuration::Sensors::Altitude && Climate::IsOK())
                     {
