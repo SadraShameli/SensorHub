@@ -25,8 +25,8 @@ private:
 
     static const int TemperatureOffset = -9;
     static const int HumidityOffset = 5;
-    static const int AirPressureOffset = 1;
+    static const int AirPressureOffset = 9;
     static const int GasResistanceOffset = 0;
-    static const int AltitudeOffset = 15;
+    static const int AltitudeOffset = -70;
     static const int SeaLevelPressure = 1011;
 };
