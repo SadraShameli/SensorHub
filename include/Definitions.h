@@ -1,4 +1,5 @@
 #pragma once
+#include <limits>
 #include <filesystem>
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -49,11 +50,12 @@ namespace Helpers
 class Reading
 {
 public:
+    Reading() : m_Current(0), m_Min(std::numeric_limits<float>::max()), m_Max(std::numeric_limits<float>::min()) {}
     Reading(float current, float min, float max) : m_Current(current), m_Min(min), m_Max(max) {}
-    float GetCurrent() const { return m_Current; }
-    float GetMin() const { return m_Min; }
-    float GetMax() const { return m_Max; }
-    void Reset() { m_Max = m_Min = m_Current; }
+    float Current() const { return m_Current; }
+    float Min() const { return m_Min; }
+    float Max() const { return m_Max; }
+    void Reset() { m_Min = m_Max = m_Current; }
     void Update(float current)
     {
         m_Current = current;

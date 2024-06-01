@@ -68,7 +68,7 @@ void Display::ResetScreenSaver()
 {
     if (Storage::GetSensorState(Configuration::Sensors::Recording))
         return;
- 
+
     m_PrevTime = clock();
     ssd1306_display_on(dev);
     Gui::Resume();
@@ -159,7 +159,7 @@ void Display::PrintText(const char *header, const char *message)
     Clear();
 
     Print(0, 0, header);
-    Print(0, 10, message);
+    Print(0, 16, message);
 
     Refresh();
 }
@@ -188,16 +188,16 @@ void Display::PrintMain()
 
     if (Climate::IsOK())
     {
-        sprintf(buff, "Temperature: %dc", (int)temperature.GetCurrent());
+        sprintf(buff, "Temperature: %dc", (int)temperature.Current());
         Print(0, 13, buff);
 
-        sprintf(buff, "Humidity: %d%%", (int)humidity.GetCurrent());
+        sprintf(buff, "Humidity: %d%%", (int)humidity.Current());
         Print(0, 26, buff);
     }
 
     if (Sound::IsOK())
     {
-        sprintf(buff, "Loudness: %ddB", (int)loudness.GetCurrent());
+        sprintf(buff, "Loudness: %ddB", (int)loudness.Current());
         Print(0, 39, buff);
     }
 
@@ -218,13 +218,13 @@ void Display::PrintTemperature()
 
     Print(0, 0, "Temperature");
 
-    sprintf(buff, "%dc", (int)reading.GetCurrent());
+    sprintf(buff, "%dc", (int)reading.Current());
     Print(0, 16, buff);
 
-    sprintf(buff, "Max: %dc", (int)reading.GetMax());
+    sprintf(buff, "Max: %dc", (int)reading.Max());
     Print(0, 32, buff);
 
-    sprintf(buff, "Min: %dc", (int)reading.GetMin());
+    sprintf(buff, "Min: %dc", (int)reading.Min());
     Print(0, 48, buff);
 
     Refresh();
@@ -239,13 +239,13 @@ void Display::PrintHumidity()
 
     Print(0, 0, "Humidity");
 
-    sprintf(buff, "%d%%", (int)reading.GetCurrent());
+    sprintf(buff, "%d%%", (int)reading.Current());
     Print(0, 16, buff);
 
-    sprintf(buff, "Max: %d%%", (int)reading.GetMax());
+    sprintf(buff, "Max: %d%%", (int)reading.Max());
     Print(0, 32, buff);
 
-    sprintf(buff, "Min: %d%%", (int)reading.GetMin());
+    sprintf(buff, "Min: %d%%", (int)reading.Min());
     Print(0, 48, buff);
 
     Refresh();
@@ -260,13 +260,13 @@ void Display::PrintAirPressure()
 
     Print(0, 0, "Air Pressure");
 
-    sprintf(buff, "%d hPa", (int)reading.GetCurrent());
+    sprintf(buff, "%d hPa", (int)reading.Current());
     Print(0, 16, buff);
 
-    sprintf(buff, "Max: %d hPa", (int)reading.GetMax());
+    sprintf(buff, "Max: %d hPa", (int)reading.Max());
     Print(0, 32, buff);
 
-    sprintf(buff, "Min: %d hPa", (int)reading.GetMin());
+    sprintf(buff, "Min: %d hPa", (int)reading.Min());
     Print(0, 48, buff);
 
     Refresh();
@@ -281,13 +281,13 @@ void Display::PrintGasResistance()
 
     Print(0, 0, "Gas Resistance");
 
-    sprintf(buff, "%d kOhms", (int)reading.GetCurrent());
+    sprintf(buff, "%d Ohms", (int)reading.Current());
     Print(0, 16, buff);
 
-    sprintf(buff, "Max: %d kOhms", (int)reading.GetMax());
+    sprintf(buff, "Max: %d Ohms", (int)reading.Max());
     Print(0, 32, buff);
 
-    sprintf(buff, "Min: %d kOhms", (int)reading.GetMin());
+    sprintf(buff, "Min: %d Ohms", (int)reading.Min());
     Print(0, 48, buff);
 
     Refresh();
@@ -302,13 +302,13 @@ void Display::PrintAltitude()
 
     Print(0, 0, "Altitude");
 
-    sprintf(buff, "%dm", (int)reading.GetCurrent());
+    sprintf(buff, "%dm", (int)reading.Current());
     Print(0, 16, buff);
 
-    sprintf(buff, "Max: %dm", (int)reading.GetMax());
+    sprintf(buff, "Max: %dm", (int)reading.Max());
     Print(0, 32, buff);
 
-    sprintf(buff, "Min: %dm", (int)reading.GetMin());
+    sprintf(buff, "Min: %dm", (int)reading.Min());
     Print(0, 48, buff);
 
     Refresh();
@@ -323,13 +323,13 @@ void Display::PrintLoudness()
 
     Print(0, 0, "Loudness");
 
-    sprintf(buff, "%ddB", (int)reading.GetCurrent());
+    sprintf(buff, "%ddB", (int)reading.Current());
     Print(0, 16, buff);
 
-    sprintf(buff, "Max: %ddB", (int)reading.GetMax());
+    sprintf(buff, "Max: %ddB", (int)reading.Max());
     Print(0, 32, buff);
 
-    sprintf(buff, "Min: %ddB", (int)reading.GetMin());
+    sprintf(buff, "Min: %ddB", (int)reading.Min());
     Print(0, 48, buff);
 
     Refresh();
@@ -344,13 +344,13 @@ void Display::PrintLoudness()
 
 //     Print(0, 0, "RPM");
 
-//     sprintf(buff, "%d", (int)reading.GetCurrent());
+//     sprintf(buff, "%d", (int)reading.Current());
 //     Print(0, 16, buff);
 
-//     sprintf(buff, "Max: %d", (int)reading.GetMax());
+//     sprintf(buff, "Max: %d", (int)reading.Max());
 //     Print(0, 32, buff);
 
-//     sprintf(buff, "Min: %d", (int)reading.GetMin());
+//     sprintf(buff, "Min: %d", (int)reading.Min());
 //     Print(0, 48, buff);
 
 //     Refresh();

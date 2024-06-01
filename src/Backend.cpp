@@ -149,25 +149,28 @@ bool Backend::RegisterReadings()
         if (Climate::IsOK())
         {
             if (Storage::GetSensorState(Configuration::Sensors::Temperature))
-                sensors[std::to_string(Configuration::Sensors::Temperature)] = (int)Climate::GetTemperature().GetCurrent();
+                sensors[std::to_string(Configuration::Sensors::Temperature)] = (int)Climate::GetTemperature().Current();
 
             if (Storage::GetSensorState(Configuration::Sensors::Humidity))
-                sensors[std::to_string(Configuration::Sensors::Humidity)] = (int)Climate::GetHumidity().GetCurrent();
+                sensors[std::to_string(Configuration::Sensors::Humidity)] = (int)Climate::GetHumidity().Current();
 
             if (Storage::GetSensorState(Configuration::Sensors::AirPressure))
-                sensors[std::to_string(Configuration::Sensors::AirPressure)] = (int)Climate::GetAirPressure().GetCurrent();
+                sensors[std::to_string(Configuration::Sensors::AirPressure)] = (int)Climate::GetAirPressure().Current();
 
             if (Storage::GetSensorState(Configuration::Sensors::GasResistance))
-                sensors[std::to_string(Configuration::Sensors::GasResistance)] = (int)Climate::GetGasResistance().GetCurrent();
+                sensors[std::to_string(Configuration::Sensors::GasResistance)] = (int)Climate::GetGasResistance().Current();
 
             if (Storage::GetSensorState(Configuration::Sensors::Altitude))
-                sensors[std::to_string(Configuration::Sensors::Altitude)] = (int)Climate::GetAltitude().GetCurrent();
+                sensors[std::to_string(Configuration::Sensors::Altitude)] = (int)Climate::GetAltitude().Current();
         }
 
         if (Sound::IsOK())
         {
             if (Storage::GetSensorState(Configuration::Sensors::Loudness))
-                sensors[std::to_string(Configuration::Sensors::Loudness)] = (int)Sound::GetLoudness().GetCurrent();
+            {
+                sensors[std::to_string(Configuration::Sensors::Loudness)] = (int)Sound::GetLoudness().Max();
+                Sound::ResetLevels();
+            }
         }
 
         // if (Storage::GetSensorState(Configuration::Sensors::RPM))

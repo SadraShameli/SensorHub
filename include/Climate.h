@@ -17,16 +17,14 @@ public:
     static const Reading &GetAltitude() { return m_Altitude; }
 
 private:
-    inline static Reading m_Temperature = {0, 150, 0};
-    inline static Reading m_Humidity = {0, 100, 0};
-    inline static Reading m_AirPressure = {0, 1300, 0};
-    inline static Reading m_GasResistance = {0, 10000000, 0};
-    inline static Reading m_Altitude = {0, 100000, 0};
-
-    static const int TemperatureOffset = -9;
-    static const int HumidityOffset = 10;
-    static const int AirPressureOffset = 0;
-    static const int GasResistanceOffset = 0;
-    static const int AltitudeOffset = 0;
-    static const int SeaLevelPressure = 1011;
+    inline static Reading m_Temperature, m_Humidity, m_AirPressure, m_GasResistance, m_Altitude;
+    struct Constants
+    {
+        static constexpr float TemperatureOffset = -2,
+                               HumidityOffset = 13,
+                               AirPressureOffset = -12,
+                               GasResistanceOffset = 0,
+                               AltitudeOffset = 0,
+                               SeaLevelPressure = 1021, SeaLevelTemperature = 14;
+    };
 };

@@ -112,7 +112,9 @@ static bool init()
     for (int i = 0; i < 4; i++)
         i2s_channel_read(i2sHandle, audio->Buffer, audio->BufferLength, nullptr, portMAX_DELAY);
 
-    return true;
+    isOK = true;
+
+    return isOK;
 }
 
 static void vTask(void *pvParameters)
@@ -121,8 +123,6 @@ static void vTask(void *pvParameters)
 
     if (init())
     {
-        isOK = true;
-
         if (Storage::GetSensorState(Configuration::Sensors::Recording))
         {
             for (;;)
@@ -159,7 +159,7 @@ void Sound::UpdateRecording()
 
     if (ReadSound())
     {
-        ESP_LOGI(TAG, "Continuing recording - dB: %d - threshold: %ld", (int)m_Loudness.GetCurrent(), Storage::GetLoudnessThreshold());
+        ESP_LOGI(TAG, "Continuing recording - dB: %d - threshold: %ld", (int)m_Loudness.Current(), Storage::GetLoudnessThreshold());
         ESP_LOGI(TAG, "Post request to URL: %s - size: %ld", address.c_str(), audio->TotalLength);
         UNIT_TIMER("Post request");
         Helpers::PrintFreeHeap();
@@ -192,9 +192,9 @@ bool Sound::ReadSound()
 
     if (decibel > MicInfo::FloorDB && decibel < MicInfo::PeakDB)
     {
-        m_Loudness.Update(decibel + soundOffset);
+        m_Loudness.Update(decibel + Sound::Constants::LoudnessOffset);
 
-        if (m_Loudness.GetCurrent() > Storage::GetLoudnessThreshold())
+        if (m_Loudness.Current() > Storage::GetLoudnessThreshold())
         {
             return true;
         }

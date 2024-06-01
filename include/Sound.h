@@ -16,6 +16,9 @@ public:
     static const Reading &GetLoudness() { return m_Loudness; }
 
 private:
-    inline static Reading m_Loudness = {0, 94, 29};
-    static const int soundOffset = -5;
+    inline static Reading m_Loudness;
+    struct Constants
+    {
+        static constexpr float LoudnessOffset = 0;
+    };
 };
