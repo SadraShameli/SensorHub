@@ -4,8 +4,8 @@
 class Backend
 {
 public:
-    static bool CheckResponseFailed(std::string &, int);
-    static bool SetupConfiguration(std::string &);
+    static bool CheckResponseFailed(const std::string &, int);
+    static bool SetupConfiguration(const std::string &);
     static void GetConfiguration();
     static bool RegisterReadings();
 

@@ -26,7 +26,7 @@ public:
     static void PrintGasResistance();
     static void PrintAltitude();
     static void PrintLoudness();
-    static void PrintRPM();
+    // static void PrintRPM();
     static void PrintWiFiClients();
 
 private:

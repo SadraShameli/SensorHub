@@ -12,9 +12,9 @@
 
 static const char *TAG = "Backend";
 
-bool Backend::CheckResponseFailed(std::string &payload, int statusCode)
+bool Backend::CheckResponseFailed(const std::string &payload, int statusCode)
 {
-    if (Request::StatusOK(statusCode))
+    if (HTTP::StatusOK(statusCode))
     {
         ESP_LOGI(TAG, "Backend response ok - status code: %d", statusCode);
         return false;
@@ -47,7 +47,7 @@ bool Backend::CheckResponseFailed(std::string &payload, int statusCode)
     return true;
 }
 
-bool Backend::SetupConfiguration(std::string &payload)
+bool Backend::SetupConfiguration(const std::string &payload)
 {
     ESP_LOGI(TAG, "Setting up configuration - payload: %s", payload.c_str());
 

@@ -50,5 +50,5 @@ class MicInfo
 {
 public:
     static constexpr float Sensitivity = 26.0f, RefDB = 94.0f, OffsetDB = -3.0f, PeakDB = 116.0f, FloorDB = 29.0f;
-    static constexpr double Amplitude = pow(10, -MicInfo::Sensitivity / 20.0f) * ((1 << (16 - 1)) - 1);
+    static constexpr double Amplitude = std::pow(10, -MicInfo::Sensitivity / 20.0f) * ((1 << (16 - 1)) - 1);
 };

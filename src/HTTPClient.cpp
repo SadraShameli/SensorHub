@@ -71,6 +71,26 @@ void HTTP::Init()
     httpClient = esp_http_client_init(&http_config);
 }
 
+bool HTTP::StatusOK(int statusCode)
+{
+    if (statusCode > 99 && statusCode < 400)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool HTTP::IsRedirect(int statusCode)
+{
+    if (statusCode == 300 || statusCode == 301 || statusCode == 302 || statusCode == 303 || statusCode == 307 || statusCode == 308)
+    {
+        return true;
+    }
+
+    return false;
+}
+
 bool Request::GET()
 {
     if (!WiFi::IsConnected())
@@ -193,24 +213,4 @@ bool Request::Stream()
     }
 
     return status;
-}
-
-bool Request::StatusOK(int statusCode)
-{
-    if (statusCode > 99 && statusCode < 400)
-    {
-        return true;
-    }
-
-    return false;
-}
-
-bool Request::IsRedirect(int statusCode)
-{
-    if (statusCode == 300 || statusCode == 301 || statusCode == 302 || statusCode == 303 || statusCode == 307 || statusCode == 308)
-    {
-        return true;
-    }
-
-    return false;
 }
