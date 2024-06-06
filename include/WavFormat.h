@@ -38,7 +38,7 @@ public:
         BufferCount = sampleRate * bufferTime / 1000;
         BufferLength = BufferCount * 16 / 8;
         TotalLength = Header.DataLength + sizeof(WaveHeader);
-        Buffer = new uint8_t[BufferLength];
+        Buffer = new uint8_t[BufferLength]();
     }
 
     uint8_t *Buffer;

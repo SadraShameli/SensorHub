@@ -217,7 +217,7 @@ void Storage::CalculateMask()
     }
 }
 
-void Storage::EncryptText(uint32_t *var, const std::string &str)
+void Storage::EncryptText(uint32_t *var, std::string &str)
 {
     for (const char &c : str)
     {

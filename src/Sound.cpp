@@ -83,8 +83,8 @@ static bool init()
     const i2s_chan_config_t chan_cfg = {
         .id = I2S_NUM_0,
         .role = I2S_ROLE_MASTER,
-        .dma_desc_num = 12,
-        .dma_frame_num = 2046,
+        .dma_desc_num = uint32_t(Storage::GetSensorState(Configuration::Sensors::Recording) ? 12 : 32),
+        .dma_frame_num = audio->Header.SampleRate / 8 / 16,
         .auto_clear = true,
     };
 
@@ -111,6 +111,13 @@ static bool init()
 
     for (int i = 0; i < 4; i++)
         i2s_channel_read(i2sHandle, audio->Buffer, audio->BufferLength, nullptr, portMAX_DELAY);
+
+    double loudness = Sound::ReadLoudness();
+    if (loudness == 0)
+    {
+        Failsafe::AddFailure(TAG, "No mic detected.");
+        return false;
+    }
 
     isOK = true;
 
@@ -150,14 +157,14 @@ void Sound::Init()
 
 void Sound::Update()
 {
-    ReadSound();
+    UpdateLoudness();
 }
 
 void Sound::UpdateRecording()
 {
     WiFi::WaitForConnection();
 
-    if (ReadSound())
+    if (UpdateLoudness())
     {
         ESP_LOGI(TAG, "Continuing recording - dB: %d - threshold: %ld", (int)m_Loudness.Current(), Storage::GetLoudnessThreshold());
         ESP_LOGI(TAG, "Post request to URL: %s - size: %ld", address.c_str(), audio->TotalLength);
@@ -182,7 +189,7 @@ bool Sound::IsOK()
     return isOK;
 }
 
-bool Sound::ReadSound()
+double Sound::ReadLoudness()
 {
     i2s_channel_read(i2sHandle, audio->Buffer, audio->BufferLength, nullptr, portMAX_DELAY);
     double rms = SoundFilter::CalculateRMS((int16_t *)audio->Buffer, audio->BufferCount);
@@ -191,6 +198,18 @@ bool Sound::ReadSound()
     // ESP_LOGI(TAG, "Loudness: %fdB", decibel);
 
     if (decibel > MicInfo::FloorDB && decibel < MicInfo::PeakDB)
+    {
+        return decibel;
+    }
+
+    return 0;
+}
+
+bool Sound::UpdateLoudness()
+{
+    double decibel = ReadLoudness();
+
+    if (decibel != 0)
     {
         m_Loudness.Update(decibel + Sound::Constants::LoudnessOffset);
 
@@ -203,8 +222,7 @@ bool Sound::ReadSound()
     }
 
     isOK = false;
-    Failsafe::AddFailure(TAG, "Loudness not valid - dB: " + std::to_string(decibel));
-    vTaskDelay(pdMS_TO_TICKS(5000));
+    Failsafe::AddFailureDelayed(TAG, "Loudness not valid - dB: " + std::to_string(decibel));
 
     return false;
 }

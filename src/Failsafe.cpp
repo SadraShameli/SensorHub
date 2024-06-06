@@ -40,7 +40,7 @@ void Failsafe::Update()
     Display::SetMenu(Configuration::Menus::Failsafe);
 }
 
-void Failsafe::AddFailure(const char *caller, const std::string &failure)
+void Failsafe::AddFailure(const char *caller, std::string &&message)
 {
     if (m_Failures.size() > 24)
     {
@@ -48,10 +48,16 @@ void Failsafe::AddFailure(const char *caller, const std::string &failure)
         ESP_LOGI(TAG, "Popped failure");
     }
 
-    m_Failures.push(Failsafe::Failure(caller, failure));
+    m_Failures.push(Failsafe::Failure(caller, std::move(message)));
     ESP_LOGI(TAG, "Pushed failure - current size: %d", m_Failures.size());
 
     xTaskNotify(xHandle, Configuration::Notifications::NewFailsafe, eSetBits);
+}
+
+void Failsafe::AddFailureDelayed(const char *caller, std::string &&message)
+{
+    AddFailure(caller, std::move(message));
+    vTaskDelay(pdMS_TO_TICKS(10000));
 }
 
 void Failsafe::PopFailure()

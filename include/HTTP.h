@@ -14,8 +14,8 @@ public:
 class Request
 {
 public:
-  Request(const std::string &url) : m_URL(url) {}
-  Request(const std::string &url, const std::string &payload) : m_URL(url), m_Payload(payload) {}
+  Request(std::string &&url) : m_URL(std::move(url)) {}
+  Request(std::string &&url, const std::string &payload) : m_URL(std::move(url)), m_Payload(payload) {}
 
   bool GET();
   bool POST();

@@ -8,7 +8,7 @@ public:
     class Failure
     {
     public:
-        Failure(const char *caller, const std::string &message) : Caller(caller), Message(message) {}
+        Failure(const char *caller, std::string &&message) : Caller(caller), Message(std::move(message)) {}
 
         const char *Caller;
         std::string Message;
@@ -16,7 +16,8 @@ public:
 
     static void Init();
     static void Update();
-    static void AddFailure(const char *, const std::string &);
+    static void AddFailure(const char *, std::string &&);
+    static void AddFailureDelayed(const char *, std::string &&);
     static void PopFailure();
     static const std::stack<Failsafe::Failure> &GetFailures() { return m_Failures; }
 

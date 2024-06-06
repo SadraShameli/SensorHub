@@ -95,7 +95,7 @@ bool Backend::SetupConfiguration(const std::string &payload)
         address += "/";
     }
 
-    Storage::SetAddress(address);
+    Storage::SetAddress(std::move(address));
     Network::NotifyConfigSet();
 
     return true;

@@ -92,8 +92,7 @@ void Climate::Update()
         else
         {
             isOK = false;
-            Failsafe::AddFailure(TAG, "Getting result failed");
-            vTaskDelay(pdMS_TO_TICKS(5000));
+            Failsafe::AddFailureDelayed(TAG, "Getting result failed");
         }
     }
 

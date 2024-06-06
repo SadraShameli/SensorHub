@@ -9,7 +9,8 @@ public:
     static void UpdateRecording();
     static bool IsOK();
 
-    static bool ReadSound();
+    static double ReadLoudness();
+    static bool UpdateLoudness();
     static void RegisterRecordings();
 
     static void ResetLevels() { m_Loudness.Reset(); };
