@@ -16,10 +16,10 @@ static const char *TAG = "WiFi";
 static esp_netif_t *sta_netif, *ap_netif;
 static wifi_mode_t wifi_mode;
 static EventBits_t event_bits;
-static EventGroupHandle_t s_wifi_event_group;
+static EventGroupHandle_t wifi_event_group;
 
-static int s_RetriesAttempts;
-static std::string s_IPAddress;
+static int retryAttempts;
+static std::string ipAddress;
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -46,24 +46,26 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
 
         else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
         {
-            xEventGroupClearBits(s_wifi_event_group, WiFi::State::Connected);
-            s_IPAddress = "0.0.0.0";
+            xEventGroupClearBits(wifi_event_group, WiFi::State::Connected);
+            ipAddress = "0.0.0.0";
 
             wifi_event_sta_disconnected_t *status = (wifi_event_sta_disconnected_t *)event_data;
             ESP_LOGW(TAG, "Disconnected from wifi - reason: %d", status->reason);
 
+            static bool passwordFailsafe = false;
             if (status->reason == WIFI_REASON_ASSOC_LEAVE)
                 return;
 
-            else if (status->reason == WIFI_REASON_AUTH_FAIL || status->reason == WIFI_REASON_ASSOC_EXPIRE || status->reason == WIFI_REASON_HANDSHAKE_TIMEOUT || status->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT)
+            else if (status->reason == WIFI_REASON_AUTH_FAIL && !passwordFailsafe)
             {
+                passwordFailsafe = true;
                 Failsafe::AddFailure(TAG, "Password: " + Storage::GetPassword() + " for SSID: " + Storage::GetSSID() + " is not correct.");
             }
 
-            if (s_RetriesAttempts < Configuration::WiFi::ConnectionRetries)
+            if (retryAttempts < Configuration::WiFi::ConnectionRetries)
             {
                 esp_wifi_connect();
-                s_RetriesAttempts++;
+                retryAttempts++;
                 ESP_LOGI(TAG, "retrying to connect to AP");
             }
 
@@ -76,7 +78,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
                 }
 
                 Failsafe::AddFailure(TAG, "Can't connect to the WiFi");
-                xEventGroupSetBits(s_wifi_event_group, WiFi::State::Failed);
+                xEventGroupSetBits(wifi_event_group, WiFi::State::Failed);
             }
         }
     }
@@ -85,15 +87,16 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
     {
         ip_event_got_ip_t event = *(ip_event_got_ip_t *)event_data;
 
-        char buffer[4 * 4 + 1] = {};
+        char buffer[4 * 4 + 1] = {0};
         snprintf(buffer, sizeof(buffer), IPSTR, IP2STR(&event.ip_info.ip));
 
         ESP_LOGI(TAG, "Connected to WiFi - SSID: %s - Password: %s - IP: %s", Storage::GetSSID().c_str(), Storage::GetPassword().c_str(), buffer);
 
-        s_IPAddress = buffer;
-        s_RetriesAttempts = 0;
-        xEventGroupSetBits(s_wifi_event_group, WiFi::State::Connected);
-        xEventGroupClearBits(s_wifi_event_group, WiFi::State::Failed);
+        ipAddress = buffer;
+        retryAttempts = 0;
+
+        xEventGroupSetBits(wifi_event_group, WiFi::State::Connected);
+        xEventGroupClearBits(wifi_event_group, WiFi::State::Failed);
         Output::SetContinuity(Output::LedY, false);
     }
 }
@@ -105,8 +108,8 @@ void WiFi::Init()
     esp_netif_init();
     esp_event_loop_create_default();
 
-    s_wifi_event_group = xEventGroupCreate();
-    configASSERT(s_wifi_event_group);
+    wifi_event_group = xEventGroupCreate();
+    configASSERT(wifi_event_group);
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     esp_wifi_init(&cfg);
@@ -238,13 +241,13 @@ void WiFi::StartStation()
 
 bool WiFi::IsConnected()
 {
-    event_bits = xEventGroupWaitBits(s_wifi_event_group, WiFi::State::Connected, pdFALSE, pdFALSE, 0);
+    event_bits = xEventGroupWaitBits(wifi_event_group, WiFi::State::Connected, pdFALSE, pdFALSE, 0);
     return event_bits & WiFi::State::Connected;
 }
 
 void WiFi::WaitForConnection()
 {
-    xEventGroupWaitBits(s_wifi_event_group, WiFi::State::Connected, pdFALSE, pdFALSE, portMAX_DELAY);
+    xEventGroupWaitBits(wifi_event_group, WiFi::State::Connected, pdFALSE, pdFALSE, portMAX_DELAY);
 }
 
 void WiFi::SetMacAddress()
@@ -257,7 +260,7 @@ void WiFi::SetMacAddress()
         {
             uint64_t NumberRepresentation;
             uint8_t ArrayRepresentation[6];
-        } mac = {};
+        } mac = {0};
 
         if (esp_efuse_mac_get_default(mac.ArrayRepresentation) != ESP_OK)
         {
@@ -265,7 +268,7 @@ void WiFi::SetMacAddress()
             return;
         }
 
-        char buffer[MAC_LEN] = {};
+        char buffer[MAC_LEN] = {0};
         snprintf(buffer, sizeof(buffer), MACSTR, MAC2STR(mac.ArrayRepresentation));
         m_MacAddress = buffer;
 
@@ -275,22 +278,22 @@ void WiFi::SetMacAddress()
 
 const std::string &WiFi::GetIPAP()
 {
-    esp_netif_ip_info_t ip = {};
+    esp_netif_ip_info_t ip = {0};
     esp_netif_get_ip_info(ap_netif, &ip);
 
-    char buffer[4 * 4 + 1] = {};
+    char buffer[4 * 4 + 1] = {0};
     snprintf(buffer, sizeof(buffer), IPSTR, IP2STR(&ip.ip));
 
-    s_IPAddress = buffer;
-    return s_IPAddress;
+    ipAddress = buffer;
+    return ipAddress;
 }
 
-const std::string &WiFi::GetIPStation() { return s_IPAddress; }
+const std::string &WiFi::GetIPStation() { return ipAddress; }
 
 const std::vector<WiFi::ClientDetails> WiFi::GetClientDetails()
 {
-    wifi_sta_list_t wifi_sta_list = {};
-    wifi_sta_mac_ip_list_t wifi_sta_ip_mac_list = {};
+    wifi_sta_list_t wifi_sta_list = {0};
+    wifi_sta_mac_ip_list_t wifi_sta_ip_mac_list = {0};
 
     esp_wifi_ap_get_sta_list(&wifi_sta_list);
     esp_wifi_ap_get_sta_list_with_ip(&wifi_sta_list, &wifi_sta_ip_mac_list);

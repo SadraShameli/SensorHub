@@ -38,7 +38,6 @@ bool Backend::CheckResponseFailed(const std::string &payload, int statusCode)
     }
 
     const char *errorMsg = doc["error"];
-
     if (errorMsg)
     {
         Failsafe::AddFailure(TAG, "Backend response failed - status code: " + std::to_string(statusCode) + " - error: " + errorMsg);
@@ -60,29 +59,31 @@ bool Backend::SetupConfiguration(const std::string &payload)
         return false;
     }
 
-    Storage::SetSSID(doc["ssid"].as<const char *>());
-    Storage::SetPassword(doc["pass"].as<const char *>());
-    Storage::SetDeviceId(doc["device_id"]);
-    std::string address = doc["address"].as<const char *>();
-
-    if (Storage::GetSSID().length() > 32 || Storage::GetSSID().empty())
+    std::string ssid = doc["ssid"];
+    if (ssid.length() > 32 || ssid.empty())
     {
-        Failsafe::AddFailure(TAG, "SSID too long or too short");
+        Failsafe::AddFailure(TAG, "Invalid WiFi SSID");
         return false;
     }
+    Storage::SetSSID(std::move(ssid));
 
-    if ((Storage::GetPassword().length() < 8 && Storage::GetPassword().length() > 64) || Storage::GetPassword().empty())
+    std::string password = doc["pass"];
+    if (password.length() < 8 || password.length() > 64)
     {
-        Failsafe::AddFailure(TAG, "Password too long or too short");
+        Failsafe::AddFailure(TAG, "Invalid WiFi Password");
         return false;
     }
+    Storage::SetPassword(std::move(password));
 
-    if (!Storage::GetDeviceId())
+    uint32_t device_id = doc["device_id"];
+    if (!device_id)
     {
         Failsafe::AddFailure(TAG, "Device Id can't be empty");
         return false;
     }
+    Storage::SetDeviceId(device_id);
 
+    std::string address = doc["address"];
     if (address.empty())
     {
         Failsafe::AddFailure(TAG, "Address can't be empty");
@@ -106,7 +107,6 @@ void Backend::GetConfiguration()
     ESP_LOGI(TAG, "Getting configuration");
 
     Request request = Request(Storage::GetAddress() + DeviceURL + std::to_string(Storage::GetDeviceId()));
-
     if (request.GET())
     {
         JsonDocument doc;
@@ -118,7 +118,7 @@ void Backend::GetConfiguration()
             return;
         }
 
-        Storage::SetDeviceName(doc["name"].as<const char *>());
+        Storage::SetDeviceName(doc["name"]);
         Storage::SetDeviceId(doc["device_id"]);
         Storage::SetRegisterInterval(doc["register_interval"]);
         Storage::SetLoudnessThreshold(doc["loudness_threshold"]);

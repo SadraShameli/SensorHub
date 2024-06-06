@@ -21,11 +21,11 @@ public:
     static bool GetSensorState(Configuration::Sensors::Sensor sensor) { return m_StorageData.Sensors[(int)sensor - 1]; }
     static bool GetConfigMode() { return m_StorageData.ConfigMode; };
 
-    static void SetSSID(std::string &&str) { m_SSID = str; }
-    static void SetPassword(std::string &&str) { m_Address = str; }
-    static void SetAddress(std::string &&str) { m_Address = str; }
-    static void SetAuthKey(std::string &&str) { m_AuthKey = str; }
-    static void SetDeviceName(std::string &&str) { m_DeviceName = str; }
+    static void SetSSID(std::string &&str) { m_SSID = std::move(str); }
+    static void SetPassword(std::string &&str) { m_Password = std::move(str); }
+    static void SetAddress(std::string &&str) { m_Address = std::move(str); }
+    static void SetAuthKey(std::string &&str) { m_AuthKey = std::move(str); }
+    static void SetDeviceName(std::string &&str) { m_DeviceName = std::move(str); }
     static void SetDeviceId(uint32_t num) { m_StorageData.DeviceId = num; }
     static void SetLoudnessThreshold(uint32_t num) { m_StorageData.LoudnessThreshold = num; }
     static void SetRegisterInterval(uint32_t num) { m_StorageData.RegisterInterval = num; }
@@ -49,10 +49,10 @@ private:
     };
 
     static void CalculateMask();
-    static void EncryptText(uint32_t *, std::string &);
+    static void EncryptText(uint32_t *, const std::string &);
     static void DecryptText(uint32_t *, std::string &);
 
     inline static uint32_t m_EncryptionMask = 0;
-    inline static StorageData m_StorageData = {};
+    inline static StorageData m_StorageData = {0};
     inline static std::string m_SSID, m_Password, m_DeviceName, m_Address, m_AuthKey;
 };

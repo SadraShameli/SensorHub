@@ -11,7 +11,6 @@ struct OutputPin
 
     OutputPin(Output::Outputs pin) : PinNum((gpio_num_t)pin) {}
 };
-
 static OutputPin outputPins[] = {Output::LedR, Output::LedY, Output::LedG};
 
 void Output::Init()

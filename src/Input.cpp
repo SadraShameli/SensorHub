@@ -8,7 +8,6 @@ struct InputPin
 
     InputPin(Input::Inputs _PinNumber) : PinNumber((gpio_num_t)_PinNumber) {}
 };
-
 static InputPin inputPins[] = {Input::Up, Input::Down};
 
 void Input::Init()

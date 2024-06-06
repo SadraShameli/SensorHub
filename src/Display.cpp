@@ -10,6 +10,7 @@
 
 static const char *TAG = "Display";
 static ssd1306_handle_t dev = nullptr;
+static bool displayOff = false;
 
 void Display::Init()
 {
@@ -49,6 +50,7 @@ void Display::Update()
     if ((m_CurrentTime - m_PrevTime) > ScreenSaverDuration)
     {
         m_PrevTime = m_CurrentTime;
+        displayOff = true;
         ssd1306_display_off(dev);
         Gui::Pause();
     }
@@ -66,10 +68,12 @@ void Display::Refresh()
 
 void Display::ResetScreenSaver()
 {
-    if (Storage::GetSensorState(Configuration::Sensors::Recording))
+    if (!displayOff || Storage::GetSensorState(Configuration::Sensors::Recording))
         return;
 
     m_PrevTime = clock();
+    displayOff = false;
+
     ssd1306_display_on(dev);
     Gui::Resume();
 }
@@ -181,7 +185,7 @@ void Display::PrintMain()
     const std::string &deviceName = Storage::GetDeviceName(), &ip = WiFi::GetIPStation();
     const Reading &temperature = Climate::GetTemperature(), &humidity = Climate::GetHumidity(), &loudness = Sound::GetLoudness();
 
-    char buff[32] = {};
+    char buff[32] = {0};
     Clear();
 
     Print(0, 0, deviceName.c_str());
@@ -213,7 +217,7 @@ void Display::PrintTemperature()
 {
     const Reading &reading = Climate::GetTemperature();
 
-    char buff[32] = {};
+    char buff[32] = {0};
     Clear();
 
     Print(0, 0, "Temperature");
@@ -234,7 +238,7 @@ void Display::PrintHumidity()
 {
     const Reading &reading = Climate::GetHumidity();
 
-    char buff[32] = {};
+    char buff[32] = {0};
     Clear();
 
     Print(0, 0, "Humidity");
@@ -255,7 +259,7 @@ void Display::PrintAirPressure()
 {
     const Reading &reading = Climate::GetAirPressure();
 
-    char buff[32] = {};
+    char buff[32] = {0};
     Clear();
 
     Print(0, 0, "Air Pressure");
@@ -276,7 +280,7 @@ void Display::PrintGasResistance()
 {
     const Reading &reading = Climate::GetGasResistance();
 
-    char buff[32] = {};
+    char buff[32] = {0};
     Clear();
 
     Print(0, 0, "Gas Resistance");
@@ -297,7 +301,7 @@ void Display::PrintAltitude()
 {
     const Reading &reading = Climate::GetAltitude();
 
-    char buff[32] = {};
+    char buff[32] = {0};
     Clear();
 
     Print(0, 0, "Altitude");
@@ -318,7 +322,7 @@ void Display::PrintLoudness()
 {
     const Reading &reading = Sound::GetLoudness();
 
-    char buff[32] = {};
+    char buff[32] = {0};
     Clear();
 
     Print(0, 0, "Loudness");
@@ -339,7 +343,7 @@ void Display::PrintLoudness()
 // {
 //     const Reading &reading = RPM::GetRPM();
 
-//     char buff[32] = {};
+//     char buff[32] = {0};
 //     Clear();
 
 //     Print(0, 0, "RPM");

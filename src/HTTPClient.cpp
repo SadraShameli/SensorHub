@@ -124,7 +124,8 @@ bool Request::GET()
         return false;
     }
 
-    m_Response = httpBuffer;
+    m_Response = std::move(httpBuffer);
+
     return true;
 }
 
@@ -163,7 +164,8 @@ bool Request::POST()
         return false;
     }
 
-    m_Response = httpBuffer;
+    m_Response = std::move(httpBuffer);
+
     return true;
 }
 

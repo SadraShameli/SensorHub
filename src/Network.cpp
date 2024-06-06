@@ -15,7 +15,7 @@
 static const char *TAG = "Network";
 static TaskHandle_t xHandle = nullptr;
 
-static void vTask(void *pvParameters)
+static void vTask(void *arg)
 {
     ESP_LOGI(TAG, "Initializing task");
 
@@ -66,7 +66,7 @@ void Network::UpdateConfig()
 {
     Output::Blink(Output::LedY, 1000, true);
 
-    xTaskNotifyWait(0, Configuration::Notifications::ConfigSet, &Configuration::Notifications::Notification, 0);
+    xTaskNotifyWait(0, Configuration::Notifications::ConfigSet, &Configuration::Notifications::Notification, portMAX_DELAY);
 
     if (Configuration::Notifications::Get(Configuration::Notifications::ConfigSet))
     {

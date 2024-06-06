@@ -15,7 +15,7 @@
 static const char *TAG = "Gui";
 static TaskHandle_t xHandle = nullptr;
 
-static void vTask(void *pvParameters)
+static void vTask(void *arg)
 {
     ESP_LOGI(TAG, "Initializing task");
 

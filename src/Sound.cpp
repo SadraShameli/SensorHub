@@ -124,7 +124,7 @@ static bool init()
     return isOK;
 }
 
-static void vTask(void *pvParameters)
+static void vTask(void *arg)
 {
     ESP_LOGI(TAG, "Initializing task");
 

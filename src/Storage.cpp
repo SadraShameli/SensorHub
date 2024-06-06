@@ -166,7 +166,7 @@ void Storage::Reset()
 {
     ESP_LOGI(TAG, "Resetting storage blob");
 
-    m_StorageData = {};
+    m_StorageData = {0};
     m_StorageData.ConfigMode = true;
 
     ESP_ERROR_CHECK(nvs_set_blob(nvsHandle, TAG, &m_StorageData, sizeof(StorageData)));
@@ -177,8 +177,8 @@ void Storage::CalculateMask()
 {
     ESP_LOGI(TAG, "Calculating encryption mask");
 
-    uint32_t maskArray[10] = {};
-    uint32_t macArray[10] = {};
+    uint32_t maskArray[10] = {0};
+    uint32_t macArray[10] = {0};
     uint32_t mask = 1564230594;
     uint64_t mask2 = 0;
 
@@ -186,7 +186,7 @@ void Storage::CalculateMask()
     {
         uint64_t NumberRepresentation;
         uint8_t ArrayRepresentation[6];
-    } mac = {};
+    } mac = {0};
 
     ESP_ERROR_CHECK(esp_efuse_mac_get_default(mac.ArrayRepresentation));
 
@@ -217,7 +217,7 @@ void Storage::CalculateMask()
     }
 }
 
-void Storage::EncryptText(uint32_t *var, std::string &str)
+void Storage::EncryptText(uint32_t *var, const std::string &str)
 {
     for (const char &c : str)
     {

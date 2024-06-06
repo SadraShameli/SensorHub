@@ -10,7 +10,7 @@
 static const char *TAG = "Failsafe";
 static TaskHandle_t xHandle = nullptr;
 
-static void vTask(void *pvParameters)
+static void vTask(void *arg)
 {
     ESP_LOGI(TAG, "Initializing task");
 
@@ -64,7 +64,7 @@ void Failsafe::PopFailure()
 {
     if (!m_Failures.empty())
     {
-        ESP_LOGI(TAG, "Popped failure");
         m_Failures.pop();
+        ESP_LOGI(TAG, "Popped failure");
     }
 }

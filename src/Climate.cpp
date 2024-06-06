@@ -44,7 +44,7 @@ static bool init()
     return isOK;
 }
 
-static void vTask(void *pvParameters)
+static void vTask(void *arg)
 {
     ESP_LOGI(TAG, "Initializing task");
 
@@ -93,6 +93,7 @@ void Climate::Update()
         {
             isOK = false;
             Failsafe::AddFailureDelayed(TAG, "Getting result failed");
+            vTaskDelete(nullptr);
         }
     }
 
