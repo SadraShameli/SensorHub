@@ -27,14 +27,18 @@ extern "C" void app_main()
   }
 
   Gui::Init();
+  Network::Init();
 
   if (Storage::GetConfigMode())
-  {
-    Network::Init();
     return;
-  }
 
-  Network::Init();
-  Climate::Init();
-  Sound::Init();
+  if (Storage::GetSensorState(Configuration::Sensors::Loudness))
+    Sound::Init();
+
+  if (Storage::GetSensorState(Configuration::Sensors::Temperature) ||
+      Storage::GetSensorState(Configuration::Sensors::Humidity) ||
+      Storage::GetSensorState(Configuration::Sensors::AirPressure) ||
+      Storage::GetSensorState(Configuration::Sensors::GasResistance) ||
+      Storage::GetSensorState(Configuration::Sensors::Altitude))
+    Climate::Init();
 }
