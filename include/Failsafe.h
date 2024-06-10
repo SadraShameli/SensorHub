@@ -8,11 +8,6 @@ namespace Failsafe
     {
     public:
         Failure(const char *caller, std::string &&message) : Caller(caller), Message(std::move(message)) {}
-        Failure(Failure &&other)
-        {
-            Caller = other.Caller;
-            Message = std::move(other.Message);
-        };
 
         const char *Caller;
         std::string Message;
