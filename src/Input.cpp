@@ -15,7 +15,7 @@ namespace Input
 
     void Init()
     {
-        for (auto &pin : inputPins)
+        for (const auto &pin : inputPins)
         {
             gpio_set_direction(pin.PinNumber, GPIO_MODE_INPUT);
             gpio_set_pull_mode(pin.PinNumber, GPIO_PULLUP_ONLY);

@@ -18,14 +18,14 @@ namespace Output
 
     void Init()
     {
-        for (auto &pin : outputPins)
+        for (const auto &pin : outputPins)
         {
             gpio_set_direction(pin.PinNum, GPIO_MODE_OUTPUT);
             gpio_set_level(pin.PinNum, 1);
             vTaskDelay(pdMS_TO_TICKS(250));
         }
 
-        for (auto &pin : outputPins)
+        for (const auto &pin : outputPins)
         {
             gpio_set_level(pin.PinNum, 0);
         }
