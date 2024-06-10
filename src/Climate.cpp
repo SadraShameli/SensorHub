@@ -14,7 +14,7 @@ namespace Climate
     {
         static const float TemperatureOffset = -2,
                            HumidityOffset = 13,
-                           AirPressureOffset = -12,
+                           AirPressureOffset = 0,
                            GasResistanceOffset = 0,
                            AltitudeOffset = 0,
                            SeaLevelPressure = 1021, SeaLevelTemperature = 14;
@@ -23,6 +23,7 @@ namespace Climate
     static const char *TAG = "Climate";
     static TaskHandle_t xHandle = nullptr;
     static bme680_sensor_t *dev = nullptr;
+    static bme680_values_float_t values = {0};
 
     static Reading temperature, humidity, airPressure, gasResistance, altitude;
     static uint32_t duration = 0;
@@ -35,7 +36,7 @@ namespace Climate
         dev = bme680_init_sensor(I2C_NUM_0, BME680_I2C_ADDRESS_2, 0);
         if (!dev)
         {
-            Failsafe ::AddFailure(TAG, "Failed to initialize sensor");
+            Failsafe ::AddFailure(TAG, "No sensor detected");
             vTaskDelete(nullptr);
         }
 
@@ -71,8 +72,6 @@ namespace Climate
 
     void Update()
     {
-        static bme680_values_float_t values = {0};
-
         if (bme680_force_measurement(dev))
         {
             vTaskDelay(duration);

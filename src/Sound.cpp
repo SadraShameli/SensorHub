@@ -59,7 +59,7 @@ namespace Sound
             httpClient = esp_http_client_init(&http_config);
             if (httpClient == nullptr)
             {
-                Failsafe::AddFailure(TAG, "Failed to initialize sound network");
+                Failsafe::AddFailure(TAG, "Failed to initialize network");
                 vTaskDelete(nullptr);
             }
         }
@@ -129,7 +129,7 @@ namespace Sound
         double loudness = ReadLoudness();
         if (loudness == 0)
         {
-            Failsafe::AddFailure(TAG, "No mic detected.");
+            Failsafe::AddFailure(TAG, "No sensor detected");
             vTaskDelete(nullptr);
         }
 

@@ -1,3 +1,4 @@
+#include "freertos/FreeRTOS.h"
 #include "ArduinoJson.h"
 #include "Definitions.h"
 #include "Backend.h"
@@ -181,6 +182,12 @@ namespace Backend
 
             // if (Storage::GetSensorState(Sensors::RPM))
             //     sensors[std::to_string(Sensors::RPM)] = (int)RPM::GetRPM();
+
+            if (!sensors.size())
+            {
+                Failsafe::AddFailure(TAG, "No sensor values to register");
+                vTaskDelete(nullptr);
+            }
 
             std::string payload;
             serializeJson(doc, payload);

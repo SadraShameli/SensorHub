@@ -19,6 +19,8 @@ namespace Pin
     static const char *TAG = "Pin";
     static TaskHandle_t xHandle = nullptr;
 
+    static bool resetCanceled = false;
+
     static void vTask(void *arg)
     {
         ESP_LOGI(TAG, "Initializing task");
@@ -51,7 +53,6 @@ namespace Pin
 
             if (!Storage::GetConfigMode())
             {
-                static bool resetCanceled = false;
                 while (!resetCanceled && clock() < 10000)
                 {
                     Display::SetMenu(Configuration::Menu::Reset);

@@ -21,7 +21,7 @@ namespace Display
     static ssd1306_handle_t dev = nullptr;
 
     static Configuration::Menu::Menus currentMenu = Configuration::Menu::Main;
-    static clock_t prevTime = 0;
+    static clock_t currentTime = 0, prevTime = 0;
     static bool displayOff = false;
 
     void Init()
@@ -58,7 +58,7 @@ namespace Display
 
     void Update()
     {
-        static clock_t currentTime = clock();
+        currentTime = clock();
         if ((currentTime - prevTime) > Constants::ScreenSaverDuration)
         {
             prevTime = currentTime;

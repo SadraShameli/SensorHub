@@ -21,7 +21,8 @@ namespace WiFi
     static EventGroupHandle_t wifi_event_group;
 
     static std::string ipAddress, macAddress;
-    static int retryAttempts;
+    static int retryAttempts = 0;
+    static bool passwordFailsafe = false;
 
     static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
     {
@@ -54,7 +55,6 @@ namespace WiFi
                 wifi_event_sta_disconnected_t *status = (wifi_event_sta_disconnected_t *)event_data;
                 ESP_LOGW(TAG, "Disconnected from wifi - reason: %d", status->reason);
 
-                static bool passwordFailsafe = false;
                 if (status->reason == WIFI_REASON_ASSOC_LEAVE)
                     return;
 

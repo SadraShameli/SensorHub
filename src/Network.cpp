@@ -18,6 +18,8 @@ namespace Network
     static const char *TAG = "Network";
     static TaskHandle_t xHandle = nullptr;
 
+    static uint32_t registerInterval = 0;
+
     static void vTask(void *arg)
     {
         ESP_LOGI(TAG, "Initializing task");
@@ -38,6 +40,8 @@ namespace Network
             WiFi::StartStation();
             HTTP::Init();
 
+            registerInterval = Storage::GetRegisterInterval() * 1000;
+
             for (;;)
             {
                 Update();
@@ -55,7 +59,6 @@ namespace Network
 
     void Update()
     {
-        static uint32_t registerInterval = Storage::GetRegisterInterval() * 1000;
         vTaskDelay(pdMS_TO_TICKS(registerInterval));
 
         if (Backend::RegisterReadings())
