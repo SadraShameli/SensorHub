@@ -1,9 +1,7 @@
 #pragma once
-#include "Backend.h"
 
-class Pin
+namespace Pin
 {
-public:
-    static void Init();
-    static void Update();
+    void Init();
+    void Update();
 };

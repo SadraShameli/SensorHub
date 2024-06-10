@@ -1,54 +1,58 @@
 #include "driver/gpio.h"
 #include "Input.h"
 
-struct InputPin
+namespace Input
 {
-    gpio_num_t PinNumber = GPIO_NUM_NC;
-    bool PinState = false, IsLocked = false;
-
-    InputPin(Input::Inputs _PinNumber) : PinNumber((gpio_num_t)_PinNumber) {}
-};
-static InputPin inputPins[] = {Input::Up, Input::Down};
-
-void Input::Init()
-{
-    for (auto &pin : inputPins)
+    struct InputPin
     {
-        gpio_set_direction(pin.PinNumber, GPIO_MODE_INPUT);
-        gpio_set_pull_mode(pin.PinNumber, GPIO_PULLUP_ONLY);
-    }
-}
+        gpio_num_t PinNumber = GPIO_NUM_NC;
+        bool PinState = false, IsLocked = false;
 
-void Input::Update()
-{
-    for (auto &pin : inputPins)
+        InputPin(Inputs _PinNumber) : PinNumber((gpio_num_t)_PinNumber) {}
+    };
+
+    static InputPin inputPins[] = {Up, Down};
+
+    void Init()
     {
-        bool pinPinState = gpio_get_level(pin.PinNumber);
-
-        if (pinPinState && pin.IsLocked)
+        for (auto &pin : inputPins)
         {
-            pin.PinState = false;
-            pin.IsLocked = false;
-        }
-
-        else if (!pinPinState && !pin.IsLocked)
-        {
-            pin.IsLocked = true;
-            pin.PinState = true;
-        }
-    }
-}
-
-bool Input::GetPinState(Inputs pinNumber)
-{
-    for (auto &pin : inputPins)
-    {
-        if ((Inputs)pin.PinNumber == pinNumber && pin.PinState)
-        {
-            pin.PinState = false;
-            return true;
+            gpio_set_direction(pin.PinNumber, GPIO_MODE_INPUT);
+            gpio_set_pull_mode(pin.PinNumber, GPIO_PULLUP_ONLY);
         }
     }
 
-    return false;
+    void Update()
+    {
+        for (auto &pin : inputPins)
+        {
+            bool pinPinState = gpio_get_level(pin.PinNumber);
+
+            if (pinPinState && pin.IsLocked)
+            {
+                pin.PinState = false;
+                pin.IsLocked = false;
+            }
+
+            else if (!pinPinState && !pin.IsLocked)
+            {
+                pin.IsLocked = true;
+                pin.PinState = true;
+            }
+        }
+    }
+
+    bool GetPinState(Inputs pinNumber)
+    {
+        for (auto &pin : inputPins)
+        {
+            if ((Inputs)pin.PinNumber == pinNumber && pin.PinState)
+            {
+                pin.PinState = false;
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -19,7 +19,7 @@ extern "C" void app_main()
   WiFi::Init();
   Pin::Init();
 
-  if (!Storage::GetConfigMode() && Storage::GetSensorState(Configuration::Sensors::Recording))
+  if (!Storage::GetConfigMode() && Storage::GetSensorState(Configuration::Sensor::Recording))
   {
     WiFi::StartStation();
     Sound::Init();
@@ -32,13 +32,13 @@ extern "C" void app_main()
   if (Storage::GetConfigMode())
     return;
 
-  if (Storage::GetSensorState(Configuration::Sensors::Loudness))
+  if (Storage::GetSensorState(Configuration::Sensor::Loudness))
     Sound::Init();
 
-  if (Storage::GetSensorState(Configuration::Sensors::Temperature) ||
-      Storage::GetSensorState(Configuration::Sensors::Humidity) ||
-      Storage::GetSensorState(Configuration::Sensors::AirPressure) ||
-      Storage::GetSensorState(Configuration::Sensors::GasResistance) ||
-      Storage::GetSensorState(Configuration::Sensors::Altitude))
+  if (Storage::GetSensorState(Configuration::Sensor::Temperature) ||
+      Storage::GetSensorState(Configuration::Sensor::Humidity) ||
+      Storage::GetSensorState(Configuration::Sensor::AirPressure) ||
+      Storage::GetSensorState(Configuration::Sensor::GasResistance) ||
+      Storage::GetSensorState(Configuration::Sensor::Altitude))
     Climate::Init();
 }

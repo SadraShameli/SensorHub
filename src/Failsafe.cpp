@@ -7,64 +7,71 @@
 #include "Output.h"
 #include "Display.h"
 
-static const char *TAG = "Failsafe";
-static TaskHandle_t xHandle = nullptr;
-
-static void vTask(void *arg)
+namespace Failsafe
 {
-    ESP_LOGI(TAG, "Initializing task");
+    static const char *TAG = "Failsafe";
+    static TaskHandle_t xHandle = nullptr;
 
-    for (;;)
+    static std::stack<Failure> failures;
+
+    static void vTask(void *arg)
     {
-        Failsafe::Update();
+        ESP_LOGI(TAG, "Initializing task");
+
+        for (;;)
+        {
+            Update();
+        }
+
+        vTaskDelete(nullptr);
     }
 
-    vTaskDelete(nullptr);
-}
-
-void Failsafe::Init()
-{
-    xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY + 1, &xHandle);
-}
-
-void Failsafe::Update()
-{
-    ESP_LOGI(TAG, "Waiting for failure");
-
-    xTaskNotifyWait(0, Configuration::Notifications::NewFailsafe, &Configuration::Notifications::Notification, portMAX_DELAY);
-
-    const Failsafe::Failure &topFailure = m_Failures.top();
-    ESP_LOGE(TAG, "Failure received from %s: %s", topFailure.Caller, topFailure.Message.c_str());
-
-    Output::Blink(Output::LedR, 5000);
-    Display::SetMenu(Configuration::Menus::Failsafe);
-}
-
-void Failsafe::AddFailure(const char *caller, std::string &&message)
-{
-    if (m_Failures.size() > 24)
+    void Init()
     {
-        m_Failures.pop();
-        ESP_LOGI(TAG, "Popped failure");
+        xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY + 1, &xHandle);
     }
 
-    m_Failures.push(Failsafe::Failure(caller, std::move(message)));
-    ESP_LOGI(TAG, "Pushed failure - current size: %d", m_Failures.size());
-
-    xTaskNotify(xHandle, Configuration::Notifications::NewFailsafe, eSetBits);
-}
-
-void Failsafe::AddFailureDelayed(const char *caller, std::string &&message)
-{
-    AddFailure(caller, std::move(message));
-    vTaskDelay(pdMS_TO_TICKS(10000));
-}
-
-void Failsafe::PopFailure()
-{
-    if (!m_Failures.empty())
+    void Update()
     {
-        m_Failures.pop();
-        ESP_LOGI(TAG, "Popped failure");
+        ESP_LOGI(TAG, "Waiting for failure");
+
+        xTaskNotifyWait(0, Configuration::Notification::NewFailsafe, &Configuration::Notification::Values, portMAX_DELAY);
+
+        const Failure &topFailure = failures.top();
+        ESP_LOGE(TAG, "Failure received from %s: %s", topFailure.Caller, topFailure.Message.c_str());
+
+        Output::Blink(Output::LedR, 5000);
+        Display::SetMenu(Configuration::Menu::Failsafe);
     }
+
+    void AddFailure(const char *caller, std::string &&message)
+    {
+        if (failures.size() > 24)
+        {
+            failures.pop();
+            ESP_LOGI(TAG, "Popped failure");
+        }
+
+        failures.emplace(caller, std::move(message));
+        ESP_LOGI(TAG, "Pushed failure - current size: %d", failures.size());
+
+        xTaskNotify(xHandle, Configuration::Notification::NewFailsafe, eSetBits);
+    }
+
+    void AddFailureDelayed(const char *caller, std::string &&message)
+    {
+        AddFailure(caller, std::move(message));
+        vTaskDelay(pdMS_TO_TICKS(10000));
+    }
+
+    void PopFailure()
+    {
+        if (!failures.empty())
+        {
+            failures.pop();
+            ESP_LOGI(TAG, "Popped failure");
+        }
+    }
+
+    const std::stack<Failure> &GetFailures() { return failures; }
 }

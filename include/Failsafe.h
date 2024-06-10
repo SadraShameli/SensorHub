@@ -2,9 +2,8 @@
 #include <string>
 #include <stack>
 
-class Failsafe
+namespace Failsafe
 {
-public:
     class Failure
     {
     public:
@@ -19,13 +18,12 @@ public:
         std::string Message;
     };
 
-    static void Init();
-    static void Update();
-    static void AddFailure(const char *, std::string &&);
-    static void AddFailureDelayed(const char *, std::string &&);
-    static void PopFailure();
-    static const std::stack<Failsafe::Failure> &GetFailures() { return m_Failures; }
+    void Init();
+    void Update();
 
-private:
-    inline static std::stack<Failsafe::Failure> m_Failures;
+    void AddFailure(const char *, std::string &&);
+    void AddFailureDelayed(const char *, std::string &&);
+    void PopFailure();
+
+    const std::stack<Failsafe::Failure> &GetFailures();
 };

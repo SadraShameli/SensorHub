@@ -2,57 +2,37 @@
 #include <string>
 #include "Configuration.h"
 
-class Storage
+namespace Storage
 {
-public:
-    static void MountSPIFFS(const char *, const char *);
-    static void Init();
-    static void Commit();
-    static void Reset();
+    void Init();
 
-    static const std::string &GetSSID() { return m_SSID; }
-    static const std::string &GetPassword() { return m_Password; }
-    static const std::string &GetAddress() { return m_Address; }
-    static const std::string &GetAuthKey() { return m_AuthKey; }
-    static const std::string &GetDeviceName() { return m_DeviceName; }
-    static uint32_t GetDeviceId() { return m_StorageData.DeviceId; }
-    static uint32_t GetLoudnessThreshold() { return m_StorageData.LoudnessThreshold; }
-    static uint32_t GetRegisterInterval() { return m_StorageData.RegisterInterval; }
-    static bool GetSensorState(Configuration::Sensors::Sensor sensor) { return m_StorageData.Sensors[(int)sensor - 1]; }
-    static bool GetConfigMode() { return m_StorageData.ConfigMode; };
+    void Commit();
+    void Reset();
+    void Mount(const char *, const char *);
 
-    static void SetSSID(std::string &&str) { m_SSID = std::move(str); }
-    static void SetPassword(std::string &&str) { m_Password = std::move(str); }
-    static void SetAddress(std::string &&str) { m_Address = std::move(str); }
-    static void SetAuthKey(std::string &&str) { m_AuthKey = std::move(str); }
-    static void SetDeviceName(std::string &&str) { m_DeviceName = std::move(str); }
-    static void SetDeviceId(uint32_t num) { m_StorageData.DeviceId = num; }
-    static void SetLoudnessThreshold(uint32_t num) { m_StorageData.LoudnessThreshold = num; }
-    static void SetRegisterInterval(uint32_t num) { m_StorageData.RegisterInterval = num; }
-    static void SetSensorState(Configuration::Sensors::Sensor sensor, bool state) { m_StorageData.Sensors[(int)sensor - 1] = state; }
-    static void SetConfigMode(bool config) { m_StorageData.ConfigMode = config; }
+    void CalculateMask();
+    void EncryptText(uint32_t *, const std::string &);
+    void DecryptText(uint32_t *, std::string &);
 
-private:
-    static constexpr int SSIDLength = 33, PasswordLength = 65, UUIDLength = 37, EndpointLength = 241;
-    struct StorageData
-    {
-        uint32_t SSID[SSIDLength];
-        uint32_t Password[PasswordLength];
-        uint32_t Address[EndpointLength];
-        uint32_t AuthKey[UUIDLength];
-        uint32_t DeviceName[UUIDLength];
-        uint32_t DeviceId;
-        uint32_t LoudnessThreshold;
-        uint32_t RegisterInterval;
-        bool Sensors[Configuration::Sensors::Sensor::SensorCount - 1];
-        bool ConfigMode;
-    };
+    const std::string &GetSSID();
+    const std::string &GetPassword();
+    const std::string &GetAddress();
+    const std::string &GetAuthKey();
+    const std::string &GetDeviceName();
+    uint32_t GetDeviceId();
+    uint32_t GetLoudnessThreshold();
+    uint32_t GetRegisterInterval();
+    bool GetSensorState(Configuration::Sensor::Sensors);
+    bool GetConfigMode();
 
-    static void CalculateMask();
-    static void EncryptText(uint32_t *, const std::string &);
-    static void DecryptText(uint32_t *, std::string &);
-
-    inline static uint32_t m_EncryptionMask = 0;
-    inline static StorageData m_StorageData = {0};
-    inline static std::string m_SSID, m_Password, m_DeviceName, m_Address, m_AuthKey;
+    void SetSSID(std::string &&);
+    void SetPassword(std::string &&);
+    void SetAddress(std::string &&);
+    void SetAuthKey(std::string &&);
+    void SetDeviceName(std::string &&);
+    void SetDeviceId(uint32_t);
+    void SetLoudnessThreshold(uint32_t);
+    void SetRegisterInterval(uint32_t);
+    void SetSensorState(Configuration::Sensor::Sensors, bool);
+    void SetConfigMode(bool);
 };

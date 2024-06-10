@@ -1,10 +1,10 @@
 #pragma once
 
-class Gui
+namespace Gui
 {
-public:
-    static void Init();
-    static void Update();
-    static void Pause();
-    static void Resume();
+    void Init();
+    void Update();
+
+    void Pause();
+    void Resume();
 };

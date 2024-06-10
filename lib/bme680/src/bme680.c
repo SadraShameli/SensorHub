@@ -183,7 +183,6 @@
  */
 typedef struct
 {
-
     bool gas_valid;     // indicate that gas measurement results are valid
     bool heater_stable; // indicate that heater temperature was stable
 
@@ -195,7 +194,6 @@ typedef struct
 
     uint8_t gas_index; // heater profile used (0 ... 9)
     uint8_t meas_index;
-
 } bme680_raw_data_t;
 
 /** Forward declaration of functions for internal use */

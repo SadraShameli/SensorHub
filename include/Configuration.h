@@ -6,13 +6,11 @@ namespace Configuration
     {
         static const char SSID[] = "Unit", Password[] = "";
         extern const char ServerCrt[] asm("_binary_cer_crt_start");
-        static const int ConnectionRetries = 10;
     }
 
-    class Sensors
+    namespace Sensor
     {
-    public:
-        enum Sensor
+        enum Sensors
         {
             Temperature = 1,
             Humidity,
@@ -26,10 +24,9 @@ namespace Configuration
         };
     };
 
-    class Menus
+    namespace Menu
     {
-    public:
-        enum Menu
+        enum Menus
         {
             Main,
             Temperature,
@@ -49,17 +46,17 @@ namespace Configuration
         };
     };
 
-    class Notifications
+    namespace Notification
     {
-    public:
-        enum Notification
+        enum Notifications
         {
             NewFailsafe = 1,
             ConfigSet,
         };
 
-        static bool Get(Notification notification) { return Notification & notification; }
-        static void Set(uint32_t notification) { Notification |= notification; }
-        inline static uint32_t Notification = 0;
+        inline static uint32_t Values = 0;
+
+        inline bool Get(Notifications value) { return Values & value; }
+        inline void Set(Notifications value) { Values |= value; }
     };
 }

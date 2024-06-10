@@ -2,29 +2,17 @@
 #include "Definitions.h"
 #include "Configuration.h"
 
-class Climate
+namespace Climate
 {
-public:
-    static void Init();
-    static void Update();
-    static bool IsOK();
+    void Init();
+    void Update();
 
-    static void ResetValues(Configuration::Sensors::Sensor);
-    static const Reading &GetTemperature() { return m_Temperature; }
-    static const Reading &GetHumidity() { return m_Humidity; }
-    static const Reading &GetAirPressure() { return m_AirPressure; }
-    static const Reading &GetGasResistance() { return m_GasResistance; }
-    static const Reading &GetAltitude() { return m_Altitude; }
+    void ResetValues(Configuration::Sensor::Sensors);
 
-private:
-    inline static Reading m_Temperature, m_Humidity, m_AirPressure, m_GasResistance, m_Altitude;
-    struct Constants
-    {
-        static constexpr float TemperatureOffset = -2,
-                               HumidityOffset = 13,
-                               AirPressureOffset = -12,
-                               GasResistanceOffset = 0,
-                               AltitudeOffset = 0,
-                               SeaLevelPressure = 1021, SeaLevelTemperature = 14;
-    };
+    bool IsOK();
+    const Reading &GetTemperature();
+    const Reading &GetHumidity();
+    const Reading &GetAirPressure();
+    const Reading &GetGasResistance();
+    const Reading &GetAltitude();
 };

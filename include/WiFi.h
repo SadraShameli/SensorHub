@@ -1,13 +1,18 @@
 #pragma once
+#include <string>
 #include <vector>
 
-#define IPV4_LEN 4 * 4 + 1
-#define MAC_LEN 6 * 3 + 1
-
-class WiFi
+namespace WiFi
 {
-public:
-    enum State
+    namespace Constants
+    {
+        static const uint32_t IPV4Length = 4 * 4 + 1,
+                              MACLength = 6 * 3 + 1,
+                              MaxRetries = 10,
+                              MaxClients = 4;
+    };
+
+    enum States
     {
         Connected = 1,
         Failed,
@@ -15,26 +20,21 @@ public:
 
     struct ClientDetails
     {
-        char IPAddress[IPV4_LEN];
-        char MacAddress[MAC_LEN];
+        char IPAddress[Constants::IPV4Length];
+        char MacAddress[Constants::MACLength];
     };
 
-    static const int MaxClientCount = 4;
+    void Init();
 
-public:
-    static void Init();
-    static void StartAP();
-    static void StartStation();
-    static bool IsConnected();
-    static void WaitForConnection();
+    void StartAP();
+    void StartStation();
+    bool IsConnected();
+    void WaitForConnection();
 
-    static void SetMacAddress();
-    static const std::string &GetIPAP();
-    static const std::vector<ClientDetails> GetClientDetails();
+    void SetMacAddress();
+    const std::string &GetIPAP();
+    const std::vector<ClientDetails> GetClientDetails();
 
-    static const std::string &GetIPStation();
-    static const std::string &GetMacAddress() { return m_MacAddress; };
-
-private:
-    inline static std::string m_MacAddress;
+    const std::string &GetIPStation();
+    const std::string &GetMacAddress();
 };

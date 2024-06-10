@@ -3,110 +3,114 @@
 #include "freertos/task.h"
 #include "Output.h"
 
-struct OutputPin
+namespace Output
 {
-    gpio_num_t PinNum = GPIO_NUM_NC;
-    clock_t UpdateTime = 0, Interval = 0;
-    bool ContinuousMode = false, PinState = false;
-
-    OutputPin(Output::Outputs pin) : PinNum((gpio_num_t)pin) {}
-};
-static OutputPin outputPins[] = {Output::LedR, Output::LedY, Output::LedG};
-
-void Output::Init()
-{
-    for (auto &pin : outputPins)
+    struct OutputPin
     {
-        gpio_set_direction(pin.PinNum, GPIO_MODE_OUTPUT);
-        gpio_set_level(pin.PinNum, 1);
-        vTaskDelay(pdMS_TO_TICKS(250));
-    }
+        gpio_num_t PinNum = GPIO_NUM_NC;
+        clock_t UpdateTime = 0, Interval = 0;
+        bool ContinuousMode = false, PinState = false;
 
-    for (auto &pin : outputPins)
+        OutputPin(Outputs pin) : PinNum((gpio_num_t)pin) {}
+    };
+
+    static OutputPin outputPins[] = {LedR, LedY, LedG};
+
+    void Init()
     {
-        gpio_set_level(pin.PinNum, 0);
-    }
-}
-
-void Output::Update()
-{
-    clock_t currentTime = clock();
-
-    for (auto &pin : outputPins)
-    {
-        if ((currentTime - pin.UpdateTime) > pin.Interval)
+        for (auto &pin : outputPins)
         {
-            pin.UpdateTime = currentTime;
+            gpio_set_direction(pin.PinNum, GPIO_MODE_OUTPUT);
+            gpio_set_level(pin.PinNum, 1);
+            vTaskDelay(pdMS_TO_TICKS(250));
+        }
 
-            if (pin.ContinuousMode)
-            {
-                pin.PinState = !pin.PinState;
-                gpio_set_level(pin.PinNum, pin.PinState);
-            }
+        for (auto &pin : outputPins)
+        {
+            gpio_set_level(pin.PinNum, 0);
+        }
+    }
 
-            else
+    void Update()
+    {
+        clock_t currentTime = clock();
+
+        for (auto &pin : outputPins)
+        {
+            if ((currentTime - pin.UpdateTime) > pin.Interval)
             {
-                if (pin.PinState)
+                pin.UpdateTime = currentTime;
+
+                if (pin.ContinuousMode)
                 {
-                    gpio_set_level(pin.PinNum, 1);
-                    pin.PinState = false;
+                    pin.PinState = !pin.PinState;
+                    gpio_set_level(pin.PinNum, pin.PinState);
                 }
 
                 else
                 {
-                    gpio_set_level(pin.PinNum, 0);
+                    if (pin.PinState)
+                    {
+                        gpio_set_level(pin.PinNum, 1);
+                        pin.PinState = false;
+                    }
+
+                    else
+                    {
+                        gpio_set_level(pin.PinNum, 0);
+                    }
                 }
             }
         }
     }
-}
 
-void Output::Toggle(Outputs pinNumber, bool targetPinState)
-{
-    for (auto &pin : outputPins)
+    void Toggle(Outputs pinNumber, bool targetPinState)
     {
-        if ((Outputs)pin.PinNum == pinNumber)
+        for (auto &pin : outputPins)
         {
-            pin.Interval = ULONG_MAX;
-            gpio_set_level(pin.PinNum, targetPinState);
-            return;
+            if ((Outputs)pin.PinNum == pinNumber)
+            {
+                pin.Interval = ULONG_MAX;
+                gpio_set_level(pin.PinNum, targetPinState);
+                return;
+            }
         }
     }
-}
 
-void Output::Blink(Outputs pinNumber, clock_t blinkTime, bool continuousModeBlinking)
-{
-    for (auto &pin : outputPins)
+    void Blink(Outputs pinNumber, clock_t blinkTime, bool continuousModeBlinking)
     {
-        if ((Outputs)pin.PinNum == pinNumber)
+        for (auto &pin : outputPins)
         {
-            if (pin.Interval != blinkTime)
+            if ((Outputs)pin.PinNum == pinNumber)
+            {
+                if (pin.Interval != blinkTime)
+                {
+                    pin.UpdateTime = 0;
+                    pin.Interval = blinkTime;
+                }
+
+                pin.ContinuousMode = continuousModeBlinking;
+
+                if (!continuousModeBlinking)
+                {
+                    pin.PinState = true;
+                }
+
+                return;
+            }
+        }
+    }
+
+    void SetContinuity(Outputs pinNumber, bool continuousModeBlinking)
+    {
+        for (auto &pin : outputPins)
+        {
+            if ((Outputs)pin.PinNum == pinNumber)
             {
                 pin.UpdateTime = 0;
-                pin.Interval = blinkTime;
+                pin.ContinuousMode = continuousModeBlinking;
+                return;
             }
-
-            pin.ContinuousMode = continuousModeBlinking;
-
-            if (!continuousModeBlinking)
-            {
-                pin.PinState = true;
-            }
-
-            return;
-        }
-    }
-}
-
-void Output::SetContinuity(Outputs pinNumber, bool continuousModeBlinking)
-{
-    for (auto &pin : outputPins)
-    {
-        if ((Outputs)pin.PinNum == pinNumber)
-        {
-            pin.UpdateTime = 0;
-            pin.ContinuousMode = continuousModeBlinking;
-            return;
         }
     }
 }

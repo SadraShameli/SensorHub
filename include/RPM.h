@@ -1,13 +1,12 @@
 #pragma once
 
-class RPM
+namespace RPM
 {
-public:
-    static void Init();
-    static void Update();
+    void Init();
+    void Update();
 
-    static unsigned long GetRPM();
-    static unsigned long GetMaxRPM();
-    static unsigned long GetAvgRPM();
-    static void ResetValues();
+    unsigned long GetRPM();
+    unsigned long GetMaxRPM();
+    unsigned long GetAvgRPM();
+    void ResetValues();
 };

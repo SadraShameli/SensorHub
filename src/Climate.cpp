@@ -8,128 +8,137 @@
 #include "Failsafe.h"
 #include "Gui.h"
 
-static const char *TAG = "Climate";
-static TaskHandle_t xHandle = nullptr;
-
-static bme680_sensor_t *dev = nullptr;
-static uint32_t duration = 0;
-static bool isOK = false;
-
-static float calculateAltitude(float currentPressure, float seaLevelPressure, float seaLevelTemp)
+namespace Climate
 {
-    const float L = 0.0065, R = 8.31432, g = 9.80665;
-    float temp = seaLevelTemp + 273.15;
-    float alt = (1 - pow(((currentPressure) / seaLevelPressure), (R * L) / (g * 0.0289644))) * temp / L;
-    return alt;
-}
-
-static bool init()
-{
-    dev = bme680_init_sensor(I2C_NUM_0, BME680_I2C_ADDRESS_2, 0);
-
-    if (!dev)
+    namespace Constants
     {
-        Failsafe ::AddFailure(TAG, "Failed to initialize sensor");
-        return false;
-    }
+        static const float TemperatureOffset = -2,
+                           HumidityOffset = 13,
+                           AirPressureOffset = -12,
+                           GasResistanceOffset = 0,
+                           AltitudeOffset = 0,
+                           SeaLevelPressure = 1021, SeaLevelTemperature = 14;
+    };
 
-    bme680_set_oversampling_rates(dev, osr_16x, osr_16x, osr_16x);
-    bme680_set_filter_size(dev, iir_size_127);
-    bme680_set_heater_profile(dev, 0, 320, 25);
-    bme680_use_heater_profile(dev, 0);
-    duration = bme680_get_measurement_duration(dev);
+    static const char *TAG = "Climate";
+    static TaskHandle_t xHandle = nullptr;
+    static bme680_sensor_t *dev = nullptr;
 
-    isOK = true;
+    static Reading temperature, humidity, airPressure, gasResistance, altitude;
+    static uint32_t duration = 0;
+    static bool isOK = false;
 
-    return isOK;
-}
-
-static void vTask(void *arg)
-{
-    ESP_LOGI(TAG, "Initializing task");
-
-    if (init())
+    static void vTask(void *arg)
     {
+        ESP_LOGI(TAG, "Initializing task");
+
+        dev = bme680_init_sensor(I2C_NUM_0, BME680_I2C_ADDRESS_2, 0);
+        if (!dev)
+        {
+            Failsafe ::AddFailure(TAG, "Failed to initialize sensor");
+            vTaskDelete(nullptr);
+        }
+
+        bme680_set_oversampling_rates(dev, osr_16x, osr_16x, osr_16x);
+        bme680_set_filter_size(dev, iir_size_127);
+        bme680_set_heater_profile(dev, 0, 320, 25);
+        bme680_use_heater_profile(dev, 0);
+
+        duration = bme680_get_measurement_duration(dev);
+        isOK = true;
+
         for (;;)
         {
-            Climate::Update();
+            Update();
             vTaskDelay(pdMS_TO_TICKS(10));
         }
+
+        vTaskDelete(nullptr);
     }
 
-    vTaskDelete(nullptr);
-}
-
-void Climate::Init()
-{
-    xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY + 2, &xHandle);
-}
-
-void Climate::Update()
-{
-    static bme680_values_float_t values = {0};
-
-    if (bme680_force_measurement(dev))
+    static float calculateAltitude(float currentPressure, float seaLevelPressure, float seaLevelTemp)
     {
-        vTaskDelay(duration);
-        if (bme680_get_results_float(dev, &values))
-        {
-            m_Temperature.Update(values.temperature + Climate::Constants::TemperatureOffset);
-            m_Humidity.Update(values.humidity + Climate::Constants::HumidityOffset);
+        const float L = 0.0065, R = 8.31432, g = 9.80665;
+        float temp = seaLevelTemp + 273.15;
+        float alt = (1 - pow(((currentPressure) / seaLevelPressure), (R * L) / (g * 0.0289644))) * temp / L;
+        return alt;
+    }
 
-            if (values.pressure != 0)
+    void Init()
+    {
+        xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY + 2, &xHandle);
+    }
+
+    void Update()
+    {
+        static bme680_values_float_t values = {0};
+
+        if (bme680_force_measurement(dev))
+        {
+            vTaskDelay(duration);
+            if (bme680_get_results_float(dev, &values))
             {
-                m_AirPressure.Update(values.pressure + Climate::Constants::AirPressureOffset);
-                m_Altitude.Update(calculateAltitude(m_AirPressure.Current(), Climate::Constants::SeaLevelPressure, Climate::Constants::SeaLevelTemperature) + Climate::Constants::AltitudeOffset);
+                temperature.Update(values.temperature + Constants::TemperatureOffset);
+                humidity.Update(values.humidity + Constants::HumidityOffset);
+
+                if (values.pressure != 0)
+                {
+                    airPressure.Update(values.pressure + Constants::AirPressureOffset);
+                    altitude.Update(calculateAltitude(airPressure.Current(), Constants::SeaLevelPressure, Constants::SeaLevelTemperature) + Constants::AltitudeOffset);
+                }
+
+                if (values.gas_resistance != 0)
+                    gasResistance.Update(values.gas_resistance + Constants::GasResistanceOffset);
+
+                // ESP_LOGI(TAG, "Temperature: %f, Humidity: %f, Air Pressure: %f, Gas Resistance: %f, Altitude: %f", temperature.Current(), humidity.Current(), airPressure.Current(), gasResistance.Current(), altitude.Current());
             }
 
-            if (values.gas_resistance != 0)
-                m_GasResistance.Update(values.gas_resistance + Climate::Constants::GasResistanceOffset);
-
-            // ESP_LOGI(TAG, "Temperature: %f, Humidity: %f, Air Pressure: %f, Gas Resistance: %f, Altitude: %f", m_Temperature.Current(), m_Humidity.Current(), m_AirPressure.Current(), m_GasResistance.Current(), m_Altitude.Current());
+            else
+            {
+                isOK = false;
+                Failsafe::AddFailureDelayed(TAG, "Getting result failed");
+                vTaskDelete(nullptr);
+            }
         }
 
         else
         {
             isOK = false;
-            Failsafe::AddFailureDelayed(TAG, "Getting result failed");
+            Failsafe::AddFailure(TAG, "Taking measurement failed");
             vTaskDelete(nullptr);
         }
     }
 
-    else
+    void ResetValues(Configuration::Sensor::Sensors sensor)
     {
-        isOK = false;
-        Failsafe::AddFailure(TAG, "Taking measurement failed");
-        vTaskDelete(nullptr);
-    }
-}
+        using Sensors = Configuration::Sensor::Sensors;
 
-bool Climate::IsOK()
-{
-    return isOK;
-}
-
-void Climate::ResetValues(Configuration::Sensors::Sensor sensor)
-{
-    switch (sensor)
-    {
-    case Configuration::Sensors::Temperature:
-        m_Temperature.Reset();
-        break;
-    case Configuration::Sensors::Humidity:
-        m_Humidity.Reset();
-        break;
-    case Configuration::Sensors::GasResistance:
-        m_GasResistance.Reset();
-        break;
-    case Configuration::Sensors::AirPressure:
-        m_AirPressure.Reset();
-        break;
-    case Configuration::Sensors::Altitude:
-        m_Altitude.Reset();
-        break;
-    default:
-        break;
+        switch (sensor)
+        {
+        case Sensors::Temperature:
+            temperature.Reset();
+            break;
+        case Sensors::Humidity:
+            humidity.Reset();
+            break;
+        case Sensors::GasResistance:
+            gasResistance.Reset();
+            break;
+        case Sensors::AirPressure:
+            airPressure.Reset();
+            break;
+        case Sensors::Altitude:
+            altitude.Reset();
+            break;
+        default:
+            break;
+        }
     }
+
+    bool IsOK() { return isOK; }
+    const Reading &GetTemperature() { return temperature; }
+    const Reading &GetHumidity() { return humidity; }
+    const Reading &GetAirPressure() { return airPressure; }
+    const Reading &GetGasResistance() { return gasResistance; }
+    const Reading &GetAltitude() { return altitude; }
 }

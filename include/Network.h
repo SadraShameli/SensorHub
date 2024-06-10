@@ -1,10 +1,10 @@
 #pragma once
 
-class Network
+namespace Network
 {
-public:
-    static void Init();
-    static void Update();
-    static void UpdateConfig();
-    static void NotifyConfigSet();
+    void Init();
+    void Update();
+    void UpdateConfig();
+
+    void NotifyConfigSet();
 };

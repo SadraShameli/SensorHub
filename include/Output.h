@@ -1,10 +1,8 @@
 #pragma once
 #include <ctime>
-#include "Backend.h"
 
-class Output
+namespace Output
 {
-public:
     enum Outputs
     {
         LedR = 32,
@@ -12,9 +10,10 @@ public:
         LedG = 25
     };
 
-    static void Init();
-    static void Update();
-    static void Toggle(Outputs, bool);
-    static void Blink(Outputs, clock_t = 50, bool = false);
-    static void SetContinuity(Outputs, bool);
+    void Init();
+    void Update();
+
+    void Toggle(Outputs, bool);
+    void Blink(Outputs, clock_t = 50, bool = false);
+    void SetContinuity(Outputs, bool);
 };

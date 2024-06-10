@@ -14,120 +14,123 @@
 #include "Climate.h"
 #include "Sound.h"
 
-static const char *TAG = "Pin";
-static TaskHandle_t xHandle = nullptr;
-
-static void vTask(void *arg)
+namespace Pin
 {
-    ESP_LOGI(TAG, "Initializing task");
+    static const char *TAG = "Pin";
+    static TaskHandle_t xHandle = nullptr;
 
-    Input::Init();
-    Output::Init();
-
-    for (;;)
+    static void vTask(void *arg)
     {
-        Input::Update();
-        Output::Update();
-        Pin::Update();
-        vTaskDelay(pdMS_TO_TICKS(10));
+        ESP_LOGI(TAG, "Initializing task");
+
+        Input::Init();
+        Output::Init();
+
+        for (;;)
+        {
+            Input::Update();
+            Output::Update();
+            Update();
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+
+        vTaskDelete(nullptr);
     }
 
-    vTaskDelete(nullptr);
-}
-
-void Pin::Init()
-{
-    xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY, &xHandle);
-}
-
-void Pin::Update()
-{
-    if (Input::GetPinState(Input::Inputs::Up))
+    void Init()
     {
-        Output::Blink(Output::LedY);
-        Display::ResetScreenSaver();
+        xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY, &xHandle);
+    }
 
-        if (!Storage::GetConfigMode())
+    void Update()
+    {
+        if (Input::GetPinState(Input::Inputs::Up))
         {
-            static bool resetCanceled = false;
-            while (!resetCanceled && clock() < 10000)
-            {
-                Display::SetMenu(Configuration::Menus::Reset);
-                Input::Update();
-                Output::Update();
+            Output::Blink(Output::LedY);
+            Display::ResetScreenSaver();
 
-                if (Input::GetPinState(Input::Up))
+            if (!Storage::GetConfigMode())
+            {
+                static bool resetCanceled = false;
+                while (!resetCanceled && clock() < 10000)
                 {
+                    Display::SetMenu(Configuration::Menu::Reset);
+                    Input::Update();
+                    Output::Update();
+
+                    if (Input::GetPinState(Input::Up))
+                    {
+                        resetCanceled = true;
+                        return;
+                    }
+
+                    if (Input::GetPinState(Input::Inputs::Down))
+                    {
+                        Storage::Reset();
+                        esp_restart();
+                    }
+
+                    vTaskDelay(pdMS_TO_TICKS(10));
+                }
+
+                if (!resetCanceled)
+                {
+                    Display::SetMenu(Configuration::Menu::Main);
                     resetCanceled = true;
-                    return;
                 }
-
-                if (Input::GetPinState(Input::Inputs::Down))
-                {
-                    Storage::Reset();
-                    esp_restart();
-                }
-
-                vTaskDelay(pdMS_TO_TICKS(10));
             }
 
-            if (!resetCanceled)
+            Display::NextMenu();
+        }
+
+        else if (Input::GetPinState(Input::Inputs::Down))
+        {
+            Output::Blink(Output::LedY);
+            Display::ResetScreenSaver();
+
+            if (Storage::GetConfigMode())
             {
-                Display::SetMenu(Configuration::Menus::Main);
-                resetCanceled = true;
+                if (Display::GetMenu() != Configuration::Menu::Failsafe)
+                    esp_restart();
+
+                Failsafe::PopFailure();
             }
-        }
 
-        Display::NextMenu();
-    }
+            switch (Display::GetMenu())
+            {
+            case Configuration::Menu::Temperature:
+                Climate::ResetValues(Configuration::Sensor::Temperature);
+                break;
 
-    else if (Input::GetPinState(Input::Inputs::Down))
-    {
-        Output::Blink(Output::LedY);
-        Display::ResetScreenSaver();
+            case Configuration::Menu::Humidity:
+                Climate::ResetValues(Configuration::Sensor::Humidity);
+                break;
 
-        if (Storage::GetConfigMode())
-        {
-            if (Display::GetMenu() != Configuration::Menus::Failsafe)
-                esp_restart();
+            case Configuration::Menu::AirPressure:
+                Climate::ResetValues(Configuration::Sensor::AirPressure);
+                break;
 
-            Failsafe::PopFailure();
-        }
+            case Configuration::Menu::GasResistance:
+                Climate::ResetValues(Configuration::Sensor::GasResistance);
+                break;
 
-        switch (Display::GetMenu())
-        {
-        case Configuration::Menus::Temperature:
-            Climate::ResetValues(Configuration::Sensors::Temperature);
-            break;
+            case Configuration::Menu::Altitude:
+                Climate::ResetValues(Configuration::Sensor::Altitude);
+                break;
 
-        case Configuration::Menus::Humidity:
-            Climate::ResetValues(Configuration::Sensors::Humidity);
-            break;
+            case Configuration::Menu::Loudness:
+                Sound::ResetLevels();
+                break;
 
-        case Configuration::Menus::AirPressure:
-            Climate::ResetValues(Configuration::Sensors::AirPressure);
-            break;
+                // case Menus::RPM:
+                //     RPM::ResetValues();
+                //     break;
+            case Configuration::Menu::Failsafe:
+                Failsafe::PopFailure();
 
-        case Configuration::Menus::GasResistance:
-            Climate::ResetValues(Configuration::Sensors::GasResistance);
-            break;
-
-        case Configuration::Menus::Altitude:
-            Climate::ResetValues(Configuration::Sensors::Altitude);
-            break;
-
-        case Configuration::Menus::Loudness:
-            Sound::ResetLevels();
-            break;
-
-            // case Menus::RPM:
-            //     RPM::ResetValues();
-            //     break;
-        case Configuration::Menus::Failsafe:
-            Failsafe::PopFailure();
-
-        default:
-            break;
+            default:
+                break;
+            }
         }
     }
 }

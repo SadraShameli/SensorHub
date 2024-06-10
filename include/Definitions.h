@@ -17,10 +17,7 @@ namespace Helpers
     {
     public:
         ProfileScope(const char *name) : m_Name(name), m_StartTime(esp_timer_get_time()), m_StartHeap(esp_get_free_heap_size()) {}
-        ~ProfileScope()
-        {
-            ESP_LOGI("Scope", "%s took %ld ms - heap before: %ld - heap after: %ld", m_Name, (long int)(esp_timer_get_time() - m_StartTime) / 1000, m_StartHeap, esp_get_free_heap_size());
-        }
+        ~ProfileScope() { ESP_LOGI("Scope", "%s took %ld ms - heap before: %ld - heap after: %ld", m_Name, (long int)(esp_timer_get_time() - m_StartTime) / 1000, m_StartHeap, esp_get_free_heap_size()); }
 
     private:
         const char *m_Name;
@@ -53,9 +50,11 @@ class Reading
 public:
     Reading() : m_Current(0), m_Min(std::numeric_limits<float>::max()), m_Max(std::numeric_limits<float>::min()) {}
     Reading(float current, float min, float max) : m_Current(current), m_Min(min), m_Max(max) {}
+
     float Current() const { return m_Current; }
     float Min() const { return m_Min; }
     float Max() const { return m_Max; }
+
     void Reset() { m_Min = m_Max = m_Current; }
     void Update(float current)
     {
