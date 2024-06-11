@@ -1,17 +1,17 @@
 #include <ctime>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "esp_timer.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "Configuration.h"
 #include "Storage.h"
 #include "Output.h"
 #include "Backend.h"
 #include "WiFi.h"
 #include "HTTP.h"
-#include "Network.h"
 #include "Display.h"
 #include "Sound.h"
+#include "Network.h"
 
 namespace Network
 {
@@ -22,7 +22,7 @@ namespace Network
 
     static void vTask(void *arg)
     {
-        ESP_LOGI(TAG, "Initializing task");
+        ESP_LOGI(TAG, "Initializing");
 
         if (Storage::GetConfigMode())
         {
@@ -38,7 +38,9 @@ namespace Network
         else
         {
             WiFi::StartStation();
-            HTTP::Init();
+
+            if (Storage::GetSensorState(Configuration::Sensor::Recording))
+                vTaskDelete(nullptr);
 
             registerInterval = Storage::GetRegisterInterval() * 1000;
 
@@ -63,7 +65,7 @@ namespace Network
 
         if (Backend::RegisterReadings())
         {
-            Sound::ResetLevels();
+            Sound::ResetValues();
             Output::Blink(Output::LedG, 1000);
         }
     }

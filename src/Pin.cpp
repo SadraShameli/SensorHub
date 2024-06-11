@@ -1,11 +1,10 @@
 #include <ctime>
 #include <vector>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "Configuration.h"
-#include "Pin.h"
 #include "Failsafe.h"
 #include "Storage.h"
 #include "Input.h"
@@ -13,6 +12,7 @@
 #include "Display.h"
 #include "Climate.h"
 #include "Sound.h"
+#include "Pin.h"
 
 namespace Pin
 {
@@ -23,7 +23,7 @@ namespace Pin
 
     static void vTask(void *arg)
     {
-        ESP_LOGI(TAG, "Initializing task");
+        ESP_LOGI(TAG, "Initializing");
 
         Input::Init();
         Output::Init();
@@ -46,6 +46,9 @@ namespace Pin
 
     void Update()
     {
+        using Menus = Configuration::Menu::Menus;
+        using Sensors = Configuration::Sensor::Sensors;
+
         if (Input::GetPinState(Input::Inputs::Up))
         {
             Output::Blink(Output::LedY);
@@ -55,7 +58,7 @@ namespace Pin
             {
                 while (!resetCanceled && clock() < 10000)
                 {
-                    Display::SetMenu(Configuration::Menu::Reset);
+                    Display::SetMenu(Menus::Reset);
                     Input::Update();
                     Output::Update();
 
@@ -76,7 +79,7 @@ namespace Pin
 
                 if (!resetCanceled)
                 {
-                    Display::SetMenu(Configuration::Menu::Main);
+                    Display::SetMenu(Menus::Main);
                     resetCanceled = true;
                 }
             }
@@ -91,7 +94,7 @@ namespace Pin
 
             if (Storage::GetConfigMode())
             {
-                if (Display::GetMenu() != Configuration::Menu::Failsafe)
+                if (Display::GetMenu() != Menus::Failsafe)
                     esp_restart();
 
                 Failsafe::PopFailure();
@@ -99,34 +102,36 @@ namespace Pin
 
             switch (Display::GetMenu())
             {
-            case Configuration::Menu::Temperature:
-                Climate::ResetValues(Configuration::Sensor::Temperature);
+            case Menus::Temperature:
+                Climate::ResetValues(Sensors::Temperature);
                 break;
 
-            case Configuration::Menu::Humidity:
-                Climate::ResetValues(Configuration::Sensor::Humidity);
+            case Menus::Humidity:
+                Climate::ResetValues(Sensors::Humidity);
                 break;
 
-            case Configuration::Menu::AirPressure:
-                Climate::ResetValues(Configuration::Sensor::AirPressure);
+            case Menus::AirPressure:
+                Climate::ResetValues(Sensors::AirPressure);
                 break;
 
-            case Configuration::Menu::GasResistance:
-                Climate::ResetValues(Configuration::Sensor::GasResistance);
+            case Menus::GasResistance:
+                Climate::ResetValues(Sensors::GasResistance);
                 break;
 
-            case Configuration::Menu::Altitude:
-                Climate::ResetValues(Configuration::Sensor::Altitude);
+            case Menus::Altitude:
+                Climate::ResetValues(Sensors::Altitude);
                 break;
 
-            case Configuration::Menu::Loudness:
-                Sound::ResetLevels();
+            case Menus::Loudness:
+            case Menus::Recording:
+                Sound::ResetValues();
                 break;
 
                 // case Menus::RPM:
                 //     RPM::ResetValues();
                 //     break;
-            case Configuration::Menu::Failsafe:
+
+            case Menus::Failsafe:
                 Failsafe::PopFailure();
 
             default:

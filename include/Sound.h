@@ -5,13 +5,13 @@ namespace Sound
 {
     void Init();
     void Update();
-    void UpdateRecording();
 
-    double ReadLoudness();
+    void UpdateRecording();
     bool UpdateLoudness();
     void RegisterRecordings();
+    float CalculateLoudness();
 
     bool IsOK();
-    void ResetLevels();
+    void ResetValues();
     const Reading &GetLoudness();
 };

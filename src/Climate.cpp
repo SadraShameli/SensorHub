@@ -4,9 +4,9 @@
 #include "driver/i2c.h"
 #include "esp_log.h"
 #include "bme680.h"
-#include "Climate.h"
 #include "Failsafe.h"
 #include "Gui.h"
+#include "Climate.h"
 
 namespace Climate
 {
@@ -31,7 +31,7 @@ namespace Climate
 
     static void vTask(void *arg)
     {
-        ESP_LOGI(TAG, "Initializing task");
+        ESP_LOGI(TAG, "Initializing");
 
         dev = bme680_init_sensor(I2C_NUM_0, BME680_I2C_ADDRESS_2, 0);
         if (!dev)
@@ -77,6 +77,7 @@ namespace Climate
             vTaskDelay(duration);
             if (bme680_get_results_float(dev, &values))
             {
+                isOK = true;
                 temperature.Update(values.temperature + Constants::TemperatureOffset);
                 humidity.Update(values.humidity + Constants::HumidityOffset);
 

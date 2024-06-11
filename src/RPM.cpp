@@ -1,6 +1,6 @@
 #include <algorithm>
-#include "esp_timer.h"
 #include "driver/gpio.h"
+#include "esp_timer.h"
 #include "RPM.h"
 
 namespace RPM

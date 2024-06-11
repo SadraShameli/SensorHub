@@ -1,7 +1,7 @@
-#include "esp_log.h"
-#include "esp_mac.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "esp_log.h"
+#include "esp_mac.h"
 #include "esp_spiffs.h"
 #include "Configuration.h"
 #include "Failsafe.h"
@@ -40,16 +40,17 @@ namespace Storage
 
     void Init()
     {
+        ESP_LOGI(TAG, "Initializing");
+
         size_t required_size = 0;
         storageData.ConfigMode = true;
 
         CalculateMask();
-        ESP_LOGI(TAG, "Initializing NVS storage");
 
         esp_err_t err = nvs_flash_init();
         if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
         {
-            ESP_LOGI(TAG, "NVS initialization failed");
+            ESP_LOGI(TAG, "Initialization failed");
             ESP_ERROR_CHECK(nvs_flash_erase());
             err = nvs_flash_init();
         }
@@ -57,11 +58,11 @@ namespace Storage
         ESP_ERROR_CHECK(err);
         ESP_ERROR_CHECK(nvs_open(TAG, NVS_READWRITE, &nvsHandle));
 
-        ESP_LOGI(TAG, "Getting NVS storage saved data");
-        nvs_get_blob(nvsHandle, TAG, nullptr, &required_size);
-        nvs_get_blob(nvsHandle, TAG, &storageData, &required_size);
+        ESP_LOGI(TAG, "Reading data");
+        ESP_ERROR_CHECK(nvs_get_blob(nvsHandle, TAG, nullptr, &required_size));
+        ESP_ERROR_CHECK(nvs_get_blob(nvsHandle, TAG, &storageData, &required_size));
 
-        ESP_LOGI(TAG, "Config Mode: %s", storageData.ConfigMode == true ? "true" : "false");
+        ESP_LOGI(TAG, "Config mode: %s", storageData.ConfigMode == true ? "true" : "false");
         if (!storageData.ConfigMode)
         {
             ssid.reserve(Constants::SSIDLength);
@@ -89,9 +90,7 @@ namespace Storage
             ESP_LOGI(TAG, "Register Interval: %ld", storageData.RegisterInterval);
 
             for (int i = 0; i < (Configuration::Sensor::SensorCount - 1); i++)
-            {
                 ESP_LOGI(TAG, "Sensor %d - state: %s", i + 1, storageData.Sensors[i] ? "enabled" : "disabled");
-            }
         }
     }
 
@@ -147,18 +146,16 @@ namespace Storage
         ESP_LOGI(TAG, "Register Interval: %ld", storageData.RegisterInterval);
 
         for (int i = 0; i < (Configuration::Sensor::SensorCount - 1); i++)
-        {
             ESP_LOGI(TAG, "Sensor %d - state: %s", i + 1, storageData.Sensors[i] ? "enabled" : "disabled");
-        }
 
-        ESP_LOGI(TAG, "Saving to storage blob");
+        ESP_LOGI(TAG, "Saving data");
         ESP_ERROR_CHECK(nvs_set_blob(nvsHandle, TAG, &storageData, sizeof(StorageData)));
         ESP_ERROR_CHECK(nvs_commit(nvsHandle));
     }
 
     void Reset()
     {
-        ESP_LOGI(TAG, "Resetting storage blob");
+        ESP_LOGI(TAG, "Resetting data");
 
         storageData = {0};
         storageData.ConfigMode = true;
@@ -169,7 +166,7 @@ namespace Storage
 
     void Mount(const char *base_path, const char *partition_label)
     {
-        ESP_LOGI(TAG, "Mounting partition %s with base path: %s", base_path, partition_label);
+        ESP_LOGI(TAG, "Mounting partition %s - base path: %s", base_path, partition_label);
 
         esp_vfs_spiffs_conf_t storage_config = {
             .base_path = base_path,
@@ -177,28 +174,22 @@ namespace Storage
             .max_files = 5,
             .format_if_mount_failed = true,
         };
-
         ESP_ERROR_CHECK(esp_vfs_spiffs_register(&storage_config));
 
 #ifdef UNIT_DEBUG
-        ESP_LOGI(TAG, "Performing SPIFFS check");
-
+        ESP_LOGI(TAG, "Performing check");
         ESP_ERROR_CHECK(esp_spiffs_check(partition_label));
-
-        ESP_LOGI(TAG, "SPIFFS Check successful");
 #endif
 
         size_t total = 0, used = 0;
         esp_err_t err = esp_spiffs_info(storage_config.partition_label, &total, &used);
-
         if (err != ESP_OK)
         {
             ESP_LOGE(TAG, "Getting partition information failed: %s - formatting", esp_err_to_name(err));
-            esp_spiffs_format(storage_config.partition_label);
+            err = esp_spiffs_format(storage_config.partition_label);
             ESP_ERROR_CHECK(err);
         }
-
-        ESP_LOGI(TAG, "Partition info: Total: %u - used: %u", total, used);
+        ESP_LOGI(TAG, "Partition info: total: %u - used: %u", total, used);
     }
 
     void CalculateMask()
@@ -217,7 +208,6 @@ namespace Storage
         } mac = {0};
 
         ESP_ERROR_CHECK(esp_efuse_mac_get_default(mac.ArrayRepresentation));
-
         mask2 = mac.NumberRepresentation;
 
         for (int i = 10 - 1; i >= 0; i--)
@@ -247,20 +237,15 @@ namespace Storage
 
     void EncryptText(uint32_t *var, const std::string &str)
     {
-        for (const char &c : str)
-        {
+        for (const char c : str)
             *(var++) = c ^ encryptionMask;
-        }
     }
 
     void DecryptText(uint32_t *var, std::string &str)
     {
         str.clear();
-
         while (*var)
-        {
             str.push_back(*(var++) ^ encryptionMask);
-        }
     }
 
     const std::string &GetSSID() { return ssid; }

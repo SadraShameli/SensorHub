@@ -1,13 +1,14 @@
 #include <ctime>
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
 #include "ssd1306.h"
-#include "Display.h"
 #include "Configuration.h"
 #include "WiFi.h"
 #include "Gui.h"
 #include "Storage.h"
 #include "Climate.h"
 #include "Sound.h"
+#include "Display.h"
 
 namespace Display
 {
@@ -22,11 +23,11 @@ namespace Display
 
     static Configuration::Menu::Menus currentMenu = Configuration::Menu::Main;
     static clock_t currentTime = 0, prevTime = 0;
-    static bool displayOff = false;
+    static bool displayOff = false, isOK = false;
 
     void Init()
     {
-        ESP_LOGI(TAG, "Initializing task");
+        ESP_LOGI(TAG, "Initializing");
 
         i2c_config_t conf = {
             .mode = I2C_MODE_MASTER,
@@ -39,10 +40,18 @@ namespace Display
             },
         };
 
-        i2c_param_config(I2C_NUM_0, &conf);
-        i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0);
+        ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_0, &conf));
+        ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0));
 
         dev = ssd1306_create(I2C_NUM_0, 0x3c);
+        if (!dev)
+        {
+            ESP_LOGI(TAG, "No display detected");
+            vTaskDelete(nullptr);
+        }
+
+        isOK = true;
+
         Clear();
 
         Print(35, 20, ">_sadra.");
@@ -73,7 +82,7 @@ namespace Display
 
     void ResetScreenSaver()
     {
-        if (!displayOff || Storage::GetSensorState(Configuration::Sensor::Recording))
+        if (!displayOff)
             return;
 
         prevTime = clock();
@@ -120,25 +129,25 @@ namespace Display
 
         Print(0, 0, deviceName.c_str());
 
+        if (WiFi::IsConnected())
+            Print(0, 13, ("IP: " + ip).c_str());
+        else
+            Print(0, 13, "Connecting to WiFi");
+
         if (Climate::IsOK())
         {
             sprintf(buff, "Temperature: %dc", (int)temperature.Current());
-            Print(0, 13, buff);
+            Print(0, 26, buff);
 
             sprintf(buff, "Humidity: %d%%", (int)humidity.Current());
-            Print(0, 26, buff);
+            Print(0, 39, buff);
         }
 
         if (Sound::IsOK())
         {
             sprintf(buff, "Loudness: %ddB", (int)loudness.Current());
-            Print(0, 39, buff);
+            Print(0, 52, buff);
         }
-
-        if (WiFi::IsConnected())
-            Print(0, 52, ("IP:" + ip).c_str());
-        else
-            Print(0, 52, "Connecting to WiFi");
 
         Refresh();
     }
@@ -313,10 +322,8 @@ namespace Display
 
     void NextMenu()
     {
-        if (Storage::GetSensorState(Configuration::Sensor::Recording))
-            return;
-
         using Menus = Configuration::Menu::Menus;
+        using Sensors = Configuration::Sensor::Sensors;
 
         if (Storage::GetConfigMode())
         {
@@ -365,15 +372,15 @@ namespace Display
             default:
                 for (int i = currentMenu + 1; i < Menus::Failsafe; i++)
                 {
-                    if (Storage::GetSensorState((Configuration::Sensor::Sensors)i))
+                    if (Storage::GetSensorState((Sensors)i))
                     {
-                        if (i >= Configuration::Sensor::Temperature && i <= Configuration::Sensor::Altitude && Climate::IsOK())
+                        if (Climate::IsOK() && (i >= Sensors::Temperature && i <= Sensors::Altitude))
                         {
                             currentMenu = (Menus)i;
                             return;
                         }
 
-                        if (i == Configuration::Sensor::Loudness && Sound::IsOK())
+                        if (Sound::IsOK() && (i >= Sensors::Loudness || i <= Sensors::Recording))
                         {
                             currentMenu = (Menus)i;
                             return;
@@ -386,6 +393,11 @@ namespace Display
         }
     }
 
+    bool IsOK() { return isOK; }
     Configuration::Menu::Menus GetMenu() { return currentMenu; }
-    void SetMenu(Configuration::Menu::Menus menu) { currentMenu = menu; }
+    void SetMenu(Configuration::Menu::Menus menu)
+    {
+        currentMenu = menu;
+        ResetScreenSaver();
+    }
 }

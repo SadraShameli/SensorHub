@@ -8,17 +8,17 @@
 #include "Storage.h"
 #include "Failsafe.h"
 #include "Output.h"
-#include "WiFi.h"
 #include "HTTP.h"
 #include "Network.h"
+#include "WiFi.h"
 
 namespace WiFi
 {
     static const char *TAG = "WiFi";
-    static esp_netif_t *sta_netif, *ap_netif;
+    static esp_netif_t *sta_netif = nullptr, *ap_netif = nullptr;
+    static EventGroupHandle_t wifi_event_group = nullptr;
     static wifi_mode_t wifi_mode;
     static EventBits_t event_bits;
-    static EventGroupHandle_t wifi_event_group;
 
     static std::string ipAddress, macAddress;
     static int retryAttempts = 0;
@@ -31,19 +31,18 @@ namespace WiFi
             if (event_id == WIFI_EVENT_AP_STACONNECTED)
             {
                 wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *)event_data;
-                ESP_LOGI(TAG, "Station " MACSTR " connected, AID=%d", MAC2STR(event->mac), event->aid);
+                ESP_LOGI(TAG, "Station " MACSTR " connected - aid: %d", MAC2STR(event->mac), event->aid);
             }
 
             else if (event_id == WIFI_EVENT_AP_STADISCONNECTED)
             {
                 wifi_event_ap_stadisconnected_t *event = (wifi_event_ap_stadisconnected_t *)event_data;
-                ESP_LOGI(TAG, "Station " MACSTR " disconnected, AID=%d", MAC2STR(event->mac), event->aid);
+                ESP_LOGI(TAG, "Station " MACSTR " disconnected - aid: %d", MAC2STR(event->mac), event->aid);
             }
 
             if (event_id == WIFI_EVENT_STA_START)
             {
-                esp_wifi_connect();
-
+                ESP_ERROR_CHECK(esp_wifi_connect());
                 Output::Blink(Output::LedY, 250, true);
             }
 
@@ -66,7 +65,7 @@ namespace WiFi
 
                 if (retryAttempts < Constants::MaxRetries)
                 {
-                    esp_wifi_connect();
+                    ESP_ERROR_CHECK(esp_wifi_connect());
                     retryAttempts++;
                     ESP_LOGI(TAG, "retrying to connect to AP");
                 }
@@ -107,36 +106,24 @@ namespace WiFi
     {
         SetMacAddress();
 
-        esp_netif_init();
-        esp_event_loop_create_default();
-
+        ESP_ERROR_CHECK(esp_netif_init());
+        ESP_ERROR_CHECK(esp_event_loop_create_default());
         wifi_event_group = xEventGroupCreate();
-        configASSERT(wifi_event_group);
 
         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-        esp_wifi_init(&cfg);
-        esp_wifi_set_storage(WIFI_STORAGE_RAM);
+        ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+        ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 
-        esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, nullptr, nullptr);
-        esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, nullptr, nullptr);
+        ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, nullptr, nullptr));
+        ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, nullptr, nullptr));
 
         sta_netif = esp_netif_create_default_wifi_sta();
-        esp_err_t err = esp_netif_set_hostname(sta_netif, Configuration::WiFi::SSID);
-
-        if (err != ESP_OK)
-        {
-            ESP_LOGE(TAG, "Setting wifi hostname failed");
-        }
+        ESP_ERROR_CHECK(esp_netif_set_hostname(sta_netif, Configuration::WiFi::SSID));
 
         if (Storage::GetConfigMode())
         {
             ap_netif = esp_netif_create_default_wifi_ap();
-            err = esp_netif_set_hostname(ap_netif, Configuration::WiFi::SSID);
-
-            if (err != ESP_OK)
-            {
-                ESP_LOGE(TAG, "Setting wifi hostname failed");
-            }
+            ESP_ERROR_CHECK(esp_netif_set_hostname(ap_netif, Configuration::WiFi::SSID));
         }
     }
 
@@ -155,9 +142,7 @@ namespace WiFi
         size_t passLength = strlen(Configuration::WiFi::Password);
 
         if (ssidLength <= 32)
-        {
             memcpy(wifi_config.ap.ssid, Configuration::WiFi::SSID, ssidLength);
-        }
 
         else
         {
@@ -173,24 +158,20 @@ namespace WiFi
         }
 
         else if (passLength != 0)
-        {
             Failsafe::AddFailure(TAG, "Password too long or too short");
-        }
 
         if (wifi_mode == WIFI_MODE_STA)
         {
             ESP_LOGI(TAG, "Wifi mode Station, switching to AP");
-
-            esp_wifi_disconnect();
-            esp_wifi_stop();
-            esp_wifi_set_mode(WIFI_MODE_NULL);
+            ESP_ERROR_CHECK(esp_wifi_disconnect());
+            ESP_ERROR_CHECK(esp_wifi_stop());
+            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
         }
 
         wifi_mode = WIFI_MODE_AP;
-
-        esp_wifi_set_mode(wifi_mode);
-        esp_wifi_set_config(WIFI_IF_AP, &wifi_config);
-        esp_wifi_start();
+        ESP_ERROR_CHECK(esp_wifi_set_mode(wifi_mode));
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
+        ESP_ERROR_CHECK(esp_wifi_start());
 
         HTTP::StartServer();
     }
@@ -206,9 +187,7 @@ namespace WiFi
         };
 
         if (Storage::GetSSID().length() <= 32)
-        {
             memcpy(wifi_config.sta.ssid, Storage::GetSSID().c_str(), Storage::GetSSID().length());
-        }
 
         else
         {
@@ -231,14 +210,14 @@ namespace WiFi
         if (wifi_mode == WIFI_MODE_AP)
         {
             ESP_LOGI(TAG, "Wifi mode AP, switching to Station");
-            esp_wifi_stop();
-            esp_wifi_set_mode(WIFI_MODE_NULL);
+            ESP_ERROR_CHECK(esp_wifi_stop());
+            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
         }
 
         wifi_mode = WIFI_MODE_STA;
-        esp_wifi_set_mode(wifi_mode);
-        esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
-        esp_wifi_start();
+        ESP_ERROR_CHECK(esp_wifi_set_mode(wifi_mode));
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+        ESP_ERROR_CHECK(esp_wifi_start());
     }
 
     bool IsConnected()
@@ -256,7 +235,7 @@ namespace WiFi
     {
         if (macAddress.empty())
         {
-            ESP_LOGI(TAG, "Reading Mac Address");
+            ESP_LOGI(TAG, "Reading mac");
 
             union
             {
@@ -264,24 +243,20 @@ namespace WiFi
                 uint8_t ArrayRepresentation[6];
             } mac = {0};
 
-            if (esp_efuse_mac_get_default(mac.ArrayRepresentation) != ESP_OK)
-            {
-                ESP_LOGE(TAG, "Reading mac from efuse failed");
-                return;
-            }
+            ESP_ERROR_CHECK(esp_efuse_mac_get_default(mac.ArrayRepresentation));
 
             char buffer[Constants::MACLength] = {0};
             snprintf(buffer, sizeof(buffer), MACSTR, MAC2STR(mac.ArrayRepresentation));
             macAddress = buffer;
 
-            ESP_LOGI(TAG, "Mac Address set: %s", buffer);
+            ESP_LOGI(TAG, "Mac set: %s", macAddress.c_str());
         }
     }
 
     const std::string &GetIPAP()
     {
         esp_netif_ip_info_t ip = {0};
-        esp_netif_get_ip_info(ap_netif, &ip);
+        ESP_ERROR_CHECK(esp_netif_get_ip_info(ap_netif, &ip));
 
         char buffer[4 * 4 + 1] = {0};
         snprintf(buffer, sizeof(buffer), IPSTR, IP2STR(&ip.ip));
@@ -295,11 +270,10 @@ namespace WiFi
         wifi_sta_list_t wifi_sta_list = {0};
         wifi_sta_mac_ip_list_t wifi_sta_ip_mac_list = {0};
 
-        esp_wifi_ap_get_sta_list(&wifi_sta_list);
-        esp_wifi_ap_get_sta_list_with_ip(&wifi_sta_list, &wifi_sta_ip_mac_list);
+        ESP_ERROR_CHECK(esp_wifi_ap_get_sta_list(&wifi_sta_list));
+        ESP_ERROR_CHECK(esp_wifi_ap_get_sta_list_with_ip(&wifi_sta_list, &wifi_sta_ip_mac_list));
 
         std::vector<ClientDetails> clientDetails(wifi_sta_ip_mac_list.num);
-
         for (int i = 0; i < wifi_sta_ip_mac_list.num; i++)
         {
             auto &station = wifi_sta_ip_mac_list.sta[i];

@@ -10,7 +10,6 @@ namespace Output
         gpio_num_t PinNum = GPIO_NUM_NC;
         clock_t UpdateTime = 0, Interval = 0;
         bool ContinuousMode = false, PinState = false;
-
         OutputPin(Outputs pin) : PinNum((gpio_num_t)pin) {}
     };
 
@@ -20,15 +19,13 @@ namespace Output
     {
         for (const auto &pin : outputPins)
         {
-            gpio_set_direction(pin.PinNum, GPIO_MODE_OUTPUT);
-            gpio_set_level(pin.PinNum, 1);
+            ESP_ERROR_CHECK(gpio_set_direction(pin.PinNum, GPIO_MODE_OUTPUT));
+            ESP_ERROR_CHECK(gpio_set_level(pin.PinNum, 1));
             vTaskDelay(pdMS_TO_TICKS(250));
         }
 
         for (const auto &pin : outputPins)
-        {
-            gpio_set_level(pin.PinNum, 0);
-        }
+            ESP_ERROR_CHECK(gpio_set_level(pin.PinNum, 0));
     }
 
     void Update()
@@ -44,21 +41,19 @@ namespace Output
                 if (pin.ContinuousMode)
                 {
                     pin.PinState = !pin.PinState;
-                    gpio_set_level(pin.PinNum, pin.PinState);
+                    ESP_ERROR_CHECK(gpio_set_level(pin.PinNum, pin.PinState));
                 }
 
                 else
                 {
                     if (pin.PinState)
                     {
-                        gpio_set_level(pin.PinNum, 1);
+                        ESP_ERROR_CHECK(gpio_set_level(pin.PinNum, 1));
                         pin.PinState = false;
                     }
 
                     else
-                    {
-                        gpio_set_level(pin.PinNum, 0);
-                    }
+                        ESP_ERROR_CHECK(gpio_set_level(pin.PinNum, 0));
                 }
             }
         }
@@ -71,7 +66,7 @@ namespace Output
             if ((Outputs)pin.PinNum == pinNumber)
             {
                 pin.Interval = ULONG_MAX;
-                gpio_set_level(pin.PinNum, targetPinState);
+                ESP_ERROR_CHECK(gpio_set_level(pin.PinNum, targetPinState));
                 return;
             }
         }
@@ -92,9 +87,7 @@ namespace Output
                 pin.ContinuousMode = continuousModeBlinking;
 
                 if (!continuousModeBlinking)
-                {
                     pin.PinState = true;
-                }
 
                 return;
             }

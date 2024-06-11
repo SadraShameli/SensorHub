@@ -1,11 +1,11 @@
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "esp_log.h"
 #include "Configuration.h"
-#include "Failsafe.h"
 #include "Output.h"
 #include "Display.h"
+#include "Failsafe.h"
 
 namespace Failsafe
 {
@@ -16,12 +16,10 @@ namespace Failsafe
 
     static void vTask(void *arg)
     {
-        ESP_LOGI(TAG, "Initializing task");
+        ESP_LOGI(TAG, "Initializing");
 
         for (;;)
-        {
             Update();
-        }
 
         vTaskDelete(nullptr);
     }

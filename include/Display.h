@@ -26,6 +26,8 @@ namespace Display
     //  void PrintRPM();
 
     void NextMenu();
+
+    bool IsOK();
     Configuration::Menu::Menus GetMenu();
     void SetMenu(Configuration::Menu::Menus);
 };

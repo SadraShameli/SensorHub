@@ -1,11 +1,13 @@
 #pragma once
+#include <cmath>
+#include "esp_heap_caps.h"
 
 namespace Sound
 {
     class WaveHeader
     {
     public:
-        WaveHeader(uint32_t sampleRate, uint16_t sampleBitrate, uint16_t channelCount, uint32_t duration)
+        WaveHeader(uint32_t sampleRate, uint32_t sampleBitrate, uint32_t duration, uint32_t channelCount)
         {
             SampleRate = sampleRate;
             BitsPerSample = sampleBitrate * channelCount;
@@ -33,16 +35,22 @@ namespace Sound
     class AudioFile
     {
     public:
-        AudioFile(uint32_t sampleRate, uint32_t sampleBitrate, uint32_t bufferTime, uint32_t duration) : Header(sampleRate, sampleBitrate, 1, duration)
+        AudioFile(uint32_t sampleRate, uint32_t sampleBitrate, uint32_t bufferTime, uint32_t duration, uint32_t channelCount = 1) : Header(sampleRate, sampleBitrate, channelCount, duration)
         {
             BufferCount = sampleRate * bufferTime / 1000;
             BufferLength = BufferCount * 16 / 8;
             TotalLength = Header.DataLength + sizeof(WaveHeader);
-            Buffer = new uint8_t[BufferLength]();
+            DMA_FrameNum = 4092 / (sampleBitrate * channelCount / 8);
+            DMA_DescNum = std::ceil((float)bufferTime / 3 / ((float)DMA_FrameNum / sampleRate * 1000));
+            Buffer = (uint8_t *)heap_caps_aligned_calloc(sampleBitrate, 1, BufferLength, MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
+            assert(Buffer);
+
+            ESP_LOGE("TAG", "%ld %ld", DMA_FrameNum, DMA_DescNum);
         }
 
         uint8_t *Buffer;
         WaveHeader Header;
         uint32_t BufferCount, BufferLength, TotalLength;
+        uint32_t DMA_DescNum = 0, DMA_FrameNum = 0;
     };
 }

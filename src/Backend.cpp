@@ -1,7 +1,6 @@
 #include "freertos/FreeRTOS.h"
 #include "ArduinoJson.h"
 #include "Definitions.h"
-#include "Backend.h"
 #include "Configuration.h"
 #include "Failsafe.h"
 #include "Storage.h"
@@ -10,6 +9,7 @@
 #include "Network.h"
 #include "Climate.h"
 #include "Sound.h"
+#include "Backend.h"
 
 namespace Backend
 {
@@ -111,7 +111,7 @@ namespace Backend
 
     void GetConfiguration()
     {
-        ESP_LOGI(TAG, "Getting configuration");
+        ESP_LOGI(TAG, "Fetching configuration");
 
         HTTP::Request request(Storage::GetAddress() + DeviceURL + std::to_string(Storage::GetDeviceId()));
         if (request.GET())
@@ -139,7 +139,7 @@ namespace Backend
             esp_restart();
         }
 
-        ESP_LOGE(TAG, "Getting configuration failed");
+        ESP_LOGE(TAG, "Fetching configuration failed");
     }
 
     bool RegisterReadings()
@@ -174,10 +174,7 @@ namespace Backend
             if (Sound::IsOK())
             {
                 if (Storage::GetSensorState(Sensors::Loudness))
-                {
                     sensors[std::to_string(Sensors::Loudness)] = (int)Sound::GetLoudness().Max();
-                    Sound::ResetLevels();
-                }
             }
 
             // if (Storage::GetSensorState(Sensors::RPM))

@@ -38,27 +38,18 @@ namespace HTTP
         size_t pathlen = strlen(uri);
 
         const char *quest = strchr(uri, '?');
-
         if (quest)
-        {
             pathlen = MIN(pathlen, quest - uri);
-        }
 
         const char *hash = strchr(uri, '#');
-
         if (hash)
-        {
             pathlen = MIN(pathlen, hash - uri);
-        }
 
         if (base_pathlen + pathlen + 1 > destsize)
-        {
             return nullptr;
-        }
 
         strcpy(dest, base_path);
         strlcpy(dest + base_pathlen, uri, pathlen + 1);
-
         return dest + base_pathlen;
     }
 
@@ -71,15 +62,14 @@ namespace HTTP
         struct stat entry_stat;
 
         DIR *dir = opendir(dirpath);
-        const size_t dirpath_len = strlen(dirpath);
-
-        strlcpy(entrypath, dirpath, sizeof(entrypath));
-
         if (!dir)
         {
             httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "Directory does not exist");
             return ESP_FAIL;
         }
+
+        const size_t dirpath_len = strlen(dirpath);
+        strlcpy(entrypath, dirpath, sizeof(entrypath));
 
         extern const char upload_script_start[] asm(FILE_PATH "index_html_start");
         extern const char upload_script_end[] asm(FILE_PATH "index_html_end");
@@ -90,12 +80,8 @@ namespace HTTP
         while ((entry = readdir(dir)) != nullptr)
         {
             strlcpy(entrypath + dirpath_len, entry->d_name, sizeof(entrypath) - dirpath_len);
-
             if (stat(entrypath, &entry_stat) == -1)
-            {
                 continue;
-            }
-
             sprintf(entrysize, "%ld", entry_stat.st_size);
         }
 
@@ -108,7 +94,6 @@ namespace HTTP
         httpd_resp_set_status(req, "307 Temporary Redirect");
         httpd_resp_set_hdr(req, "Location", "/");
         httpd_resp_send(req, nullptr, 0);
-
         return ESP_OK;
     }
 
@@ -118,29 +103,19 @@ namespace HTTP
     static esp_err_t set_content_type_from_file(httpd_req_t *req, const char *filename)
     {
         if (IS_FILE_EXT(filename, ".pdf"))
-        {
             return httpd_resp_set_type(req, "application/pdf");
-        }
 
         else if (IS_FILE_EXT(filename, ".html"))
-        {
             return httpd_resp_set_type(req, "text/html");
-        }
 
         else if (IS_FILE_EXT(filename, ".jpeg"))
-        {
             return httpd_resp_set_type(req, "image/jpeg");
-        }
 
         else if (IS_FILE_EXT(filename, ".png"))
-        {
             return httpd_resp_set_type(req, "image/png");
-        }
 
         else if (IS_FILE_EXT(filename, ".ico"))
-        {
             return httpd_resp_set_type(req, "image/x-icon");
-        }
 
         return httpd_resp_set_type(req, "text/plain");
     }
@@ -166,7 +141,6 @@ namespace HTTP
         struct stat file_stat;
 
         const char *filename = get_path_from_uri(filepath, ((struct file_server_data *)req->user_ctx)->base_path, req->uri, sizeof(filepath));
-
         if (!filename)
         {
             httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Filename too long");
@@ -174,34 +148,25 @@ namespace HTTP
         }
 
         if (filename[strlen(filename) - 1] == '/')
-        {
             return http_resp_dir_html(req, filepath);
-        }
 
         if (stat(filepath, &file_stat) == -1)
         {
             if (strcmp(filename, "/index.html") == 0)
-            {
                 return index_html_get_handler(req);
-            }
 
 #ifndef UNIT_DISABLE_FAVICON
             else if (strcmp(filename, "/favicon.ico") == 0)
-            {
                 return favicon_get_handler(req);
-            }
 #endif
             httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "File does not exist");
-
             return ESP_FAIL;
         }
 
         fd = fopen(filepath, "r");
-
         if (!fd)
         {
             httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Reading existing file failed");
-
             return ESP_FAIL;
         }
 
@@ -221,7 +186,6 @@ namespace HTTP
                     fclose(fd);
                     httpd_resp_sendstr_chunk(req, nullptr);
                     httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Sending file failed");
-
                     return ESP_FAIL;
                 }
             }
@@ -229,7 +193,6 @@ namespace HTTP
         } while (chunksize != 0);
 
         fclose(fd);
-
         httpd_resp_send_chunk(req, nullptr, 0);
         return ESP_OK;
     }
@@ -244,20 +207,14 @@ namespace HTTP
             if ((ret = httpd_req_recv(req, http_payload.data(), remaining)) <= 0)
             {
                 if (ret == HTTPD_SOCK_ERR_TIMEOUT)
-                {
                     continue;
-                }
-
                 return ESP_FAIL;
             }
-
             remaining -= ret;
         }
 
         httpd_resp_send_chunk(req, nullptr, 0);
-
         Backend::SetupConfiguration(http_payload);
-
         return ESP_OK;
     }
 
@@ -266,18 +223,15 @@ namespace HTTP
         ESP_LOGI(TAG, "Starting HTTP server on IP %s", WiFi::GetIPAP().c_str());
 
         static struct file_server_data *server_data = nullptr;
-
         if (!server_data)
         {
             Storage::Mount(FOLDER_PATH, PARTITION_NAME);
-
             server_data = (file_server_data *)calloc(1, sizeof(file_server_data));
             strlcpy(server_data->base_path, FOLDER_PATH, sizeof(server_data->base_path));
         }
 
         httpd_config_t config = HTTPD_DEFAULT_CONFIG();
         config.uri_match_fn = httpd_uri_match_wildcard;
-
         ESP_ERROR_CHECK(httpd_start(&s_Server, &config));
 
         httpd_uri_t file_download = {
@@ -286,26 +240,21 @@ namespace HTTP
             .handler = download_get_handler,
             .user_ctx = server_data,
         };
-
-        httpd_register_uri_handler(s_Server, &file_download);
+        ESP_ERROR_CHECK(httpd_register_uri_handler(s_Server, &file_download));
 
         httpd_uri_t config_download = {
-            .uri = "/*",
+            .uri = "/config",
             .method = HTTP_POST,
             .handler = config_handler,
             .user_ctx = server_data,
         };
-
-        httpd_register_uri_handler(s_Server, &config_download);
+        ESP_ERROR_CHECK(httpd_register_uri_handler(s_Server, &config_download));
     }
 
     void StopServer()
     {
         if (!s_Server)
-        {
             return;
-        }
-
         httpd_stop(s_Server);
     }
 }

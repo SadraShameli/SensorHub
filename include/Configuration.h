@@ -5,7 +5,6 @@ namespace Configuration
     namespace WiFi
     {
         static const char SSID[] = "Unit", Password[] = "";
-        extern const char ServerCrt[] asm("_binary_cer_crt_start");
     }
 
     namespace Sensor

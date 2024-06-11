@@ -1,16 +1,16 @@
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "esp_log.h"
 #include "Configuration.h"
 #include "Display.h"
-#include "Gui.h"
 #include "Failsafe.h"
 #include "Input.h"
 #include "Storage.h"
 #include "WiFi.h"
 #include "Climate.h"
 #include "Sound.h"
+#include "Gui.h"
 
 namespace Gui
 {
@@ -19,7 +19,7 @@ namespace Gui
 
     static void vTask(void *arg)
     {
-        ESP_LOGI(TAG, "Initializing task");
+        ESP_LOGI(TAG, "Initializing");
 
         Display::Init();
 
@@ -41,15 +41,15 @@ namespace Gui
 
     void Update()
     {
+        using Menus = Configuration::Menu::Menus;
+
         switch (Display::GetMenu())
         {
-        case Configuration::Menu::Main:
-        {
+        case Menus::Main:
             Display::PrintMain();
-            return;
-        }
+            break;
 
-        case Configuration::Menu::Failsafe:
+        case Menus::Failsafe:
         {
             const auto &failures = Failsafe::GetFailures();
             if (failures.empty())
@@ -59,75 +59,54 @@ namespace Gui
                 const auto &failure = failures.top();
                 Display::PrintText(("Failsafe: " + std::string(failure.Caller)).c_str(), failure.Message.c_str());
             }
-            return;
+            break;
         }
 
-        case Configuration::Menu::Config:
-        {
+        case Menus::Config:
             if (!Configuration::Notification::Get(Configuration::Notification::ConfigSet))
-                Display::PrintLines("Configuration", ("SSID: " + std::string(Configuration::WiFi::SSID)).c_str(), "Server IP:", WiFi::GetIPAP().c_str());
-            return;
-        }
+                Display::PrintLines("Configuration", ("SSID: " + std::string(Configuration::WiFi::SSID)).c_str(), "Server IP: ", WiFi::GetIPAP().c_str());
+            break;
 
-        case Configuration::Menu::ConfigConnecting:
-        {
+        case Menus::ConfigConnecting:
             Display::PrintLines("Configuration", ("Connecting to " + Storage::GetSSID()).c_str(), "", "");
-            return;
-        }
+            break;
 
-        case Configuration::Menu::ConfigConnected:
-        {
+        case Menus::ConfigConnected:
             Display::PrintLines("Configuration", ("Connected to " + Storage::GetSSID()).c_str(), "", "Retrieving data");
-            return;
-        }
+            break;
 
-        case Configuration::Menu::ConfigClients:
-        {
+        case Menus::ConfigClients:
             Display::PrintWiFiClients();
-            return;
-        }
+            break;
 
-        case Configuration::Menu::Reset:
-        {
+        case Menus::Reset:
             Display::PrintText("Configuration", "Press bottom button  to reset device");
-            return;
-        }
+            break;
 
         default:
-        {
             if (Climate::IsOK())
             {
                 switch (Display::GetMenu())
                 {
-                case Configuration::Menu::Temperature:
-                {
+                case Menus::Temperature:
                     Display::PrintTemperature();
-                    return;
-                }
+                    break;
 
-                case Configuration::Menu::Humidity:
-                {
+                case Menus::Humidity:
                     Display::PrintHumidity();
-                    return;
-                }
+                    break;
 
-                case Configuration::Menu::AirPressure:
-                {
+                case Menus::AirPressure:
                     Display::PrintAirPressure();
-                    return;
-                }
+                    break;
 
-                case Configuration::Menu::GasResistance:
-                {
+                case Menus::GasResistance:
                     Display::PrintGasResistance();
-                    return;
-                }
+                    break;
 
-                case Configuration::Menu::Altitude:
-                {
+                case Menus::Altitude:
                     Display::PrintAltitude();
-                    return;
-                }
+                    break;
 
                 default:
                     break;
@@ -136,15 +115,19 @@ namespace Gui
 
             if (Sound::IsOK())
             {
-                if (Display::GetMenu() == Configuration::Menu::Loudness)
+                switch (Display::GetMenu())
+                {
+                case Menus::Loudness:
+                case Menus::Recording:
                     Display::PrintLoudness();
+
+                default:
+                    break;
+                }
             }
 
-            // if (Display::GetMenu() == Configuration::Menu::RPM)
+            // if (Display::GetMenu() == Menus::RPM)
             //     Display::PrintRPM();
-
-            return;
-        }
         }
     }
 
