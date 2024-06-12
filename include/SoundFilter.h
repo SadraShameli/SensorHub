@@ -126,19 +126,6 @@ namespace Sound
         std::vector<DelayStates> m_DelayStates;
     };
 
-    void i2s_adc_data_scale(uint8_t *s_buff, uint8_t *d_buff, uint32_t len)
-    {
-        uint32_t j = 0;
-        uint32_t dac_value = 0;
-
-        for (int i = 0; i < len; i += 2)
-        {
-            dac_value = ((((uint16_t)(s_buff[i + 1] & 0xf) << 8) | ((s_buff[i + 0]))));
-            d_buff[j++] = 0;
-            d_buff[j++] = dac_value * 256 / 2048;
-        }
-    }
-
     inline static SoundFilter DC_Blocker = {
         1.0,
         {
@@ -170,4 +157,32 @@ namespace Sound
             {-2.0000000000000000, +1.0000000000000000, +0.3775800047420818, -0.035636575668043},
         },
     };
+
+    inline void NormalizeAudio(int16_t *samples, uint32_t count)
+    {
+        DC_Blocker.Filter(samples, samples, count);
+        INMP441.Filter(samples, samples, count);
+
+        int16_t max = 0;
+        for (uint32_t i = 0; i < count; i++)
+            if (std::abs(samples[i]) > max)
+                max = samples[i];
+
+        float scaleFactor = 32767.0f / max;
+        for (uint32_t i = 0; i < count; i++)
+            samples[i] = (int16_t)(samples[i] * scaleFactor);
+    }
+
+    inline void NormalizeAudio(uint8_t *s_buff, uint8_t *d_buff, uint32_t len)
+    {
+        uint32_t j = 0;
+        uint32_t dac_value = 0;
+
+        for (int i = 0; i < len; i += 2)
+        {
+            dac_value = ((((uint16_t)(s_buff[i + 1] & 0xf) << 8) | ((s_buff[i + 0]))));
+            d_buff[j++] = 0;
+            d_buff[j++] = dac_value * 256 / 2048;
+        }
+    }
 }

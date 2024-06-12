@@ -2,10 +2,10 @@
 #include "Configuration.h"
 #include "Failsafe.h"
 #include "Storage.h"
+#include "Pin.h"
+#include "Gui.h"
 #include "WiFi.h"
 #include "Network.h"
-#include "Gui.h"
-#include "Pin.h"
 #include "Sound.h"
 #include "Climate.h"
 
@@ -15,10 +15,10 @@ extern "C" void app_main()
 
   Failsafe::Init();
   Storage::Init();
+  Pin::Init();
+  Gui::Init();
   WiFi::Init();
   Network::Init();
-  Gui::Init();
-  Pin::Init();
 
   if (Storage::GetConfigMode())
     return;

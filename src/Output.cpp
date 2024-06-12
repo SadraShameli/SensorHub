@@ -24,6 +24,8 @@ namespace Output
             vTaskDelay(pdMS_TO_TICKS(250));
         }
 
+        vTaskDelay(pdMS_TO_TICKS(250));
+
         for (const auto &pin : outputPins)
             ESP_ERROR_CHECK(gpio_set_level(pin.PinNum, 0));
     }

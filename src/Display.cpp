@@ -136,17 +136,26 @@ namespace Display
 
         if (Climate::IsOK())
         {
-            sprintf(buff, "Temperature: %dc", (int)temperature.Current());
-            Print(0, 26, buff);
+            if (Storage::GetSensorState(Configuration::Sensor::Temperature))
+            {
+                sprintf(buff, "Temperature: %dc", (int)temperature.Current());
+                Print(0, 26, buff);
+            }
 
-            sprintf(buff, "Humidity: %d%%", (int)humidity.Current());
-            Print(0, 39, buff);
+            if (Storage::GetSensorState(Configuration::Sensor::Humidity))
+            {
+                sprintf(buff, "Humidity: %d%%", (int)humidity.Current());
+                Print(0, 39, buff);
+            }
         }
 
         if (Sound::IsOK())
         {
-            sprintf(buff, "Loudness: %ddB", (int)loudness.Current());
-            Print(0, 52, buff);
+            if (Storage::GetSensorState(Configuration::Sensor::Recording ) || Storage::GetSensorState(Configuration::Sensor::Loudness))
+            {
+                sprintf(buff, "Loudness: %ddB", (int)loudness.Current());
+                Print(0, 52, buff);
+            }
         }
 
         Refresh();

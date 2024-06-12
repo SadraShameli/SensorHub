@@ -4,11 +4,9 @@
 #include "esp_log.h"
 #include "WavFormat.h"
 #include "SoundFilter.h"
-#include "Configuration.h"
 #include "Backend.h"
 #include "Definitions.h"
 #include "Failsafe.h"
-#include "Storage.h"
 #include "Output.h"
 #include "Display.h"
 #include "WiFi.h"
@@ -62,13 +60,16 @@ namespace Sound
         {
             audio = new AudioFile(16000, 16, 125, 0);
             assert(audio);
+
+            transferLength = audio->BufferLength;
+            transferCount = audio->BufferCount;
         }
 
         const i2s_std_config_t i2s_config = {
             .clk_cfg = {
                 .sample_rate_hz = audio->Header.SampleRate,
                 .clk_src = I2S_CLK_SRC_APLL,
-                .mclk_multiple = I2S_MCLK_MULTIPLE_256,
+                .mclk_multiple = I2S_MCLK_MULTIPLE_512,
             },
             .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO),
             .gpio_cfg = {
@@ -96,8 +97,13 @@ namespace Sound
         ESP_ERROR_CHECK(i2s_channel_init_std_mode(i2sHandle, &i2s_config));
         ESP_ERROR_CHECK(i2s_channel_enable(i2sHandle));
 
-        for (int i = 0; i < 4; i++)
-            ESP_ERROR_CHECK(i2s_channel_read(i2sHandle, audio->Buffer, transferLength, nullptr, portMAX_DELAY));
+        if (Storage::GetSensorState(Configuration::Sensor::Recording))
+            for (int i = 0; i < 4; i++)
+                ESP_ERROR_CHECK(i2s_channel_read(i2sHandle, audio->Buffer, transferLength, nullptr, portMAX_DELAY));
+
+        else
+            for (int i = 0; i < 6; i++)
+                ESP_ERROR_CHECK(i2s_channel_read(i2sHandle, audio->Buffer, transferLength, nullptr, portMAX_DELAY));
 
         double rms = SoundFilter::CalculateRMS((int16_t *)audio->Buffer, transferCount);
         double decibel = 20.0f * log10(rms / Constants::Amplitude) + Constants::RefDB + Constants::OffsetDB;
@@ -150,6 +156,7 @@ namespace Sound
 
             Output::Blink(Output::LedG, 250, true);
             RegisterRecordings();
+            esp_http_client_close(httpClient);
             Output::SetContinuity(Output::LedG, false);
         }
     }
@@ -178,30 +185,26 @@ namespace Sound
         if (length < 0)
         {
             Failsafe::AddFailure(TAG, "Writing wav header failed");
-            esp_http_client_close(httpClient);
             return;
         }
 
-        i2s_adc_data_scale(audio->Buffer, audio->Buffer, audio->BufferLength);
         for (size_t byte_count = 0; byte_count < audio->BufferLength; byte_count += transferLength)
         {
             length = esp_http_client_write(httpClient, (char *)audio->Buffer + byte_count, transferLength);
             if (length < 0)
             {
                 Failsafe::AddFailure(TAG, "Writing data failed");
-                esp_http_client_close(httpClient);
                 return;
             }
 
             else if (length < transferLength)
             {
                 Failsafe::AddFailure(TAG, "Writing data partially complete");
-                esp_http_client_close(httpClient);
                 return;
             }
         }
 
-        for (size_t byte_count = 0; byte_count < audio->Header.DataLength; byte_count += transferLength)
+        for (size_t byte_count = 0; byte_count < audio->Header.DataLength - audio->BufferLength; byte_count += transferLength)
         {
             i2s_channel_read(i2sHandle, audio->Buffer, transferLength, nullptr, portMAX_DELAY);
 
@@ -213,19 +216,16 @@ namespace Sound
                     loudness.Update((float)decibel);
             }
 
-            i2s_adc_data_scale(audio->Buffer, audio->Buffer, transferLength);
             length = esp_http_client_write(httpClient, (char *)audio->Buffer, transferLength);
             if (length < 0)
             {
                 Failsafe::AddFailure(TAG, "Writing data failed");
-                esp_http_client_close(httpClient);
                 return;
             }
 
             else if (length < transferLength)
             {
                 Failsafe::AddFailure(TAG, "Writing data partially complete");
-                esp_http_client_close(httpClient);
                 return;
             }
         }
@@ -234,7 +234,6 @@ namespace Sound
         if (length < 0)
         {
             Failsafe::AddFailure(TAG, "Fetching backend response failed");
-            esp_http_client_close(httpClient);
             return;
         }
 
@@ -254,14 +253,12 @@ namespace Sound
         else
         {
             Failsafe::AddFailure(TAG, "Error fetching data from backend - status code: " + statusCode);
-            esp_http_client_close(httpClient);
             return;
         }
 
         esp_http_client_read(httpClient, httpPayload.data(), httpPayload.capacity());
-        esp_http_client_close(httpClient);
-
-        Backend::CheckResponseFailed(httpPayload, statusCode);
+        if (!Backend::CheckResponseFailed(httpPayload, statusCode))
+            ResetValues();
     }
 
     float CalculateLoudness()

@@ -23,7 +23,7 @@ namespace Backend
     {
         if (HTTP::StatusOK(statusCode))
         {
-            ESP_LOGI(TAG, "Backend response ok - status code: %d", statusCode);
+            ESP_LOGI(TAG, "Backend response ok");
             return false;
         }
 
@@ -191,9 +191,7 @@ namespace Backend
 
             HTTP::Request request(Storage::GetAddress() + ReadingURL, payload);
             if (request.POST())
-            {
                 return true;
-            }
 
             Failsafe::AddFailure(TAG, "Registering readings failed");
         }

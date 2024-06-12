@@ -42,6 +42,7 @@ namespace Network
             if (Storage::GetSensorState(Configuration::Sensor::Recording))
                 vTaskDelete(nullptr);
 
+            HTTP::Init();
             registerInterval = Storage::GetRegisterInterval() * 1000;
 
             for (;;)
