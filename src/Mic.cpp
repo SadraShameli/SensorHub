@@ -2,17 +2,17 @@
 #include "esp_http_client.h"
 #include "esp_tls.h"
 #include "esp_log.h"
-#include "WavFormat.h"
-#include "SoundFilter.h"
+#include "Audio.h"
 #include "Backend.h"
 #include "Definitions.h"
 #include "Failsafe.h"
 #include "Output.h"
+#include "Storage.h"
 #include "Display.h"
 #include "WiFi.h"
-#include "Sound.h"
+#include "Mic.h"
 
-namespace Sound
+namespace Mic
 {
     namespace Constants
     {
@@ -26,11 +26,12 @@ namespace Sound
     static i2s_chan_handle_t i2sHandle;
     static esp_http_client_handle_t httpClient;
 
-    static AudioFile *audio;
+    static Audio *audio;
     static Reading loudness;
+    static bool isOK = false;
+
     static std::string address, httpPayload;
     static uint32_t transferLength = 0, transferCount = 0;
-    static bool isOK = false;
 
     static void vTask(void *arg)
     {
@@ -38,11 +39,10 @@ namespace Sound
 
         if (Storage::GetSensorState(Configuration::Sensor::Recording))
         {
-            audio = new AudioFile(48000, 16, 1000, 10);
-            assert(audio);
-
+            audio = new Audio(48000, 16, 1000, 10);
             transferLength = audio->BufferLength / 8;
             transferCount = transferLength / audio->Header.BytesPerSample;
+
             address = Storage::GetAddress() + Backend::RecordingURL + std::to_string(Storage::GetDeviceId());
             ESP_LOGI(TAG, "Recording register address: %s", address.c_str());
 
@@ -58,9 +58,7 @@ namespace Sound
 
         else
         {
-            audio = new AudioFile(16000, 16, 125, 0);
-            assert(audio);
-
+            audio = new Audio(16000, 16, 125, 0);
             transferLength = audio->BufferLength;
             transferCount = audio->BufferCount;
         }
@@ -100,12 +98,11 @@ namespace Sound
         if (Storage::GetSensorState(Configuration::Sensor::Recording))
             for (int i = 0; i < 4; i++)
                 ESP_ERROR_CHECK(i2s_channel_read(i2sHandle, audio->Buffer, transferLength, nullptr, portMAX_DELAY));
-
         else
             for (int i = 0; i < 6; i++)
                 ESP_ERROR_CHECK(i2s_channel_read(i2sHandle, audio->Buffer, transferLength, nullptr, portMAX_DELAY));
 
-        double rms = SoundFilter::CalculateRMS((int16_t *)audio->Buffer, transferCount);
+        double rms = CalculateRMS((int16_t *)audio->Buffer, transferCount);
         double decibel = 20.0f * log10(rms / Constants::Amplitude) + Constants::RefDB + Constants::OffsetDB;
         if (decibel > Constants::FloorDB && decibel < Constants::PeakDB)
         {
@@ -134,10 +131,7 @@ namespace Sound
         xTaskCreate(&vTask, TAG, 8192, nullptr, tskIDLE_PRIORITY + 4, &xHandle);
     }
 
-    void Update()
-    {
-        UpdateLoudness();
-    }
+    void Update() { UpdateLoudness(); }
 
     void UpdateRecording()
     {
@@ -150,7 +144,7 @@ namespace Sound
             esp_err_t err = esp_http_client_open(httpClient, audio->TotalLength);
             if (err != ESP_OK)
             {
-                Failsafe::AddFailure(TAG, "POST request failed: " + (err == ESP_ERR_HTTP_CONNECT ? "URL not found: " + address : esp_err_to_name(err)));
+                Failsafe::AddFailure(TAG, "POST request failed - " + (err == ESP_ERR_HTTP_CONNECT ? "URL not found: " + address : esp_err_to_name(err)));
                 return;
             }
 
@@ -164,6 +158,7 @@ namespace Sound
     bool UpdateLoudness()
     {
         i2s_channel_read(i2sHandle, audio->Buffer, audio->BufferLength, nullptr, portMAX_DELAY);
+
         double decibel = CalculateLoudness();
         if (!decibel)
         {
@@ -181,7 +176,7 @@ namespace Sound
 
     void RegisterRecordings()
     {
-        int length = esp_http_client_write(httpClient, (char *)&audio->Header, sizeof(WaveHeader));
+        int length = esp_http_client_write(httpClient, (char *)&audio->Header, sizeof(WavHeader));
         if (length < 0)
         {
             Failsafe::AddFailure(TAG, "Writing wav header failed");
@@ -210,7 +205,7 @@ namespace Sound
 
             if (Display::IsOK())
             {
-                double rms = SoundFilter::CalculateRMS((int16_t *)audio->Buffer, transferCount);
+                double rms = CalculateRMS((int16_t *)audio->Buffer, transferCount);
                 double decibel = 20.0f * log10(rms / Constants::Amplitude) + Constants::RefDB + Constants::OffsetDB;
                 if (decibel > Constants::FloorDB && decibel < Constants::PeakDB)
                     loudness.Update((float)decibel);
@@ -252,7 +247,7 @@ namespace Sound
 
         else
         {
-            Failsafe::AddFailure(TAG, "Error fetching data from backend - status code: " + statusCode);
+            Failsafe::AddFailure(TAG, "Status: " + std::to_string(statusCode) + " - empty response");
             return;
         }
 
@@ -263,10 +258,10 @@ namespace Sound
 
     float CalculateLoudness()
     {
-        double rms = SoundFilter::CalculateRMS((int16_t *)audio->Buffer, audio->BufferCount);
+        double rms = CalculateRMS((int16_t *)audio->Buffer, audio->BufferCount);
         double decibel = 20.0f * log10(rms / Constants::Amplitude) + Constants::RefDB + Constants::OffsetDB;
 
-        // ESP_LOGI(TAG, "Loudness: %fdB", decibel);
+        // ESP_LOGI(TAG, "Loudness: %ddB", (int)decibel);
 
         if (decibel > Constants::FloorDB && decibel < Constants::PeakDB)
             return (float)decibel;

@@ -1,7 +1,7 @@
 #pragma once
 #include "Definitions.h"
 
-namespace Sound
+namespace Mic
 {
     void Init();
     void Update();

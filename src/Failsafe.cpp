@@ -36,7 +36,7 @@ namespace Failsafe
         xTaskNotifyWait(0, Configuration::Notification::NewFailsafe, &Configuration::Notification::Values, portMAX_DELAY);
 
         const Failure &topFailure = failures.top();
-        ESP_LOGE(TAG, "Failure received from %s: %s", topFailure.Caller, topFailure.Message.c_str());
+        ESP_LOGE(TAG, "%s - %s", topFailure.Caller, topFailure.Message.c_str());
 
         Output::Blink(Output::LedR, 5000);
         Display::SetMenu(Configuration::Menu::Failsafe);

@@ -10,7 +10,7 @@
 #include "WiFi.h"
 #include "HTTP.h"
 #include "Display.h"
-#include "Sound.h"
+#include "Mic.h"
 #include "Network.h"
 
 namespace Network
@@ -66,7 +66,7 @@ namespace Network
 
         if (Backend::RegisterReadings())
         {
-            Sound::ResetValues();
+            Mic::ResetValues();
             Output::Blink(Output::LedG, 1000);
         }
     }
@@ -92,8 +92,15 @@ namespace Network
         }
     }
 
+    void Reset()
+    {
+        vTaskDelete(xHandle);
+        Init();
+    }
+
     void NotifyConfigSet()
     {
         xTaskNotify(xHandle, Configuration::Notification::ConfigSet, eSetBits);
     }
+
 }

@@ -6,8 +6,8 @@ namespace WiFi
 {
     namespace Constants
     {
-        static const uint32_t IPV4Length = 4 * 4 + 1,
-                              MACLength = 6 * 3 + 1,
+        static const uint32_t IPv4Length = 4 * 4 + 1,
+                              MacLength = 6 * 3 + 1,
                               MaxRetries = 10,
                               MaxClients = 4;
     };
@@ -15,13 +15,12 @@ namespace WiFi
     enum States
     {
         Connected = 1,
-        Failed,
     };
 
     struct ClientDetails
     {
-        char IPAddress[Constants::IPV4Length];
-        char MacAddress[Constants::MACLength];
+        char IPAddress[Constants::IPv4Length];
+        char MacAddress[Constants::MacLength];
     };
 
     void Init();
@@ -33,8 +32,7 @@ namespace WiFi
 
     void SetMacAddress();
     const std::string &GetIPAP();
-    const std::vector<ClientDetails> GetClientDetails();
-
     const std::string &GetIPStation();
     const std::string &GetMacAddress();
+    const std::vector<ClientDetails> &GetClientDetails();
 };

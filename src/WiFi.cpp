@@ -1,4 +1,5 @@
 #include <cstring>
+#include <algorithm>
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_wifi.h"
@@ -20,9 +21,10 @@ namespace WiFi
     static wifi_mode_t wifi_mode;
     static EventBits_t event_bits;
 
-    static std::string ipAddress, macAddress;
     static int retryAttempts = 0;
     static bool passwordFailsafe = false;
+    static std::string ipAddress, macAddress;
+    static std::vector<ClientDetails> clientDetails(Constants::MaxClients);
 
     static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
     {
@@ -57,13 +59,13 @@ namespace WiFi
                 if (status->reason == WIFI_REASON_ASSOC_LEAVE)
                     return;
 
-                else if (status->reason == WIFI_REASON_AUTH_FAIL && !passwordFailsafe)
+                if (status->reason == WIFI_REASON_AUTH_FAIL && !passwordFailsafe)
                 {
                     passwordFailsafe = true;
                     Failsafe::AddFailure(TAG, "Password: " + Storage::GetPassword() + " for SSID: " + Storage::GetSSID() + " is not correct.");
                 }
 
-                if (retryAttempts < Constants::MaxRetries)
+                if (retryAttempts < Constants::MaxRetries && !passwordFailsafe)
                 {
                     ESP_ERROR_CHECK(esp_wifi_connect());
                     retryAttempts++;
@@ -72,14 +74,19 @@ namespace WiFi
 
                 else
                 {
-                    if (status->reason == WIFI_REASON_NO_AP_FOUND || status->reason == WIFI_REASON_NO_AP_FOUND_W_COMPATIBLE_SECURITY || status->reason == WIFI_REASON_NO_AP_FOUND_IN_AUTHMODE_THRESHOLD || status->reason == WIFI_REASON_NO_AP_FOUND_IN_RSSI_THRESHOLD)
+                    if (Storage::GetConfigMode())
+                    {
+                        passwordFailsafe = false;
+                        Network::Reset();
+                    }
+
+                    Output::SetContinuity(Output::LedY, false);
+
+                    if (status->reason == WIFI_REASON_NO_AP_FOUND || status->reason == WIFI_REASON_NO_AP_FOUND_IN_RSSI_THRESHOLD)
                     {
                         Failsafe::AddFailure(TAG, "Can't find SSID: " + Storage::GetSSID());
                         return;
                     }
-
-                    Failsafe::AddFailure(TAG, "Can't connect to the WiFi");
-                    xEventGroupSetBits(wifi_event_group, States::Failed);
                 }
             }
         }
@@ -97,7 +104,6 @@ namespace WiFi
             retryAttempts = 0;
 
             xEventGroupSetBits(wifi_event_group, States::Connected);
-            xEventGroupClearBits(wifi_event_group, States::Failed);
             Output::SetContinuity(Output::LedY, false);
         }
     }
@@ -245,7 +251,7 @@ namespace WiFi
 
             ESP_ERROR_CHECK(esp_efuse_mac_get_default(mac.ArrayRepresentation));
 
-            char buffer[Constants::MACLength] = {0};
+            char buffer[Constants::MacLength] = {0};
             snprintf(buffer, sizeof(buffer), MACSTR, MAC2STR(mac.ArrayRepresentation));
             macAddress = buffer;
 
@@ -265,7 +271,7 @@ namespace WiFi
         return ipAddress;
     }
 
-    const std::vector<ClientDetails> GetClientDetails()
+    const std::vector<ClientDetails> &GetClientDetails()
     {
         wifi_sta_list_t wifi_sta_list = {0};
         wifi_sta_mac_ip_list_t wifi_sta_ip_mac_list = {0};
@@ -273,12 +279,16 @@ namespace WiFi
         ESP_ERROR_CHECK(esp_wifi_ap_get_sta_list(&wifi_sta_list));
         ESP_ERROR_CHECK(esp_wifi_ap_get_sta_list_with_ip(&wifi_sta_list, &wifi_sta_ip_mac_list));
 
-        std::vector<ClientDetails> clientDetails(wifi_sta_ip_mac_list.num);
+        clientDetails.clear();
+        clientDetails.reserve(wifi_sta_ip_mac_list.num);
+
         for (int i = 0; i < wifi_sta_ip_mac_list.num; i++)
         {
-            auto &station = wifi_sta_ip_mac_list.sta[i];
-            snprintf(clientDetails[i].IPAddress, sizeof(clientDetails[i].IPAddress), IPSTR, IP2STR(&station.ip));
-            snprintf(clientDetails[i].MacAddress, sizeof(clientDetails[i].MacAddress), MACSTR, MAC2STR(station.mac));
+            ClientDetails client = {0};
+            const auto &station = wifi_sta_ip_mac_list.sta[i];
+            snprintf(client.IPAddress, sizeof(client.IPAddress), IPSTR, IP2STR(&station.ip));
+            snprintf(client.MacAddress, sizeof(client.MacAddress), MACSTR, MAC2STR(station.mac));
+            clientDetails.push_back(client);
         }
 
         return clientDetails;

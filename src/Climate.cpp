@@ -36,7 +36,7 @@ namespace Climate
         dev = bme680_init_sensor(I2C_NUM_0, BME680_I2C_ADDRESS_2, 0);
         if (!dev)
         {
-            Failsafe ::AddFailure(TAG, "No sensor detected");
+            Failsafe::AddFailure(TAG, "No sensor detected");
             vTaskDelete(nullptr);
         }
 

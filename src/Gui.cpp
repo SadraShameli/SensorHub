@@ -9,7 +9,7 @@
 #include "Storage.h"
 #include "WiFi.h"
 #include "Climate.h"
-#include "Sound.h"
+#include "Mic.h"
 #include "Gui.h"
 
 namespace Gui
@@ -113,7 +113,7 @@ namespace Gui
                 }
             }
 
-            if (Sound::IsOK())
+            if (Mic::IsOK())
             {
                 switch (Display::GetMenu())
                 {

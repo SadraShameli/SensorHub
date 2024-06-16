@@ -7,7 +7,7 @@
 #include "Gui.h"
 #include "Storage.h"
 #include "Climate.h"
-#include "Sound.h"
+#include "Mic.h"
 #include "Display.h"
 
 namespace Display
@@ -57,8 +57,8 @@ namespace Display
         Print(35, 20, ">_sadra.");
         Print(30, 40, "Sensor Hub");
         Refresh();
-
         vTaskDelay(pdMS_TO_TICKS(Constants::LogoDuration));
+
         Clear();
 
         if (Storage::GetConfigMode())
@@ -122,7 +122,7 @@ namespace Display
     void PrintMain()
     {
         const std::string &deviceName = Storage::GetDeviceName(), &ip = WiFi::GetIPStation();
-        const Reading &temperature = Climate::GetTemperature(), &humidity = Climate::GetHumidity(), &loudness = Sound::GetLoudness();
+        const Reading &temperature = Climate::GetTemperature(), &humidity = Climate::GetHumidity(), &loudness = Mic::GetLoudness();
 
         char buff[32] = {0};
         Clear();
@@ -149,9 +149,9 @@ namespace Display
             }
         }
 
-        if (Sound::IsOK())
+        if (Mic::IsOK())
         {
-            if (Storage::GetSensorState(Configuration::Sensor::Recording ) || Storage::GetSensorState(Configuration::Sensor::Loudness))
+            if (Storage::GetSensorState(Configuration::Sensor::Recording) || Storage::GetSensorState(Configuration::Sensor::Loudness))
             {
                 sprintf(buff, "Loudness: %ddB", (int)loudness.Current());
                 Print(0, 52, buff);
@@ -268,7 +268,7 @@ namespace Display
 
     void PrintLoudness()
     {
-        const Reading &reading = Sound::GetLoudness();
+        const Reading &reading = Mic::GetLoudness();
 
         char buff[32] = {0};
         Clear();
@@ -317,7 +317,7 @@ namespace Display
         Print(0, 0, "Connected devices");
 
         int offset = 13;
-        for (auto &client : clients)
+        for (const auto &client : clients)
         {
             Print(0, offset, client.IPAddress);
             offset += 10;
@@ -389,7 +389,7 @@ namespace Display
                             return;
                         }
 
-                        if (Sound::IsOK() && (i >= Sensors::Loudness || i <= Sensors::Recording))
+                        if (Mic::IsOK() && (i >= Sensors::Loudness || i <= Sensors::Recording))
                         {
                             currentMenu = (Menus)i;
                             return;

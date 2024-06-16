@@ -89,7 +89,7 @@ namespace Storage
             ESP_LOGI(TAG, "Loudness Threshold: %ld", storageData.LoudnessThreshold);
             ESP_LOGI(TAG, "Register Interval: %ld", storageData.RegisterInterval);
 
-            for (int i = 0; i < (Configuration::Sensor::SensorCount - 1); i++)
+            for (int i = 0; i < Configuration::Sensor::SensorCount - 1; i++)
                 ESP_LOGI(TAG, "Sensor %d - state: %s", i + 1, storageData.Sensors[i] ? "enabled" : "disabled");
         }
     }
@@ -256,7 +256,7 @@ namespace Storage
     uint32_t GetDeviceId() { return storageData.DeviceId; }
     uint32_t GetLoudnessThreshold() { return storageData.LoudnessThreshold; }
     uint32_t GetRegisterInterval() { return storageData.RegisterInterval; }
-    bool GetSensorState(Configuration::Sensor::Sensors sensor) { return storageData.Sensors[(int)sensor - 1]; }
+    bool GetSensorState(Configuration::Sensor::Sensors sensor) { return storageData.Sensors[sensor - 1]; }
     bool GetConfigMode() { return storageData.ConfigMode; };
 
     void SetSSID(std::string &&str) { ssid = std::move(str); }
@@ -267,6 +267,6 @@ namespace Storage
     void SetDeviceId(uint32_t num) { storageData.DeviceId = num; }
     void SetLoudnessThreshold(uint32_t num) { storageData.LoudnessThreshold = num; }
     void SetRegisterInterval(uint32_t num) { storageData.RegisterInterval = num; }
-    void SetSensorState(Configuration::Sensor::Sensors sensor, bool state) { storageData.Sensors[(int)sensor - 1] = state; }
+    void SetSensorState(Configuration::Sensor::Sensors sensor, bool state) { storageData.Sensors[sensor - 1] = state; }
     void SetConfigMode(bool config) { storageData.ConfigMode = config; }
 }

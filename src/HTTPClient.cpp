@@ -33,9 +33,9 @@ namespace HTTP
             int statusCode = esp_http_client_get_status_code(evt->client);
 
             if (httpBuffer.length())
-                ESP_LOGI(TAG, "HTTP status code: %d - payload: %s", statusCode, httpBuffer.c_str());
+                ESP_LOGI(TAG, "Status: %d - %s", statusCode, httpBuffer.c_str());
             else
-                ESP_LOGI(TAG, "HTTP status code: %d - empty response", statusCode);
+                ESP_LOGI(TAG, "Status: %d - empty response", statusCode);
         }
 #endif
 
@@ -73,9 +73,6 @@ namespace HTTP
         if (!WiFi::IsConnected())
             return false;
 
-        if (m_URL.back() == '/')
-            m_URL.pop_back();
-
         ESP_LOGI(TAG, "GET request to URL: %s", m_URL.c_str());
         UNIT_TIMER("GET request");
 
@@ -87,7 +84,7 @@ namespace HTTP
 
         if (err != ESP_OK)
         {
-            Failsafe::AddFailure(TAG, "GET request failed: " + (err == ESP_ERR_HTTP_CONNECT ? "URL not found: " + m_URL : esp_err_to_name(err)));
+            Failsafe::AddFailure(TAG, "GET request failed - " + (err == ESP_ERR_HTTP_CONNECT ? "URL not found: " + m_URL : esp_err_to_name(err)));
             return false;
         }
 
@@ -99,28 +96,25 @@ namespace HTTP
         return true;
     }
 
-    bool Request::POST()
+    bool Request::POST(const std::string &payload)
     {
         if (!WiFi::IsConnected())
             return false;
 
-        if (m_URL.back() == '/')
-            m_URL.pop_back();
-
-        ESP_LOGI(TAG, "POST request to URL: %s - payload: %s", m_URL.c_str(), m_Payload.c_str());
+        ESP_LOGI(TAG, "POST request to URL: %s - payload: %s", m_URL.c_str(), payload.c_str());
         UNIT_TIMER("POST request");
 
         esp_http_client_set_url(httpClient, m_URL.c_str());
         esp_http_client_set_method(httpClient, HTTP_METHOD_POST);
         esp_http_client_set_header(httpClient, "Content-Type", "application/json");
-        esp_http_client_set_post_field(httpClient, m_Payload.c_str(), m_Payload.length());
+        esp_http_client_set_post_field(httpClient, payload.c_str(), payload.length());
 
         esp_err_t err = esp_http_client_perform(httpClient);
         esp_http_client_close(httpClient);
 
         if (err != ESP_OK)
         {
-            Failsafe::AddFailure(TAG, "POST request failed: " + (err == ESP_ERR_HTTP_CONNECT ? "URL not found: " + m_URL : esp_err_to_name(err)));
+            Failsafe::AddFailure(TAG, "POST request failed - " + (err == ESP_ERR_HTTP_CONNECT ? "URL not found: " + m_URL : esp_err_to_name(err)));
             return false;
         }
 
@@ -132,7 +126,7 @@ namespace HTTP
         return true;
     }
 
-    bool Request::Stream()
+    bool Request::Stream(const char *filename)
     {
         bool status = false;
 
@@ -141,19 +135,16 @@ namespace HTTP
             static const int streamSize = 8192;
             static char streamBuffer[streamSize] = {0};
 
-            if (m_URL.back() == '/')
-                m_URL.pop_back();
-
-            ESP_LOGI(TAG, "Stream request to URL: %s - file: %s", m_URL.c_str(), m_Payload.c_str());
+            ESP_LOGI(TAG, "Stream request to URL: %s - file: %s", m_URL.c_str(), filename);
             UNIT_TIMER("Stream request");
 
             esp_http_client_set_url(httpClient, m_URL.c_str());
             esp_http_client_set_method(httpClient, HTTP_METHOD_POST);
 
-            esp_err_t err = esp_http_client_open(httpClient, Helpers::GetFileSize(m_Payload.c_str()));
+            esp_err_t err = esp_http_client_open(httpClient, Helpers::GetFileSize(filename));
             if (err == ESP_OK)
             {
-                FILE *file = fopen(m_Payload.c_str(), "rb");
+                FILE *file = fopen(filename, "rb");
                 size_t read = 0;
 
                 do
@@ -167,7 +158,7 @@ namespace HTTP
             }
 
             else
-                Failsafe::AddFailure(TAG, "Stream request failed: " + (err == ESP_ERR_HTTP_CONNECT ? "URL not found: " + m_URL : esp_err_to_name(err)));
+                Failsafe::AddFailure(TAG, "Stream request failed - " + (err == ESP_ERR_HTTP_CONNECT ? "URL not found: " + m_URL : esp_err_to_name(err)));
             esp_http_client_close(httpClient);
         }
 

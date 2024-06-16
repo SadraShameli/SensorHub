@@ -6,7 +6,7 @@
 #include "Gui.h"
 #include "WiFi.h"
 #include "Network.h"
-#include "Sound.h"
+#include "Mic.h"
 #include "Climate.h"
 
 extern "C" void app_main()
@@ -26,7 +26,7 @@ extern "C" void app_main()
   using Sensors = Configuration::Sensor::Sensors;
 
   if (Storage::GetSensorState(Sensors::Loudness) || Storage::GetSensorState(Sensors::Recording))
-    Sound::Init();
+    Mic::Init();
 
   if (Storage::GetSensorState(Sensors::Temperature) ||
       Storage::GetSensorState(Sensors::Humidity) ||

@@ -7,6 +7,8 @@ namespace Failsafe
     class Failure
     {
     public:
+        Failure(const char *caller, const char *message) : Caller(caller), Message(message) {}
+        Failure(const char *caller, const std::string &message) : Caller(caller), Message(message) {}
         Failure(const char *caller, std::string &&message) : Caller(caller), Message(std::move(message)) {}
 
         const char *Caller;

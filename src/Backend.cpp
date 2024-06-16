@@ -8,7 +8,7 @@
 #include "HTTP.h"
 #include "Network.h"
 #include "Climate.h"
-#include "Sound.h"
+#include "Mic.h"
 #include "Backend.h"
 
 namespace Backend
@@ -23,46 +23,44 @@ namespace Backend
     {
         if (HTTP::StatusOK(statusCode))
         {
-            ESP_LOGI(TAG, "Backend response ok");
+            ESP_LOGI(TAG, "Response ok");
             return false;
         }
 
         if (payload.empty())
         {
-            Failsafe::AddFailure(TAG, "Backend response failed - empty response - status code: " + std::to_string(statusCode));
+            Failsafe::AddFailure(TAG, "Status: " + std::to_string(statusCode) + " - empty response");
             return true;
         }
 
-        ESP_LOGI(TAG, "Checking backend response");
+        ESP_LOGI(TAG, "Checking response");
 
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, payload);
 
         if (error != DeserializationError::Ok)
         {
-            Failsafe::AddFailure(TAG, "Deserializing response failed: " + std::string(error.c_str()) + " - status code: " + std::to_string(statusCode));
+            Failsafe::AddFailure(TAG, "Status: " + std::to_string(statusCode) + " - deserialization failed: " + std::string(error.c_str()));
             return true;
         }
 
         const char *errorMsg = doc["error"];
         if (errorMsg)
-        {
-            Failsafe::AddFailure(TAG, "Backend response failed - status code: " + std::to_string(statusCode) + " - error: " + errorMsg);
-        }
+            Failsafe::AddFailure(TAG, "Status: " + std::to_string(statusCode) + " - " + errorMsg);
 
         return true;
     }
 
     bool SetupConfiguration(const std::string &payload)
     {
-        ESP_LOGI(TAG, "Setting up configuration - payload: %s", payload.c_str());
+        ESP_LOGI(TAG, "Setting up configuration: %s", payload.c_str());
 
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, payload);
 
         if (error != DeserializationError::Ok)
         {
-            Failsafe::AddFailure(TAG, "Deserializing setup configuration failed: " + std::string(error.c_str()));
+            Failsafe::AddFailure(TAG, "Deserialization failed: " + std::string(error.c_str()));
             return false;
         }
 
@@ -96,16 +94,12 @@ namespace Backend
             Failsafe::AddFailure(TAG, "Address can't be empty");
             return false;
         }
-
         Helpers::RemoveWhiteSpace(address);
         if (address.back() != '/')
-        {
             address += "/";
-        }
-
         Storage::SetAddress(std::move(address));
-        Network::NotifyConfigSet();
 
+        Network::NotifyConfigSet();
         return true;
     }
 
@@ -121,7 +115,7 @@ namespace Backend
 
             if (error != DeserializationError::Ok)
             {
-                Failsafe::AddFailure(TAG, "Deserializing configuration failed: " + std::string(error.c_str()));
+                Failsafe::AddFailure(TAG, "Deserialization failed: " + std::string(error.c_str()));
                 return;
             }
 
@@ -149,9 +143,8 @@ namespace Backend
             ESP_LOGI(TAG, "Registering readings");
 
             JsonDocument doc;
-            doc["device_id"] = Storage::GetDeviceId();
-
             JsonObject sensors = doc["sensors"].to<JsonObject>();
+            doc["device_id"] = Storage::GetDeviceId();
 
             if (Climate::IsOK())
             {
@@ -171,10 +164,10 @@ namespace Backend
                     sensors[std::to_string(Sensors::Altitude)] = (int)Climate::GetAltitude().Current();
             }
 
-            if (Sound::IsOK())
+            if (Mic::IsOK())
             {
                 if (Storage::GetSensorState(Sensors::Loudness))
-                    sensors[std::to_string(Sensors::Loudness)] = (int)Sound::GetLoudness().Max();
+                    sensors[std::to_string(Sensors::Loudness)] = (int)Mic::GetLoudness().Max();
             }
 
             // if (Storage::GetSensorState(Sensors::RPM))
@@ -189,8 +182,8 @@ namespace Backend
             std::string payload;
             serializeJson(doc, payload);
 
-            HTTP::Request request(Storage::GetAddress() + ReadingURL, payload);
-            if (request.POST())
+            HTTP::Request request(Storage::GetAddress() + ReadingURL);
+            if (request.POST(payload))
                 return true;
 
             Failsafe::AddFailure(TAG, "Registering readings failed");

@@ -23,7 +23,7 @@ namespace Display
     void PrintAltitude();
     void PrintLoudness();
     void PrintWiFiClients();
-    //  void PrintRPM();
+    // void PrintRPM();
 
     void NextMenu();
 

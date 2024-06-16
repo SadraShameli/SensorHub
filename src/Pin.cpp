@@ -11,7 +11,7 @@
 #include "Output.h"
 #include "Display.h"
 #include "Climate.h"
-#include "Sound.h"
+#include "Mic.h"
 #include "Pin.h"
 
 namespace Pin
@@ -124,7 +124,7 @@ namespace Pin
 
             case Menus::Loudness:
             case Menus::Recording:
-                Sound::ResetValues();
+                Mic::ResetValues();
                 break;
 
                 // case Menus::RPM:
