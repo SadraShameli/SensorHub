@@ -74,18 +74,16 @@ namespace WiFi
 
                 else
                 {
+                    retryAttempts = 0;
+                    Output::SetContinuity(Output::LedY, false);
+
+                    if (status->reason == WIFI_REASON_NO_AP_FOUND || status->reason == WIFI_REASON_NO_AP_FOUND_IN_RSSI_THRESHOLD)
+                        Failsafe::AddFailure(TAG, "Can't find SSID: " + Storage::GetSSID());
+
                     if (Storage::GetConfigMode())
                     {
                         passwordFailsafe = false;
                         Network::Reset();
-                    }
-
-                    Output::SetContinuity(Output::LedY, false);
-
-                    if (status->reason == WIFI_REASON_NO_AP_FOUND || status->reason == WIFI_REASON_NO_AP_FOUND_IN_RSSI_THRESHOLD)
-                    {
-                        Failsafe::AddFailure(TAG, "Can't find SSID: " + Storage::GetSSID());
-                        return;
                     }
                 }
             }
