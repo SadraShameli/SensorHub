@@ -54,7 +54,7 @@ namespace Display
 
         Clear();
 
-        Print(35, 20, ">_sadra.");
+        Print(35, 20, ">_sadra");
         Print(30, 40, "Sensor Hub");
         Refresh();
         vTaskDelay(pdMS_TO_TICKS(Constants::LogoDuration));
