@@ -67,9 +67,9 @@ namespace WiFi
 
                 if (retryAttempts < Constants::MaxRetries && !passwordFailsafe)
                 {
+                    ESP_LOGI(TAG, "retrying to connect to AP");
                     ESP_ERROR_CHECK(esp_wifi_connect());
                     retryAttempts++;
-                    ESP_LOGI(TAG, "retrying to connect to AP");
                 }
 
                 else

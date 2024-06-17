@@ -21,6 +21,8 @@ namespace Backend
 
     bool CheckResponseFailed(const std::string &payload, int statusCode)
     {
+        ESP_LOGI(TAG, "Checking response");
+
         if (HTTP::StatusOK(statusCode))
         {
             ESP_LOGI(TAG, "Response ok");
@@ -32,8 +34,6 @@ namespace Backend
             Failsafe::AddFailure(TAG, "Status: " + std::to_string(statusCode) + " - empty response");
             return true;
         }
-
-        ESP_LOGI(TAG, "Checking response");
 
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, payload);
