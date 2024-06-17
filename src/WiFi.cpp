@@ -59,7 +59,7 @@ namespace WiFi
                 if (status->reason == WIFI_REASON_ASSOC_LEAVE)
                     return;
 
-                if (status->reason == WIFI_REASON_AUTH_FAIL && !passwordFailsafe)
+                if (!passwordFailsafe && (status->reason == WIFI_REASON_AUTH_FAIL || status->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT))
                 {
                     passwordFailsafe = true;
                     Failsafe::AddFailure(TAG, "Password: " + Storage::GetPassword() + " for SSID: " + Storage::GetSSID() + " is not correct.");
