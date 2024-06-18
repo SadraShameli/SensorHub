@@ -42,7 +42,7 @@ namespace Helpers
     }
 
     inline static void PrintFreeHeap() { ESP_LOGI("Heap", "Free: %ld", esp_get_free_heap_size()); }
-    inline static size_t GetFileSize(const char *filePath) { return std::filesystem::file_size(filePath); }
+    inline static uint32_t GetFileSize(const char *filePath) { return (uint32_t)std::filesystem::file_size(filePath); }
 }
 
 class Reading

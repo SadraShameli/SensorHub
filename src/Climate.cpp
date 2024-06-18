@@ -59,9 +59,9 @@ namespace Climate
 
     static float calculateAltitude(float currentPressure, float seaLevelPressure, float seaLevelTemp)
     {
-        const float L = 0.0065, R = 8.31432, g = 9.80665;
-        float temp = seaLevelTemp + 273.15;
-        float alt = (1 - pow(((currentPressure) / seaLevelPressure), (R * L) / (g * 0.0289644))) * temp / L;
+        const float L = 0.0065f, R = 8.31432f, g = 9.80665f;
+        float temp = seaLevelTemp + 273.15f;
+        float alt = (1.0f - powf(((currentPressure) / seaLevelPressure), (R * L) / (g * 0.0289644f))) * temp / L;
         return alt;
     }
 

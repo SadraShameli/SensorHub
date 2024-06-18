@@ -144,8 +144,8 @@ namespace Mic
         {
             BufferLength = BufferCount * 16 / 8;
             TotalLength = Header.DataLength + sizeof(WavHeader);
-            DMA_FrameNum = 4092 / (sampleBitrate * channelCount / 8);
-            DMA_DescNum = std::max(std::ceil((float)bufferTime / (Storage::GetSensorState(Configuration::Sensor::Recording) ? 3 : 1) / ((float)DMA_FrameNum / sampleRate * 1000)), 3.0f);
+            DMA_FrameNum = (uint32_t)(4092.0f / (sampleBitrate * channelCount / 8.0f));
+            DMA_DescNum = (uint32_t)std::max(std::ceil((float)bufferTime / (Storage::GetSensorState(Configuration::Sensor::Recording) ? 3.0f : 1.0f) / ((float)DMA_FrameNum / (float)sampleRate * 1000.0f)), 3.0f);
             Buffer = new uint8_t[BufferLength];
         }
 
@@ -166,19 +166,6 @@ namespace Mic
             samples[i] = (int16_t)(samples[i] * scaleFactor);
     }
 
-    inline void NormalizeAudio(uint8_t *buffer, uint32_t size)
-    {
-        uint32_t j = 0;
-        uint32_t dac_value = 0;
-
-        for (int i = 0; i < size; i += 2)
-        {
-            dac_value = ((((uint16_t)(buffer[i + 1] & 0xf) << 8) | ((buffer[i + 0]))));
-            buffer[j++] = 0;
-            buffer[j++] = dac_value * 256 / 2048;
-        }
-    }
-
     template <typename T>
     static float CalculateRMS(T *input, uint32_t size)
     {
@@ -190,7 +177,7 @@ namespace Mic
             sum_sqr += f0 * f0;
         }
 
-        return std::sqrt(sum_sqr / size);
+        return std::sqrt(sum_sqr / (float)size);
     }
 
     // inline AudioFilter DC_Blocker = {
