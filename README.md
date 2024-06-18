@@ -1,4 +1,4 @@
-## Sensor Hub Firmware
+## Sensor Hub
 
 This project is part of a full-stack application and is intended to gather various data such as temperature, humidity, air pressure, gas resistance, altitude, noise recordings, loudness levels and RPM values. The devices are placed at various locations in The Netherlands and are continuously sending these data to my website: [sadra.nl](https://sadra.nl)
 
