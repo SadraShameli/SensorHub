@@ -25,9 +25,9 @@ Sensor Hub is powered by ESP32 and there are 4 different device types:
   - You can connect to the WiFi created by the device and open the configuration page by navigating to the URL: [192.168.4.1](http://192.168.4.1)
   - Once you submit, the device will connect to the backend, fetch it's configuration, save it to the storage and reboot in normal mode
 - Lots of focus on optimizations
-  - Debug and release configurations apply different macros and compiler flags to make debugging easy and runtime faster
-  - Enabling all compiler warnings to write safer code
-  - Using std::move and pass by reference to avoid additional copies
+  - **Debug** and **release** configurations apply different macros and compiler flags to make debugging easy and runtime faster
+  - Enabling all **compiler warnings** to write safer code
+  - Using **std::move** and **pass by reference** to avoid additional copies
 - Supporting **multithreading** for all core functionality. Tasks are created, suspended and deleted when needed
   - This results to a boot time of only **100ms** when running in release mode
 - Advanced **failsafe** system and logging mechanisms to notify users of potential errors and bugs
