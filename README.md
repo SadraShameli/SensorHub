@@ -33,7 +33,7 @@ Sensor Hub is powered by ESP32 and there are 4 different device types:
 - Advanced **failsafe** system and logging mechanisms to notify users of potential errors and bugs
   - Saving a list of last **25** failures that occurred during the runtime
 - Using **XOR** bitwise operations with the **mac address** to encrypt user data before saving to the storage
-- Custom **Pin**, **WiFi**, **HTTP** and **Gui** classes to provide simple APIs for ease of us
+- Custom **Pin**, **WiFi**, **HTTP** and **Gui** classes to provide simple APIs for ease of use
 - Handling runtime and backend errors and notifying users with a failsafe when errors occur
 
 ### Supported modules
