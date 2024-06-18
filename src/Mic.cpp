@@ -17,7 +17,7 @@ namespace Mic
     namespace Constants
     {
         static const float Sensitivity = 26.0f, RefDB = 94.0f, OffsetDB = -3.0f, PeakDB = 116.0f, FloorDB = 29.0f;
-        static const double Amplitude = std::pow(10, -Sensitivity / 20.0f) * ((1 << (16 - 1)) - 1);
+        static const float Amplitude = powf(10.f, -Sensitivity / 20.0f) * ((1 << (16 - 1)) - 1);
         static const float LoudnessOffset = 0;
     };
 
@@ -102,11 +102,11 @@ namespace Mic
             for (int i = 0; i < 6; i++)
                 ESP_ERROR_CHECK(i2s_channel_read(i2sHandle, audio->Buffer, transferLength, nullptr, portMAX_DELAY));
 
-        double rms = CalculateRMS((int16_t *)audio->Buffer, transferCount);
-        double decibel = 20.0f * log10(rms / Constants::Amplitude) + Constants::RefDB + Constants::OffsetDB;
+        float rms = CalculateRMS((int16_t *)audio->Buffer, transferCount);
+        float decibel = 20.0f * log10f(rms / Constants::Amplitude) + Constants::RefDB + Constants::OffsetDB;
         if (decibel > Constants::FloorDB && decibel < Constants::PeakDB)
         {
-            loudness.Update((float)decibel + Constants::LoudnessOffset);
+            loudness.Update(decibel + Constants::LoudnessOffset);
             isOK = true;
         }
 
@@ -159,7 +159,7 @@ namespace Mic
     {
         i2s_channel_read(i2sHandle, audio->Buffer, audio->BufferLength, nullptr, portMAX_DELAY);
 
-        double decibel = CalculateLoudness();
+        float decibel = CalculateLoudness();
         if (!decibel)
         {
             Failsafe::AddFailureDelayed(TAG, "Loudness not valid: " + std::to_string(decibel) + "dB");
@@ -168,7 +168,7 @@ namespace Mic
 
         isOK = true;
         loudness.Update(decibel + Constants::LoudnessOffset);
-        if (loudness.Current() > Storage::GetLoudnessThreshold())
+        if ((uint32_t)loudness.Current() > Storage::GetLoudnessThreshold())
             return true;
 
         return false;
@@ -205,10 +205,10 @@ namespace Mic
 
             if (Display::IsOK())
             {
-                double rms = CalculateRMS((int16_t *)audio->Buffer, transferCount);
-                double decibel = 20.0f * log10(rms / Constants::Amplitude) + Constants::RefDB + Constants::OffsetDB;
+                float rms = CalculateRMS((int16_t *)audio->Buffer, transferCount);
+                float decibel = 20.0f * log10f(rms / Constants::Amplitude) + Constants::RefDB + Constants::OffsetDB;
                 if (decibel > Constants::FloorDB && decibel < Constants::PeakDB)
-                    loudness.Update((float)decibel);
+                    loudness.Update(decibel);
             }
 
             length = esp_http_client_write(httpClient, (char *)audio->Buffer, transferLength);
@@ -225,7 +225,7 @@ namespace Mic
             }
         }
 
-        length = esp_http_client_fetch_headers(httpClient);
+        length = (int)esp_http_client_fetch_headers(httpClient);
         if (length < 0)
         {
             Failsafe::AddFailure(TAG, "Fetching backend response failed");
@@ -258,13 +258,13 @@ namespace Mic
 
     float CalculateLoudness()
     {
-        double rms = CalculateRMS((int16_t *)audio->Buffer, audio->BufferCount);
-        double decibel = 20.0f * log10(rms / Constants::Amplitude) + Constants::RefDB + Constants::OffsetDB;
+        float rms = CalculateRMS((int16_t *)audio->Buffer, audio->BufferCount);
+        float decibel = 20.0f * log10f(rms / Constants::Amplitude) + Constants::RefDB + Constants::OffsetDB;
 
         // ESP_LOGI(TAG, "Loudness: %ddB", (int)decibel);
 
         if (decibel > Constants::FloorDB && decibel < Constants::PeakDB)
-            return (float)decibel;
+            return decibel;
         return 0;
     }
 

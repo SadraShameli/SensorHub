@@ -11,7 +11,7 @@ namespace Display
     void Refresh();
     void ResetScreenSaver();
 
-    void Print(uint8_t, uint8_t, const char *, uint8_t = 12);
+    void Print(uint32_t, uint32_t, const char *, uint32_t = 12);
     void PrintText(const char *, const char *);
     void PrintLines(const char *, const char *, const char *, const char *);
 

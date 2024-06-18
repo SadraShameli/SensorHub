@@ -92,9 +92,9 @@ namespace Display
         Gui::Resume();
     }
 
-    void Print(uint8_t x, uint8_t y, const char *text, uint8_t size)
+    void Print(uint32_t x, uint32_t y, const char *text, uint32_t size)
     {
-        ssd1306_draw_string(dev, x, y, (const uint8_t *)text, size, 1);
+        ssd1306_draw_string(dev, (uint8_t)x, (uint8_t)y, (const uint8_t *)text, (uint8_t)size, 1);
     }
 
     void PrintText(const char *header, const char *message)
@@ -316,7 +316,7 @@ namespace Display
 
         Print(0, 0, "Connected devices");
 
-        int offset = 13;
+        uint32_t offset = 13;
         for (const auto &client : clients)
         {
             Print(0, offset, client.IPAddress);

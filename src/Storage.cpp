@@ -34,7 +34,7 @@ namespace Storage
     static const char *TAG = "Storage";
     static nvs_handle_t nvsHandle = 0;
 
-    static uint32_t encryptionMask = 0;
+    static uint64_t encryptionMask = 0;
     static StorageData storageData = {0};
     static std::string ssid, password, deviceName, address, AuthKey;
 
@@ -197,7 +197,7 @@ namespace Storage
         ESP_LOGI(TAG, "Calculating encryption mask");
 
         uint32_t maskArray[10] = {0};
-        uint32_t macArray[10] = {0};
+        uint64_t macArray[10] = {0};
         uint32_t mask = 1564230594;
         uint64_t mask2 = 0;
 
@@ -238,14 +238,19 @@ namespace Storage
     void EncryptText(uint32_t *var, const std::string &str)
     {
         for (const char c : str)
-            *(var++) = c ^ encryptionMask;
+            *(var++) = c ^ (uint32_t)encryptionMask;
+        *var = 0;
     }
 
     void DecryptText(uint32_t *var, std::string &str)
     {
         str.clear();
         while (*var)
-            str.push_back(*(var++) ^ encryptionMask);
+        {
+            char decryptedChar = char((*var ^ encryptionMask) & 0xFF);
+            str.push_back(decryptedChar);
+            ++var;
+        }
     }
 
     const std::string &GetSSID() { return ssid; }
