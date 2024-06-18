@@ -3,7 +3,7 @@
 This project is created as a full-stack project and is intended to gather various data such as temperature, humidity, air pressure, gas resistance, altitude, noise recordings, loudness levels and RPM values.<br>
 The devices are placed at various locations in The Netherlands and are continuously sending data to my website at [sadra.nl](https://sadra.nl)
 
-> [!NOTE]>
+> [!NOTE]
 > Sensor Hub is powered by ESP32 boards and it has in total 4 different device types:
 >
 > - Sensor Unit
