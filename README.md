@@ -2,18 +2,22 @@
 
 This project is part of a full-stack application and is intended to gather various data such as temperature, humidity, air pressure, gas resistance, altitude, noise recordings, loudness levels and RPM values. The devices are placed at various locations in The Netherlands and are continuously sending these data to my website: [sadra.nl](https://sadra.nl)
 
+<br>
+<img src="Assets/Images/SensorHub.jpg">
+<br>
+
 ### Device Types
 
 Sensor Hub is powered by ESP32 and there are 4 different device types:
 
 - Sensor Unit
-  - Designed for gathering climate data and loudness levels. It is meant for indoor usage. Outdoor usage is possible too but it should not come in contact with any water.
+  - Designed for gathering climate data and loudness levels
 - Sound Unit
-  - Designed for recording loud noises and is specially made for outdoor usage.
+  - Designed for recording loud noises and has a detachable microphone
 - RPM Unit
-  - Designed for gathering RPM values of a rotating object using laser and IR sensor.
+  - Designed for gathering RPM values of rotating objects using laser and IR sensor
 - HMI Unit
-  - Designed as a user interface to manage other devices and communicate to the backend.
+  - Designed as a user interface to manage other devices and communicate with the backend
 
 ### Features
 
