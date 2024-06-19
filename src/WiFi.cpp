@@ -59,7 +59,7 @@ namespace WiFi
                 if (status->reason == WIFI_REASON_ASSOC_LEAVE)
                     return;
 
-                if (!passwordFailsafe && (status->reason == WIFI_REASON_AUTH_FAIL || status->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT))
+                if (!passwordFailsafe && (status->reason == WIFI_REASON_AUTH_FAIL || status->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT || status->reason == WIFI_REASON_NO_AP_FOUND_W_COMPATIBLE_SECURITY))
                 {
                     passwordFailsafe = true;
                     Failsafe::AddFailure(TAG, "Password: " + Storage::GetPassword() + " for SSID: " + Storage::GetSSID() + " is not correct.");
@@ -161,7 +161,7 @@ namespace WiFi
             wifi_config.ap.pairwise_cipher = WIFI_CIPHER_TYPE_CCMP;
         }
 
-        else if (passLength != 0)
+        else if (passLength)
             Failsafe::AddFailure(TAG, "Password too long or too short");
 
         if (wifi_mode == WIFI_MODE_STA)
@@ -205,7 +205,7 @@ namespace WiFi
             wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
         }
 
-        else
+        else if (Storage::GetPassword().length())
         {
             Failsafe::AddFailure(TAG, "Password too long or too short");
             return;

@@ -73,7 +73,7 @@ namespace Backend
         Storage::SetSSID(std::move(ssid));
 
         std::string password = doc["pass"];
-        if (password.length() < 8 || password.length() > 64)
+        if (!password.empty() && (password.length() < 8 || password.length() > 64))
         {
             Failsafe::AddFailure(TAG, "Invalid WiFi Password");
             return false;
