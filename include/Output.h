@@ -1,4 +1,5 @@
 #pragma once
+
 #include <ctime>
 
 namespace Output

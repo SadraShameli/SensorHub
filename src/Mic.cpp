@@ -1,16 +1,17 @@
 #include "driver/i2s_std.h"
 #include "esp_http_client.h"
-#include "esp_tls.h"
 #include "esp_log.h"
+#include "esp_tls.h"
+
 #include "Audio.h"
 #include "Backend.h"
 #include "Definitions.h"
+#include "Display.h"
 #include "Failsafe.h"
+#include "Mic.h"
 #include "Output.h"
 #include "Storage.h"
-#include "Display.h"
 #include "WiFi.h"
-#include "Mic.h"
 
 namespace Mic
 {

@@ -1,7 +1,10 @@
 #pragma once
+
 #include <cmath>
 #include <vector>
+
 #include "esp_heap_caps.h"
+
 #include "Storage.h"
 
 namespace Mic

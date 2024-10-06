@@ -1,14 +1,16 @@
 #include <ctime>
+
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "ssd1306.h"
-#include "Configuration.h"
-#include "WiFi.h"
-#include "Gui.h"
-#include "Storage.h"
+
 #include "Climate.h"
-#include "Mic.h"
+#include "Configuration.h"
 #include "Display.h"
+#include "Gui.h"
+#include "Mic.h"
+#include "Storage.h"
+#include "WiFi.h"
 
 namespace Display
 {

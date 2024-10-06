@@ -1,18 +1,20 @@
 #include <ctime>
 #include <vector>
+
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "Configuration.h"
-#include "Failsafe.h"
-#include "Storage.h"
-#include "Input.h"
-#include "Output.h"
-#include "Display.h"
+
 #include "Climate.h"
+#include "Configuration.h"
+#include "Display.h"
+#include "Failsafe.h"
+#include "Input.h"
 #include "Mic.h"
+#include "Output.h"
 #include "Pin.h"
+#include "Storage.h"
 
 namespace Pin
 {

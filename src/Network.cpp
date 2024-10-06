@@ -1,17 +1,19 @@
 #include <ctime>
-#include "esp_timer.h"
+
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "Configuration.h"
-#include "Storage.h"
-#include "Output.h"
+
 #include "Backend.h"
-#include "WiFi.h"
-#include "HTTP.h"
+#include "Configuration.h"
 #include "Display.h"
+#include "HTTP.h"
 #include "Mic.h"
 #include "Network.h"
+#include "Output.h"
+#include "Storage.h"
+#include "WiFi.h"
 
 namespace Network
 {

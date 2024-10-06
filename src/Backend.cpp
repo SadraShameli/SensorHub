@@ -1,15 +1,16 @@
-#include "freertos/FreeRTOS.h"
 #include "ArduinoJson.h"
-#include "Definitions.h"
+#include "freertos/FreeRTOS.h"
+
+#include "Backend.h"
+#include "Climate.h"
 #include "Configuration.h"
+#include "Definitions.h"
 #include "Failsafe.h"
+#include "HTTP.h"
+#include "Mic.h"
+#include "Network.h"
 #include "Storage.h"
 #include "WiFi.h"
-#include "HTTP.h"
-#include "Network.h"
-#include "Climate.h"
-#include "Mic.h"
-#include "Backend.h"
 
 namespace Backend
 {

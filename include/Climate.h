@@ -1,6 +1,7 @@
 #pragma once
-#include "Definitions.h"
+
 #include "Configuration.h"
+#include "Definitions.h"
 
 namespace Climate
 {

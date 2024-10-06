@@ -1,5 +1,7 @@
 #pragma once
+
 #include <string>
+
 #include "Configuration.h"
 
 namespace Storage

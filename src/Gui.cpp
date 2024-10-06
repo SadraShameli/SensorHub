@@ -1,16 +1,17 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/task.h"
+
+#include "Climate.h"
 #include "Configuration.h"
 #include "Display.h"
 #include "Failsafe.h"
+#include "Gui.h"
 #include "Input.h"
+#include "Mic.h"
 #include "Storage.h"
 #include "WiFi.h"
-#include "Climate.h"
-#include "Mic.h"
-#include "Gui.h"
 
 namespace Gui
 {

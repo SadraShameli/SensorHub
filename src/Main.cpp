@@ -1,13 +1,13 @@
-#include "Definitions.h"
-#include "Configuration.h"
-#include "Failsafe.h"
-#include "Storage.h"
-#include "Pin.h"
-#include "Gui.h"
-#include "WiFi.h"
-#include "Network.h"
-#include "Mic.h"
 #include "Climate.h"
+#include "Configuration.h"
+#include "Definitions.h"
+#include "Failsafe.h"
+#include "Gui.h"
+#include "Mic.h"
+#include "Network.h"
+#include "Pin.h"
+#include "Storage.h"
+#include "WiFi.h"
 
 extern "C" void app_main()
 {

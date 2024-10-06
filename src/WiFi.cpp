@@ -1,16 +1,18 @@
-#include <cstring>
 #include <algorithm>
+#include <cstring>
+
 #include "esp_log.h"
 #include "esp_mac.h"
-#include "esp_wifi.h"
 #include "esp_wifi_ap_get_sta_list.h"
+#include "esp_wifi.h"
+
 #include "Backend.h"
 #include "Configuration.h"
-#include "Storage.h"
 #include "Failsafe.h"
-#include "Output.h"
 #include "HTTP.h"
 #include "Network.h"
+#include "Output.h"
+#include "Storage.h"
 #include "WiFi.h"
 
 namespace WiFi

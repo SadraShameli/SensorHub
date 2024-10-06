@@ -1,12 +1,14 @@
-#include <string.h>
 #include <cmath>
+#include <string.h>
+
+#include "bme680.h"
 #include "driver/gpio.h"
 #include "driver/i2c.h"
 #include "esp_log.h"
-#include "bme680.h"
+
+#include "Climate.h"
 #include "Failsafe.h"
 #include "Gui.h"
-#include "Climate.h"
 
 namespace Climate
 {

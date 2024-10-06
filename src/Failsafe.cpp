@@ -1,11 +1,12 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/task.h"
+
 #include "Configuration.h"
-#include "Output.h"
 #include "Display.h"
 #include "Failsafe.h"
+#include "Output.h"
 
 namespace Failsafe
 {
