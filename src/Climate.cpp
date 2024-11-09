@@ -14,12 +14,12 @@ namespace Climate
 {
     namespace Constants
     {
-        static const float TemperatureOffset = -2,
-                           HumidityOffset = 13,
+        static const float TemperatureOffset = 0,
+                           HumidityOffset = 0,
                            AirPressureOffset = 0,
                            GasResistanceOffset = 0,
                            AltitudeOffset = 0,
-                           SeaLevelPressure = 1021, SeaLevelTemperature = 14;
+                           SeaLevelPressure = 1026, SeaLevelTemperature = 9;
     };
 
     static const char *TAG = "Climate";
