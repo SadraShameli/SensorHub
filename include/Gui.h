@@ -1,10 +1,15 @@
 #pragma once
 
-namespace Gui
-{
-    void Init();
-    void Update();
+/**
+ * @namespace
+ * @brief A namespace for managing the graphical user interface.
+ */
+namespace Gui {
 
-    void Pause();
-    void Resume();
-};
+void Init();
+void Update();
+
+void Pause();
+void Resume();
+
+};  // namespace Gui

@@ -2,12 +2,19 @@
 
 #include <string>
 
-namespace Backend
-{
-    bool CheckResponseFailed(const std::string &, int);
-    bool SetupConfiguration(const std::string &);
-    void GetConfiguration();
-    bool RegisterReadings();
+#include "HTTP.h"
 
-    extern std::string DeviceURL, ReadingURL, RecordingURL;
-};
+/**
+ * @namespace
+ * @brief A namespace for managing backend related functionality.
+ */
+namespace Backend {
+
+bool CheckResponseFailed(const std::string &, HTTP::Status::StatusCode);
+bool SetupConfiguration(const std::string &);
+void GetConfiguration();
+bool RegisterReadings();
+
+extern std::string DeviceURL, ReadingURL, RecordingURL;
+
+};  // namespace Backend

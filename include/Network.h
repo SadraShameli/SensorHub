@@ -1,11 +1,16 @@
 #pragma once
 
-namespace Network
-{
-    void Init();
-    void Update();
-    void UpdateConfig();
-    void Reset();
+/**
+ * @namespace
+ * @brief A namespace for managing the network.
+ */
+namespace Network {
 
-    void NotifyConfigSet();
-};
+void Init();
+void Update();
+void UpdateConfig();
+void Reset();
+
+void NotifyConfigSet();
+
+};  // namespace Network

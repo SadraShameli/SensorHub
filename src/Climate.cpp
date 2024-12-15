@@ -45,7 +45,6 @@ static void vTask(void *arg) {
     ESP_LOGI(TAG, "Initializing");
 
     dev = bme680_init_sensor(I2C_NUM_0, BME680_I2C_ADDRESS_2, 0);
-
     if (dev == nullptr) {
         Failsafe::AddFailure(TAG, "No sensor detected");
 
@@ -75,7 +74,7 @@ static void vTask(void *arg) {
  * This function creates a new FreeRTOS task for climate control using the
  * specified task function, task name, stack size, priority, and task handle.
  *
- * @note The task is created with a priority of (tskIDLE_PRIORITY + 2) and a
+ * @note The task is created with a priority of `tskIDLE_PRIORITY + 2` and a
  * stack size of 4096 bytes.
  */
 void Init() {
@@ -91,7 +90,7 @@ void Init() {
  * gas resistance values with the appropriate offsets. If the measurement or
  * result retrieval fails, it logs the failure and deletes the current task.
  *
- * @note The function uses FreeRTOS vTaskDelay and vTaskDelete for task
+ * @note The function uses FreeRTOS `vTaskDelay` and `vTaskDelete` for task
  * management.
  */
 void Update() {
@@ -151,10 +150,15 @@ void Update() {
  *
  * This function resets the values of the sensor specified by the
  * parameter `sensor`. It supports the following sensor types:
+ *
  * - Temperature
+ *
  * - Humidity
+ *
  * - GasResistance
+ *
  * - AirPressure
+ *
  * - Altitude
  *
  * @param sensor The sensor whose values need to be reset. It should be
@@ -202,7 +206,7 @@ void ResetValues(Configuration::Sensor::Sensors sensor) {
  * @param seaLevelTemp The standard temperature at sea level in degrees Celsius.
  * @return The calculated altitude in meters.
  */
-static float calculateAltitude(
+float calculateAltitude(
     float currentPressure, float seaLevelPressure, float seaLevelTemp
 ) {
     // Lapse rate in K/m (temperature decrease per meter of altitude)
@@ -232,35 +236,35 @@ static float calculateAltitude(
  * This function returns the status of the system, indicating whether it is
  * operating correctly.
  *
- * @return true if the system is OK, false otherwise.
+ * @return `true` if the system is OK, `false` otherwise.
  */
 bool IsOK() { return isOK; }
 
 /**
  * @brief Retrieves the current temperature reading.
  *
- * @return const Reading& Reference to the current temperature reading.
+ * @return `const Reading&` Reference to the current temperature reading.
  */
 const Reading &GetTemperature() { return temperature; }
 
 /**
  * @brief Retrieves the current humidity reading.
  *
- * @return const Reading& Reference to the current humidity reading.
+ * @return `const Reading&` Reference to the current humidity reading.
  */
 const Reading &GetHumidity() { return humidity; }
 
 /**
  * @brief Retrieves the current air pressure reading.
  *
- * @return const Reading& Reference to the air pressure reading.
+ * @return `const Reading&` Reference to the air pressure reading.
  */
 const Reading &GetAirPressure() { return airPressure; }
 
 /**
  * @brief Retrieves the gas resistance reading.
  *
- * @return const Reading& Reference to the gas resistance reading.
+ * @return `const Reading&` Reference to the gas resistance reading.
  */
 const Reading &GetGasResistance() { return gasResistance; }
 
@@ -269,7 +273,7 @@ const Reading &GetGasResistance() { return gasResistance; }
  *
  * This function returns a constant reference to the altitude reading.
  *
- * @return const Reading& A constant reference to the altitude reading.
+ * @return `const Reading&` A constant reference to the altitude reading.
  */
 const Reading &GetAltitude() { return altitude; }
 

@@ -38,10 +38,10 @@ static void vTask(void *arg) {
 /**
  * @brief Initializes the failsafe mechanism by creating a task.
  *
- * This function creates a new task using the FreeRTOS xTaskCreate function.
+ * This function creates a new task using the FreeRTOS `xTaskCreate` function.
  * The task is created with a stack size of 4096 bytes, a priority of
- * tskIDLE_PRIORITY + 1, and no parameters passed to it. The task handle
- * is stored in the xHandle variable.
+ * `tskIDLE_PRIORITY + 1`, and no parameters passed to it. The task handle
+ * is stored in the `xHandle` variable.
  */
 void Init() {
     xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY + 1, &xHandle);
@@ -51,7 +51,7 @@ void Init() {
  * @brief Waits for a failure notification and handles the failure.
  *
  * This function waits indefinitely for a failure notification using
- * xTaskNotifyWait. Once a failure is detected, it logs the failure details,
+ * `xTaskNotifyWait`. Once a failure is detected, it logs the failure details,
  * blinks a red LED, and sets the display menu to the failsafe menu.
  *
  * @note This function assumes that the failures stack and the necessary
@@ -90,9 +90,7 @@ void AddFailure(const char *caller, std::string &&message) {
         ESP_LOGI(TAG, "Popped failure");
     }
 
-    failures.emplace(
-        std::forward<const char *>(caller), std::forward<std::string>(message)
-    );
+    failures.emplace(caller, std::move(message));
 
     ESP_LOGI(TAG, "Pushed failure - current size: %d", failures.size());
 
@@ -134,10 +132,12 @@ void PopFailure() {
  *
  * This function returns a constant reference to the stack of Failure objects.
  * It allows read-only access to the stack, which contains the recorded
- * failures. Note that the returned stack is not thread-safe and should be
+ * failures.
+ *
+ * @note The returned stack is not thread-safe and should be
  * accessed with caution in a multi-threaded environment.
  *
- * @return const std::stack<Failure>& A constant reference to the stack of
+ * @return `const std::stack<Failure>&` A constant reference to the stack of
  * failures.
  */
 const std::stack<Failure> &GetFailures() { return failures; }

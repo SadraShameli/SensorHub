@@ -20,8 +20,8 @@ static const uint32_t LogoDuration = 1000, ScreenSaverDuration = 1 * 60 * 1000;
 };
 
 static const char *TAG = "Display";
-static ssd1306_handle_t dev = nullptr;
 
+static ssd1306_handle_t dev = nullptr;
 static Configuration::Menu::Menus currentMenu = Configuration::Menu::Main;
 static clock_t currentTime = 0, prevTime = 0;
 static bool displayOff = false, isOK = false;
@@ -56,8 +56,9 @@ void Init() {
     ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0));
 
     dev = ssd1306_create(I2C_NUM_0, 0x3c);
-    if (!dev) {
+    if (dev == nullptr) {
         ESP_LOGI(TAG, "No display detected");
+
         vTaskDelete(nullptr);
     }
 
@@ -90,14 +91,42 @@ void Update() {
     if ((currentTime - prevTime) > Constants::ScreenSaverDuration) {
         prevTime = currentTime;
         displayOff = true;
+
         ssd1306_display_off(dev);
         Gui::Pause();
     }
 }
 
+/**
+ * @brief Checks if the system is in an OK state.
+ *
+ * @return `true` if the system is OK, `false` otherwise.
+ */
+bool IsOK() { return isOK; }
+
+/**
+ * @brief Clears the display screen.
+ *
+ * This function clears the entire screen of the SSD1306 display by setting all
+ * pixels to 0.
+ */
 void Clear() { ssd1306_clear_screen(dev, 0x00); }
+
+/**
+ * @brief Refreshes the display by updating the graphical memory.
+ *
+ * This function calls the `ssd1306_refresh_gram` function to refresh the
+ * display with the current graphical memory content.
+ */
 void Refresh() { ssd1306_refresh_gram(dev); }
 
+/**
+ * @brief Resets the screen saver and turns the display back on.
+ *
+ * This function checks if the display is currently off. If it is, it resets the
+ * screen saver by updating the previous time to the current clock time, sets
+ * the `displayOff` flag to false, turns the display on, and resumes the GUI.
+ */
 void ResetScreenSaver() {
     if (!displayOff) {
         return;
@@ -110,12 +139,29 @@ void ResetScreenSaver() {
     Gui::Resume();
 }
 
+/**
+ * @brief Prints a string on the display at the specified coordinates.
+ *
+ * @param x The x-coordinate where the text will be printed.
+ * @param y The y-coordinate where the text will be printed.
+ * @param text The string to be printed on the display.
+ * @param size The size of the text to be printed.
+ */
 void Print(uint32_t x, uint32_t y, const char *text, uint32_t size) {
     ssd1306_draw_string(
         dev, (uint8_t)x, (uint8_t)y, (const uint8_t *)text, (uint8_t)size, 1
     );
 }
 
+/**
+ * @brief Prints a header and a message on the display.
+ *
+ * This function clears the display, prints the header at the top,
+ * prints the message below the header, and then refreshes the display.
+ *
+ * @param header The header text to be printed at the top of the display.
+ * @param message The message text to be printed below the header.
+ */
 void PrintText(const char *header, const char *message) {
     Clear();
 
@@ -125,6 +171,17 @@ void PrintText(const char *header, const char *message) {
     Refresh();
 }
 
+/**
+ * @brief Prints four lines of text on the display.
+ *
+ * This function clears the display, prints four lines of text at specified
+ * positions, and then refreshes the display to show the new content.
+ *
+ * @param line1 The text to print on the first line.
+ * @param line2 The text to print on the second line.
+ * @param line3 The text to print on the third line.
+ * @param line4 The text to print on the fourth line.
+ */
 void PrintLines(
     const char *line1, const char *line2, const char *line3, const char *line4
 ) {
@@ -138,9 +195,19 @@ void PrintLines(
     Refresh();
 }
 
+/**
+ * @brief Prints the main display information including device name, IP address,
+ *        temperature, humidity, and loudness.
+ *
+ * This function retrieves and displays various sensor readings and device
+ * information on the display. It shows the device name, IP address (if
+ * connected to WiFi), temperature, humidity, and loudness levels. The display
+ * is cleared before printing the new information and refreshed at the end.
+ */
 void PrintMain() {
     const std::string &deviceName = Storage::GetDeviceName(),
                       &ip = WiFi::GetIPStation();
+
     const Reading &temperature = Climate::GetTemperature(),
                   &humidity = Climate::GetHumidity(),
                   &loudness = Mic::GetLoudness();
@@ -179,6 +246,15 @@ void PrintMain() {
     Refresh();
 }
 
+/**
+ * @brief Prints the current, maximum, and minimum temperature readings on the
+ * display.
+ *
+ * This function retrieves the current temperature reading from the Climate
+ * sensor, formats the temperature values, and prints them on the display at
+ * specified positions. It clears the display before printing and refreshes the
+ * display after printing.
+ */
 void PrintTemperature() {
     const Reading &reading = Climate::GetTemperature();
 
@@ -199,6 +275,16 @@ void PrintTemperature() {
     Refresh();
 }
 
+/**
+ * @brief Prints the current, maximum, and minimum humidity readings on the
+ * display.
+ *
+ * This function retrieves the current humidity reading from the Climate sensor,
+ * formats the readings into strings, and prints them on the display at
+ * specified positions. It first clears the display, prints the "Humidity"
+ * label, and then prints the current, maximum, and minimum humidity values.
+ * Finally, it refreshes the display to show the updated information.
+ */
 void PrintHumidity() {
     const Reading &reading = Climate::GetHumidity();
 
@@ -219,6 +305,15 @@ void PrintHumidity() {
     Refresh();
 }
 
+/**
+ * @brief Prints the current, maximum, and minimum air pressure readings to the
+ * display.
+ *
+ * This function retrieves the current air pressure reading from the Climate
+ * sensor, formats the readings, and prints them to the display at specified
+ * positions. The display is cleared before printing the new readings, and
+ * refreshed after printing.
+ */
 void PrintAirPressure() {
     const Reading &reading = Climate::GetAirPressure();
 
@@ -239,6 +334,16 @@ void PrintAirPressure() {
     Refresh();
 }
 
+/**
+ * @brief Prints the gas resistance readings on the display.
+ *
+ * This function retrieves the current, maximum, and minimum gas resistance
+ * readings from the Climate sensor and displays them on the screen. The
+ * readings are displayed in ohms at different positions on the screen.
+ *
+ * The display is cleared before printing the new readings, and the screen
+ * is refreshed after all the readings are printed.
+ */
 void PrintGasResistance() {
     const Reading &reading = Climate::GetGasResistance();
 
@@ -259,6 +364,17 @@ void PrintGasResistance() {
     Refresh();
 }
 
+/**
+ * @brief Prints the current, maximum, and minimum altitude readings on the
+ * display.
+ *
+ * This function retrieves the current altitude reading from the Climate sensor,
+ * formats the readings into strings, and prints them on the display at
+ * specified positions. It first clears the display, prints the "Altitude"
+ * label, and then prints the current altitude, maximum altitude, and minimum
+ * altitude at different positions on the display. Finally, it refreshes the
+ * display to show the updated information.
+ */
 void PrintAltitude() {
     const Reading &reading = Climate::GetAltitude();
 
@@ -279,6 +395,16 @@ void PrintAltitude() {
     Refresh();
 }
 
+/**
+ * @brief Prints the loudness readings from the microphone to the display.
+ *
+ * This function retrieves the current, maximum, and minimum loudness readings
+ * from the microphone and displays them on the screen. The loudness values are
+ * displayed in decibels (dB) at different positions on the screen.
+ *
+ * The display is cleared before printing the new values, and the screen is
+ * refreshed at the end to ensure the new values are shown.
+ */
 void PrintLoudness() {
     const Reading &reading = Mic::GetLoudness();
 
@@ -299,27 +425,17 @@ void PrintLoudness() {
     Refresh();
 }
 
-// void PrintRPM()
-// {
-//     const Reading &reading = RPM::GetRPM();
+/**
+ * @brief Prints the details of connected WiFi clients on the display.
+ *
+ * This function retrieves the list of connected WiFi clients and displays
+ * their IP and MAC addresses on the screen. The display is cleared before
+ * printing the details, and the screen is refreshed after printing.
 
-//     char buff[32] = {0};
-//     Clear();
-
-//     Print(0, 0, "RPM");
-
-//     sprintf(buff, "%d", (int)reading.Current());
-//     Print(0, 16, buff);
-
-//     sprintf(buff, "Max: %d", (int)reading.Max());
-//     Print(0, 32, buff);
-
-//     sprintf(buff, "Min: %d", (int)reading.Min());
-//     Print(0, 48, buff);
-
-//     Refresh();
-// }
-
+ * @note The function assumes that the `WiFi::GetClientDetails()` function
+ * returns a vector of `WiFi::ClientDetails` objects, each containing
+ * `IPAddress` and `MacAddress` fields.
+ */
 void PrintWiFiClients() {
     const std::vector<WiFi::ClientDetails> &clients = WiFi::GetClientDetails();
 
@@ -339,6 +455,40 @@ void PrintWiFiClients() {
     Refresh();
 }
 
+/**
+ * @brief Advances the current menu to the next menu based on the current state.
+ *
+ * This function updates the `currentMenu` variable to the next appropriate menu
+ * depending on whether the system is in configuration mode or not. The function
+ * handles different cases for each menu and transitions to the next logical
+ * menu.
+ *
+ * If the system is in configuration mode (`Storage::GetConfigMode()` returns
+ * true):
+ *
+ * - Transitions from `Config` to `ConfigClients`.
+ *
+ * - Transitions from `ConfigClients` to `Failsafe`.
+ *
+ * - Transitions from `Failsafe` to either `ConfigConnected` or
+ * `ConfigConnecting` based on the notification and WiFi connection status.
+ *
+ * - Transitions from `ConfigConnecting` or `ConfigConnected` back to
+ * `Failsafe`.
+ *
+ * If the system is not in configuration mode:
+ *
+ * - Transitions from `Failsafe` or `Reset` to `Main`.
+ *
+ * - Iterates through the sensor menus and transitions to the first active
+ * sensor menu that meets the conditions for climate or microphone status.
+ *
+ * - Defaults to `Failsafe` if no other menu is appropriate.
+ *
+ * @note The function assumes that `currentMenu` is a valid menu state and that
+ *       `Menus` and `Sensors` enums are properly defined in the `Configuration`
+ * namespace.
+ */
 void NextMenu() {
     using Menus = Configuration::Menu::Menus;
     using Sensors = Configuration::Sensor::Sensors;
@@ -362,6 +512,7 @@ void NextMenu() {
                     } else {
                         currentMenu = Menus::ConfigConnecting;
                     }
+
                     return;
                 }
 
@@ -407,10 +558,26 @@ void NextMenu() {
     }
 }
 
-bool IsOK() { return isOK; }
+/**
+ * @brief Retrieves the current menu configuration.
+ *
+ * @return `Configuration::Menu::Menus` The current menu.
+ */
 Configuration::Menu::Menus GetMenu() { return currentMenu; }
+
+/**
+ * @brief Sets the current menu and resets the screen saver.
+ *
+ * This function updates the current menu to the specified menu and
+ * resets the screen saver timer to prevent the screen saver from
+ * activating immediately after the menu change.
+ *
+ * @param menu The menu to set as the current menu. This should be one
+ *             of the values from the `Configuration::Menu::Menus` enum.
+ */
 void SetMenu(Configuration::Menu::Menus menu) {
     currentMenu = menu;
+
     ResetScreenSaver();
 }
 

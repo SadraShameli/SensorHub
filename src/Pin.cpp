@@ -1,10 +1,7 @@
+#include "Pin.h"
+
 #include <ctime>
 #include <vector>
-
-#include "driver/gpio.h"
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 
 #include "Climate.h"
 #include "Configuration.h"
@@ -13,97 +10,126 @@
 #include "Input.h"
 #include "Mic.h"
 #include "Output.h"
-#include "Pin.h"
 #include "Storage.h"
+#include "driver/gpio.h"
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
-namespace Pin
-{
-    static const char *TAG = "Pin";
-    static TaskHandle_t xHandle = nullptr;
+namespace Pin {
 
-    static bool resetCanceled = false;
+static const char *TAG = "Pin";
+static TaskHandle_t xHandle = nullptr;
 
-    static void vTask(void *arg)
-    {
-        ESP_LOGI(TAG, "Initializing");
+static bool resetCanceled = false;
 
-        Input::Init();
-        Output::Init();
+/**
+ * @brief Task function that initializes input and output modules and
+ * continuously updates them.
+ *
+ * This function is intended to be run as a FreeRTOS task. It performs the
+ * following steps:
+ *
+ * 1. Logs an initialization message.
+ *
+ * 2. Initializes the Input and Output modules.
+ *
+ * 3. Enters an infinite loop where it:
+ *    - Updates the Input module.
+ *
+ *    - Updates the Output module.
+ *
+ *    - Calls the Update function.
+ *
+ *    - Delays for 10 milliseconds.
+ *
+ * @param arg Pointer to the task's argument (unused).
+ */
+static void vTask(void *arg) {
+    ESP_LOGI(TAG, "Initializing");
 
-        for (;;)
-        {
-            Input::Update();
-            Output::Update();
-            Update();
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+    Input::Init();
+    Output::Init();
 
-        vTaskDelete(nullptr);
+    for (;;) {
+        Input::Update();
+        Output::Update();
+        Update();
+
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 
-    void Init()
-    {
-        xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY, &xHandle);
-    }
+    vTaskDelete(nullptr);
+}
 
-    void Update()
-    {
-        using Menus = Configuration::Menu::Menus;
-        using Sensors = Configuration::Sensor::Sensors;
+/**
+ * @brief Initializes the Pin module.
+ *
+ * This function creates a FreeRTOS task to run the `vTask` function.
+ */
+void Init() {
+    xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY, &xHandle);
+}
 
-        if (Input::GetPinState(Input::Inputs::Up))
-        {
-            Output::Blink(Output::LedY);
-            Display::ResetScreenSaver();
+/**
+ * @brief Updates the Pin module.
+ *
+ * This function checks if the `Up` or `Down` input pins are pressed and
+ * performs the following actions:
+ *
+ * - If the `Up` pin is pressed, it advances to the next menu.
+ *
+ * - If the `Down` pin is pressed, it resets the values of the current menu.
+ */
+void Update() {
+    using Menus = Configuration::Menu::Menus;
+    using Sensors = Configuration::Sensor::Sensors;
 
-            if (!Storage::GetConfigMode())
-            {
-                while (!resetCanceled && clock() < 10000)
-                {
-                    Display::SetMenu(Menus::Reset);
-                    Input::Update();
-                    Output::Update();
+    if (Input::GetPinState(Input::Inputs::Up)) {
+        Output::Blink(Output::LedY);
+        Display::ResetScreenSaver();
 
-                    if (Input::GetPinState(Input::Up))
-                    {
-                        resetCanceled = true;
-                        return;
-                    }
+        if (!Storage::GetConfigMode()) {
+            while (!resetCanceled && clock() < 10000) {
+                Display::SetMenu(Menus::Reset);
+                Input::Update();
+                Output::Update();
 
-                    if (Input::GetPinState(Input::Inputs::Down))
-                    {
-                        Storage::Reset();
-                        esp_restart();
-                    }
-
-                    vTaskDelay(pdMS_TO_TICKS(10));
-                }
-
-                if (!resetCanceled)
-                {
-                    Display::SetMenu(Menus::Main);
+                if (Input::GetPinState(Input::Up)) {
                     resetCanceled = true;
+                    return;
                 }
+
+                if (Input::GetPinState(Input::Inputs::Down)) {
+                    Storage::Reset();
+                    esp_restart();
+                }
+
+                vTaskDelay(pdMS_TO_TICKS(10));
             }
 
-            Display::NextMenu();
+            if (!resetCanceled) {
+                Display::SetMenu(Menus::Main);
+                resetCanceled = true;
+            }
         }
 
-        else if (Input::GetPinState(Input::Inputs::Down))
-        {
-            Output::Blink(Output::LedY);
-            Display::ResetScreenSaver();
+        Display::NextMenu();
+    }
 
-            if (Storage::GetConfigMode())
-            {
-                if (Display::GetMenu() != Menus::Failsafe)
-                    esp_restart();
+    else if (Input::GetPinState(Input::Inputs::Down)) {
+        Output::Blink(Output::LedY);
+        Display::ResetScreenSaver();
 
-                Failsafe::PopFailure();
+        if (Storage::GetConfigMode()) {
+            if (Display::GetMenu() != Menus::Failsafe) {
+                esp_restart();
             }
 
-            switch (Display::GetMenu())
-            {
+            Failsafe::PopFailure();
+        }
+
+        switch (Display::GetMenu()) {
             case Menus::Temperature:
                 Climate::ResetValues(Sensors::Temperature);
                 break;
@@ -129,16 +155,13 @@ namespace Pin
                 Mic::ResetValues();
                 break;
 
-                // case Menus::RPM:
-                //     RPM::ResetValues();
-                //     break;
-
             case Menus::Failsafe:
                 Failsafe::PopFailure();
 
             default:
                 break;
-            }
         }
     }
 }
+
+}  // namespace Pin
