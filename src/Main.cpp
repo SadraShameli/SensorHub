@@ -21,17 +21,23 @@ extern "C" void app_main()
   Network::Init();
 
   if (Storage::GetConfigMode())
+  {
     return;
+  }
 
   using Sensors = Configuration::Sensor::Sensors;
 
   if (Storage::GetSensorState(Sensors::Loudness) || Storage::GetSensorState(Sensors::Recording))
+  {
     Mic::Init();
+  }
 
   if (Storage::GetSensorState(Sensors::Temperature) ||
       Storage::GetSensorState(Sensors::Humidity) ||
       Storage::GetSensorState(Sensors::AirPressure) ||
       Storage::GetSensorState(Sensors::GasResistance) ||
       Storage::GetSensorState(Sensors::Altitude))
+  {
     Climate::Init();
+  }
 }
