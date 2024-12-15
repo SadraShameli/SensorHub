@@ -2,17 +2,22 @@
 
 #include "Definitions.h"
 
-namespace Mic
-{
-    void Init();
-    void Update();
+/**
+ * @namespace
+ * @brief A namespace for managing the microphone.
+ */
+namespace Mic {
 
-    void UpdateRecording();
-    bool UpdateLoudness();
-    void RegisterRecordings();
-    float CalculateLoudness();
+void Init();
+void Update();
 
-    bool IsOK();
-    void ResetValues();
-    const Reading &GetLoudness();
-};
+void UpdateRecording();
+bool UpdateLoudness();
+void RegisterRecordings();
+float CalculateLoudness();
+
+bool IsOK();
+void ResetValues();
+const Reading &GetLoudness();
+
+};  // namespace Mic

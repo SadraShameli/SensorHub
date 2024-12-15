@@ -3,25 +3,41 @@
 #include <stack>
 #include <string>
 
-namespace Failsafe
-{
-    class Failure
-    {
-    public:
-        Failure(const char *caller, const char *message) : Caller(caller), Message(message) {}
-        Failure(const char *caller, const std::string &message) : Caller(caller), Message(message) {}
-        Failure(const char *caller, std::string &&message) : Caller(caller), Message(std::move(message)) {}
+/**
+ * @namespace
+ * @brief A namespace for managing failures.
+ */
+namespace Failsafe {
 
-        const char *Caller;
-        std::string Message;
-    };
+/**
+ * @class
+ * @brief Represents a failure with a caller and a message.
+ *
+ * The Failure class encapsulates information about a failure, including the
+ * caller and a message describing the failure.
+ */
+class Failure {
+   public:
+    Failure(const char *caller, const char *message)
+        : Caller(caller), Message(message) {}
 
-    void Init();
-    void Update();
+    Failure(const char *caller, const std::string &message)
+        : Caller(caller), Message(message) {}
 
-    void AddFailure(const char *, std::string &&);
-    void AddFailureDelayed(const char *, std::string &&);
-    void PopFailure();
+    Failure(const char *caller, std::string &&message)
+        : Caller(caller), Message(std::move(message)) {}
 
-    const std::stack<Failsafe::Failure> &GetFailures();
+    const char *Caller;
+    std::string Message;
 };
+
+void Init();
+void Update();
+
+void AddFailure(const char *, std::string &&);
+void AddFailureDelayed(const char *, std::string &&);
+void PopFailure();
+
+const std::stack<Failsafe::Failure> &GetFailures();
+
+};  // namespace Failsafe

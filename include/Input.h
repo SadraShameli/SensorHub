@@ -1,15 +1,16 @@
 #pragma once
 
-namespace Input
-{
-    enum Inputs
-    {
-        Up = 27,
-        Down = 26
-    };
+/**
+ * @namespace
+ * @brief A namespace for managing the input.
+ */
+namespace Input {
 
-    void Init();
-    void Update();
+enum Inputs { Up = 27, Down = 26 };
 
-    bool GetPinState(Inputs);
-};
+void Init();
+void Update();
+
+bool GetPinState(Inputs);
+
+};  // namespace Input
