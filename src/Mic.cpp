@@ -280,8 +280,6 @@ bool UpdateLoudness() {
  * It reads audio data from an I2S channel, calculates the RMS and decibel
  * levels, and updates the loudness if within a specified range. It also
  * handles HTTP responses and checks for failures.
- *
- * @return void
  */
 void RegisterRecordings() {
     int length = esp_http_client_write(

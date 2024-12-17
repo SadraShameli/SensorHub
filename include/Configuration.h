@@ -106,5 +106,4 @@ inline bool Get(Notifications value) { return Values & value; }
 inline void Set(Notifications value) { Values |= value; }
 
 };  // namespace Notification
-
 }  // namespace Configuration

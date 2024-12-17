@@ -29,7 +29,7 @@ std::string DeviceURL = "device/", ReadingURL = "reading/",
  *
  * @param payload The response payload as a string.
  * @param statusCode The HTTP status code of the response.
- * @return true if the response indicates a failure, false otherwise.
+ * @return `true` if the response indicates a failure, `false` otherwise.
  */
 bool CheckResponseFailed(
     const std::string &payload, HTTP::Status::StatusCode statusCode
@@ -83,7 +83,8 @@ bool CheckResponseFailed(
  * any parameter is invalid, it logs the failure and returns false.
  *
  * @param payload A JSON string containing the configuration parameters.
- * @return true if the configuration is successfully set up, false otherwise.
+ * @return `true` if the configuration is successfully set up, `false`
+ * otherwise.
  */
 bool SetupConfiguration(const std::string &payload) {
     ESP_LOGI(TAG, "Setting up configuration: %s", payload.c_str());

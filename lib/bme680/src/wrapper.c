@@ -1,26 +1,29 @@
-#include <sys/time.h>
-#include <string.h>
-#include "driver/spi_master.h"
-#include "driver/spi_common.h"
-#include "driver/i2c.h"
-#include "driver/gpio.h"
 #include "wrapper.h"
+
+#include <string.h>
+#include <sys/time.h>
+
+#include "driver/gpio.h"
+#include "driver/i2c.h"
+#include "driver/spi_common.h"
+#include "driver/spi_master.h"
 
 bool gpio_isr_service_installed = false;
 bool auto_pull_up = false;
 bool auto_pull_down = true;
 
-uint32_t sdk_system_get_time()
-{
+uint32_t sdk_system_get_time() {
     struct timeval time;
     gettimeofday(&time, 0);
     return time.tv_sec * 1e6 + time.tv_usec;
 }
 
-esp_err_t gpio_set_interrupt(gpio_num_t gpio, gpio_int_type_t type, gpio_isr_t handler)
-{
-    if (!gpio_isr_service_installed)
+esp_err_t gpio_set_interrupt(
+    gpio_num_t gpio, gpio_int_type_t type, gpio_isr_t handler
+) {
+    if (!gpio_isr_service_installed) {
         gpio_isr_service_installed = (gpio_install_isr_service(0) == ESP_OK);
+    }
 
     gpio_config_t gpio_cfg = {
         .pin_bit_mask = ((uint64_t)(((uint64_t)1) << gpio)),
@@ -36,8 +39,7 @@ esp_err_t gpio_set_interrupt(gpio_num_t gpio, gpio_int_type_t type, gpio_isr_t h
     return ESP_OK;
 }
 
-void gpio_enable(gpio_num_t gpio, const gpio_mode_t mode)
-{
+void gpio_enable(gpio_num_t gpio, const gpio_mode_t mode) {
     gpio_config_t gpio_cfg = {
         .pin_bit_mask = ((uint64_t)(((uint64_t)1) << gpio)),
         .mode = mode,
@@ -51,34 +53,37 @@ void gpio_enable(gpio_num_t gpio, const gpio_mode_t mode)
 #define I2C_ACK_VAL 0x0
 #define I2C_NACK_VAL 0x1
 
-void i2c_init(int bus, gpio_num_t sda, gpio_num_t scl, uint32_t freq)
-{
+void i2c_init(int bus, gpio_num_t sda, gpio_num_t scl, uint32_t freq) {
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
         .sda_io_num = sda,
         .scl_io_num = scl,
         .sda_pullup_en = GPIO_PULLUP_ENABLE,
         .scl_pullup_en = GPIO_PULLUP_ENABLE,
-        .master = {
-            .clk_speed = freq,
-        },
+        .master =
+            {
+                .clk_speed = freq,
+            },
     };
 
     i2c_param_config(bus, &conf);
     i2c_driver_install(bus, I2C_MODE_MASTER, 0, 0, 0);
 }
 
-int i2c_slave_write(uint8_t bus, uint8_t addr, const uint8_t *reg, uint8_t *data, uint32_t len)
-{
+int i2c_slave_write(
+    uint8_t bus, uint8_t addr, const uint8_t *reg, uint8_t *data, uint32_t len
+) {
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, addr << 1 | I2C_MASTER_WRITE, true);
 
-    if (reg)
+    if (reg) {
         i2c_master_write_byte(cmd, *reg, true);
+    }
 
-    if (data)
+    if (data) {
         i2c_master_write(cmd, data, len, true);
+    }
 
     i2c_master_stop(cmd);
     esp_err_t err = i2c_master_cmd_begin(bus, cmd, pdMS_TO_TICKS(1000));
@@ -87,29 +92,31 @@ int i2c_slave_write(uint8_t bus, uint8_t addr, const uint8_t *reg, uint8_t *data
     return err;
 }
 
-int i2c_slave_read(uint8_t bus, uint8_t addr, const uint8_t *reg, uint8_t *data, uint32_t len)
-{
-    if (len == 0)
+int i2c_slave_read(
+    uint8_t bus, uint8_t addr, const uint8_t *reg, uint8_t *data, uint32_t len
+) {
+    if (len == 0) {
         return true;
+    }
 
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    if (reg)
-    {
+    if (reg) {
         i2c_master_start(cmd);
         i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
         i2c_master_write_byte(cmd, *reg, true);
 
-        if (!data)
+        if (!data) {
             i2c_master_stop(cmd);
+        }
     }
 
-    if (data)
-    {
+    if (data) {
         i2c_master_start(cmd);
         i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_READ, true);
 
-        if (len > 1)
+        if (len > 1) {
             i2c_master_read(cmd, data, len - 1, I2C_ACK_VAL);
+        }
 
         i2c_master_read_byte(cmd, data + len - 1, I2C_NACK_VAL);
         i2c_master_stop(cmd);
@@ -126,8 +133,9 @@ int i2c_slave_read(uint8_t bus, uint8_t addr, const uint8_t *reg, uint8_t *data,
 
 spi_device_handle_t spi_handles[SPI_MAX_CS] = {0};
 
-bool spi_bus_init(spi_host_device_t host, uint8_t sclk, uint8_t miso, uint8_t mosi)
-{
+bool spi_bus_init(
+    spi_host_device_t host, uint8_t sclk, uint8_t miso, uint8_t mosi
+) {
     spi_bus_config_t spi_bus_cfg = {
         .miso_io_num = miso,
         .mosi_io_num = mosi,
@@ -139,13 +147,14 @@ bool spi_bus_init(spi_host_device_t host, uint8_t sclk, uint8_t miso, uint8_t mo
     return (spi_bus_initialize(host, &spi_bus_cfg, 1) == ESP_OK);
 }
 
-bool spi_device_init(uint8_t bus, uint8_t cs)
-{
-    if (bus >= SPI_MAX_BUS || cs >= SPI_MAX_CS)
+bool spi_device_init(uint8_t bus, uint8_t cs) {
+    if (bus >= SPI_MAX_BUS || cs >= SPI_MAX_CS) {
         return false;
+    }
 
-    if ((spi_handles[cs] = malloc(sizeof(spi_device_handle_t))) == 0)
+    if ((spi_handles[cs] = malloc(sizeof(spi_device_handle_t))) == 0) {
         return false;
+    }
 
     spi_device_interface_config_t dev_cfg = {
         .clock_speed_hz = 1e6,
@@ -158,8 +167,7 @@ bool spi_device_init(uint8_t bus, uint8_t cs)
         .dummy_bits = 0,
     };
 
-    if (spi_bus_add_device(bus, &dev_cfg, &(spi_handles[cs])) != ESP_OK)
-    {
+    if (spi_bus_add_device(bus, &dev_cfg, &(spi_handles[cs])) != ESP_OK) {
         free(spi_handles[cs]);
         return false;
     }
@@ -167,10 +175,12 @@ bool spi_device_init(uint8_t bus, uint8_t cs)
     return true;
 }
 
-size_t spi_transfer_pf(uint8_t bus, uint8_t cs, const uint8_t *mosi, uint8_t *miso, uint16_t len)
-{
-    if (cs >= SPI_MAX_CS)
+size_t spi_transfer_pf(
+    uint8_t bus, uint8_t cs, const uint8_t *mosi, uint8_t *miso, uint16_t len
+) {
+    if (cs >= SPI_MAX_CS) {
         return 0;
+    }
 
     spi_transaction_t spi_trans = {
         .length = len * 8,
@@ -178,8 +188,9 @@ size_t spi_transfer_pf(uint8_t bus, uint8_t cs, const uint8_t *mosi, uint8_t *mi
         .rx_buffer = miso,
     };
 
-    if (spi_device_transmit(spi_handles[cs], &spi_trans) != ESP_OK)
+    if (spi_device_transmit(spi_handles[cs], &spi_trans) != ESP_OK) {
         return 0;
+    }
 
     return len;
 }
