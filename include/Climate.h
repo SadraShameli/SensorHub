@@ -16,10 +16,10 @@ void ResetValues(Configuration::Sensor::Sensors);
 float calculateAltitude(float, float, float);
 
 bool IsOK();
-const Reading &GetTemperature();
-const Reading &GetHumidity();
-const Reading &GetAirPressure();
-const Reading &GetGasResistance();
-const Reading &GetAltitude();
+const Reading& GetTemperature();
+const Reading& GetHumidity();
+const Reading& GetAirPressure();
+const Reading& GetGasResistance();
+const Reading& GetAltitude();
 
 };  // namespace Climate

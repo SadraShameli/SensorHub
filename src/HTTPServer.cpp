@@ -29,7 +29,7 @@ struct file_server_data {
     char scratch[SCRATCH_BUFSIZE];
 };
 
-static const char *TAG = "HTTP Server";
+static const char* TAG = "HTTP Server";
 static httpd_handle_t s_Server = nullptr;
 
 /**
@@ -46,18 +46,17 @@ static httpd_handle_t s_Server = nullptr;
  * @return A pointer to the end of the base path in the destination buffer, or
  * `nullptr` if the resulting path exceeds the size of the destination buffer.
  */
-static const char *get_path_from_uri(
-    char *dest, const char *base_path, const char *uri, size_t destsize
-) {
+static const char* get_path_from_uri(char* dest, const char* base_path,
+                                     const char* uri, size_t destsize) {
     const size_t base_pathlen = strlen(base_path);
     size_t pathlen = strlen(uri);
 
-    const char *quest = strchr(uri, '?');
+    const char* quest = strchr(uri, '?');
     if (quest != nullptr) {
         pathlen = MIN(pathlen, quest - uri);
     }
 
-    const char *hash = strchr(uri, '#');
+    const char* hash = strchr(uri, '#');
     if (hash != nullptr) {
         pathlen = MIN(pathlen, hash - uri);
     }
@@ -84,18 +83,17 @@ static const char *get_path_from_uri(
  * @param dirpath The path to the directory to be listed.
  * @return `ESP_OK` on success, `ESP_FAIL` on failure.
  */
-static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath) {
+static esp_err_t http_resp_dir_html(httpd_req_t* req, const char* dirpath) {
     char entrypath[FILE_PATH_MAX];
     char entrysize[16];
 
-    struct dirent *entry;
+    struct dirent* entry;
     struct stat entry_stat;
 
-    DIR *dir = opendir(dirpath);
+    DIR* dir = opendir(dirpath);
     if (dir == nullptr) {
-        httpd_resp_send_err(
-            req, HTTPD_404_NOT_FOUND, "Directory does not exist"
-        );
+        httpd_resp_send_err(req, HTTPD_404_NOT_FOUND,
+                            "Directory does not exist");
 
         return ESP_FAIL;
     }
@@ -110,10 +108,8 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath) {
     httpd_resp_send(req, upload_script_start, upload_script_size);
 
     while ((entry = readdir(dir)) != nullptr) {
-        strlcpy(
-            entrypath + dirpath_len, entry->d_name,
-            sizeof(entrypath) - dirpath_len
-        );
+        strlcpy(entrypath + dirpath_len, entry->d_name,
+                sizeof(entrypath) - dirpath_len);
 
         if (stat(entrypath, &entry_stat) == -1) {
             continue;
@@ -137,7 +133,7 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath) {
  * @param req Pointer to the HTTP request.
  * @return `ESP_OK` on success.
  */
-static esp_err_t index_html_get_handler(httpd_req_t *req) {
+static esp_err_t index_html_get_handler(httpd_req_t* req) {
     httpd_resp_set_status(req, "307 Temporary Redirect");
     httpd_resp_set_hdr(req, "Location", "/");
     httpd_resp_send(req, nullptr, 0);
@@ -183,9 +179,8 @@ static esp_err_t index_html_get_handler(httpd_req_t *req) {
  * @param filename The filename to check.
  * @return `ESP_OK` on success, `ESP_FAIL` on failure.
  */
-static esp_err_t set_content_type_from_file(
-    httpd_req_t *req, const char *filename
-) {
+static esp_err_t set_content_type_from_file(httpd_req_t* req,
+                                            const char* filename) {
     if (IS_FILE_EXT(filename, ".pdf")) {
         return httpd_resp_set_type(req, "application/pdf");
     }
@@ -220,15 +215,15 @@ static esp_err_t set_content_type_from_file(
  * @param req Pointer to the HTTP request.
  * @return `ESP_OK` on success.
  */
-static esp_err_t favicon_get_handler(httpd_req_t *req) {
+static esp_err_t favicon_get_handler(httpd_req_t* req) {
     extern const unsigned char favicon_ico_start[] asm(FILE_PATH
                                                        "favicon_ico_start");
-    extern const unsigned char favicon_ico_end[] asm(FILE_PATH "favicon_ico_end"
-    );
+    extern const unsigned char favicon_ico_end[] asm(FILE_PATH
+                                                     "favicon_ico_end");
     const size_t favicon_ico_size = (favicon_ico_end - favicon_ico_start);
 
     httpd_resp_set_type(req, "image/x-icon");
-    httpd_resp_send(req, (const char *)favicon_ico_start, favicon_ico_size);
+    httpd_resp_send(req, (const char*)favicon_ico_start, favicon_ico_size);
 
     return ESP_OK;
 }
@@ -246,20 +241,18 @@ static esp_err_t favicon_get_handler(httpd_req_t *req) {
  * @param req Pointer to the HTTP request.
  * @return `ESP_OK` on success, `ESP_FAIL` on failure.
  */
-static esp_err_t download_get_handler(httpd_req_t *req) {
+static esp_err_t download_get_handler(httpd_req_t* req) {
     char filepath[FILE_PATH_MAX];
-    FILE *fd = nullptr;
+    FILE* fd = nullptr;
     struct stat file_stat;
 
-    const char *filename = get_path_from_uri(
-        filepath, ((struct file_server_data *)req->user_ctx)->base_path,
-        req->uri, sizeof(filepath)
-    );
+    const char* filename = get_path_from_uri(
+        filepath, ((struct file_server_data*)req->user_ctx)->base_path,
+        req->uri, sizeof(filepath));
 
     if (filename == nullptr) {
-        httpd_resp_send_err(
-            req, HTTPD_500_INTERNAL_SERVER_ERROR, "Filename too long"
-        );
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR,
+                            "Filename too long");
         return ESP_FAIL;
     }
 
@@ -283,16 +276,15 @@ static esp_err_t download_get_handler(httpd_req_t *req) {
 
     fd = fopen(filepath, "r");
     if (fd == nullptr) {
-        httpd_resp_send_err(
-            req, HTTPD_500_INTERNAL_SERVER_ERROR, "Reading existing file failed"
-        );
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR,
+                            "Reading existing file failed");
 
         return ESP_FAIL;
     }
 
     set_content_type_from_file(req, filename);
 
-    char *chunk = ((struct file_server_data *)req->user_ctx)->scratch;
+    char* chunk = ((struct file_server_data*)req->user_ctx)->scratch;
     size_t chunksize;
 
     do {
@@ -302,9 +294,8 @@ static esp_err_t download_get_handler(httpd_req_t *req) {
             if (httpd_resp_send_chunk(req, chunk, chunksize) != ESP_OK) {
                 fclose(fd);
                 httpd_resp_sendstr_chunk(req, nullptr);
-                httpd_resp_send_err(
-                    req, HTTPD_500_INTERNAL_SERVER_ERROR, "Sending file failed"
-                );
+                httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR,
+                                    "Sending file failed");
 
                 return ESP_FAIL;
             }
@@ -331,7 +322,7 @@ static esp_err_t download_get_handler(httpd_req_t *req) {
  * @param req Pointer to the HTTP request.
  * @return `ESP_OK` on success, `ESP_FAIL` on failure.
  */
-static esp_err_t config_handler(httpd_req_t *req) {
+static esp_err_t config_handler(httpd_req_t* req) {
     int ret = 0, remaining = req->content_len;
     std::string http_payload(remaining, 0);
 
@@ -363,13 +354,12 @@ static esp_err_t config_handler(httpd_req_t *req) {
 void StartServer() {
     ESP_LOGI(TAG, "Starting HTTP server on IP %s", WiFi::GetIPAP().c_str());
 
-    static struct file_server_data *server_data = nullptr;
+    static struct file_server_data* server_data = nullptr;
     if (server_data == nullptr) {
         Storage::Mount(FOLDER_PATH, PARTITION_NAME);
-        server_data = (file_server_data *)calloc(1, sizeof(file_server_data));
-        strlcpy(
-            server_data->base_path, FOLDER_PATH, sizeof(server_data->base_path)
-        );
+        server_data = (file_server_data*)calloc(1, sizeof(file_server_data));
+        strlcpy(server_data->base_path, FOLDER_PATH,
+                sizeof(server_data->base_path));
     }
 
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();

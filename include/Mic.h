@@ -18,6 +18,6 @@ float CalculateLoudness();
 
 bool IsOK();
 void ResetValues();
-const Reading &GetLoudness();
+const Reading& GetLoudness();
 
 };  // namespace Mic

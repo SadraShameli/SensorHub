@@ -10,7 +10,7 @@
 
 namespace Failsafe {
 
-static const char *TAG = "Failsafe";
+static const char* TAG = "Failsafe";
 static TaskHandle_t xHandle = nullptr;
 
 static std::stack<Failure> failures;
@@ -25,7 +25,7 @@ static std::stack<Failure> failures;
  *
  * @param arg Pointer to the arguments passed to the task function (unused).
  */
-static void vTask(void *arg) {
+static void vTask(void* arg) {
     ESP_LOGI(TAG, "Initializing");
 
     for (;;) {
@@ -60,12 +60,10 @@ void Init() {
 void Update() {
     ESP_LOGI(TAG, "Waiting for failure");
 
-    xTaskNotifyWait(
-        0, Configuration::Notification::NewFailsafe,
-        &Configuration::Notification::Values, portMAX_DELAY
-    );
+    xTaskNotifyWait(0, Configuration::Notification::NewFailsafe,
+                    &Configuration::Notification::Values, portMAX_DELAY);
 
-    const Failure &topFailure = failures.top();
+    const Failure& topFailure = failures.top();
     ESP_LOGE(TAG, "%s - %s", topFailure.Caller, topFailure.Message.c_str());
 
     Output::Blink(Output::LedR, 5000);
@@ -83,7 +81,7 @@ void Update() {
  * @param caller The name of the caller function or module.
  * @param message The failure message to be added.
  */
-void AddFailure(const char *caller, std::string &&message) {
+void AddFailure(const char* caller, std::string&& message) {
     if (failures.size() >= 24) {
         failures.pop();
 
@@ -106,7 +104,7 @@ void AddFailure(const char *caller, std::string &&message) {
  * @param caller The name of the caller function.
  * @param message The failure message to be added.
  */
-void AddFailureDelayed(const char *caller, std::string &&message) {
+void AddFailureDelayed(const char* caller, std::string&& message) {
     AddFailure(caller, std::move(message));
 
     vTaskDelay(pdMS_TO_TICKS(10000));
@@ -140,6 +138,8 @@ void PopFailure() {
  * @return `const std::stack<Failure>&` A constant reference to the stack of
  * failures.
  */
-const std::stack<Failure> &GetFailures() { return failures; }
+const std::stack<Failure>& GetFailures() {
+    return failures;
+}
 
 }  // namespace Failsafe

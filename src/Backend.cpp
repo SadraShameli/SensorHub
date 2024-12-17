@@ -14,7 +14,7 @@
 
 namespace Backend {
 
-static const char *TAG = "Backend";
+static const char* TAG = "Backend";
 
 std::string DeviceURL = "device/", ReadingURL = "reading/",
             RecordingURL = "recording/";
@@ -31,9 +31,8 @@ std::string DeviceURL = "device/", ReadingURL = "reading/",
  * @param statusCode The HTTP status code of the response.
  * @return `true` if the response indicates a failure, `false` otherwise.
  */
-bool CheckResponseFailed(
-    const std::string &payload, HTTP::Status::StatusCode statusCode
-) {
+bool CheckResponseFailed(const std::string& payload,
+                         HTTP::Status::StatusCode statusCode) {
     ESP_LOGI(TAG, "Checking response");
 
     if (HTTP::Status::IsSuccess(statusCode)) {
@@ -43,10 +42,8 @@ bool CheckResponseFailed(
     }
 
     if (payload.empty()) {
-        Failsafe::AddFailure(
-            TAG,
-            "Status: " + std::to_string((int)statusCode) + " - empty response"
-        );
+        Failsafe::AddFailure(TAG, "Status: " + std::to_string((int)statusCode) +
+                                      " - empty response");
 
         return true;
     }
@@ -55,19 +52,17 @@ bool CheckResponseFailed(
     DeserializationError error = deserializeJson(doc, payload);
 
     if (error != DeserializationError::Ok) {
-        Failsafe::AddFailure(
-            TAG, "Status: " + std::to_string((int)statusCode) +
-                     " - deserialization failed: " + std::string(error.c_str())
-        );
+        Failsafe::AddFailure(TAG, "Status: " + std::to_string((int)statusCode) +
+                                      " - deserialization failed: " +
+                                      std::string(error.c_str()));
 
         return true;
     }
 
-    const char *errorMsg = doc["error"];
+    const char* errorMsg = doc["error"];
     if (errorMsg != nullptr) {
-        Failsafe::AddFailure(
-            TAG, "Status: " + std::to_string((int)statusCode) + " - " + errorMsg
-        );
+        Failsafe::AddFailure(TAG, "Status: " + std::to_string((int)statusCode) +
+                                      " - " + errorMsg);
     }
 
     return true;
@@ -86,7 +81,7 @@ bool CheckResponseFailed(
  * @return `true` if the configuration is successfully set up, `false`
  * otherwise.
  */
-bool SetupConfiguration(const std::string &payload) {
+bool SetupConfiguration(const std::string& payload) {
     ESP_LOGI(TAG, "Setting up configuration: %s", payload.c_str());
 
     JsonDocument doc;
@@ -94,8 +89,7 @@ bool SetupConfiguration(const std::string &payload) {
 
     if (error != DeserializationError::Ok) {
         Failsafe::AddFailure(
-            TAG, "Deserialization failed: " + std::string(error.c_str())
-        );
+            TAG, "Deserialization failed: " + std::string(error.c_str()));
 
         return false;
     }
@@ -170,10 +164,8 @@ bool SetupConfiguration(const std::string &payload) {
 void GetConfiguration() {
     ESP_LOGI(TAG, "Fetching configuration");
 
-    HTTP::Request request(
-        Storage::GetAddress() + DeviceURL +
-        std::to_string(Storage::GetDeviceId())
-    );
+    HTTP::Request request(Storage::GetAddress() + DeviceURL +
+                          std::to_string(Storage::GetDeviceId()));
 
     if (request.GET()) {
         JsonDocument doc;
@@ -182,8 +174,7 @@ void GetConfiguration() {
 
         if (error != DeserializationError::Ok) {
             Failsafe::AddFailure(
-                TAG, "Deserialization failed: " + std::string(error.c_str())
-            );
+                TAG, "Deserialization failed: " + std::string(error.c_str()));
 
             return;
         }
@@ -196,9 +187,8 @@ void GetConfiguration() {
         JsonArray sensors = doc["sensors"].as<JsonArray>();
 
         for (JsonVariant sensor : sensors) {
-            Storage::SetSensorState(
-                sensor.as<Configuration::Sensor::Sensors>(), true
-            );
+            Storage::SetSensorState(sensor.as<Configuration::Sensor::Sensors>(),
+                                    true);
         }
 
         Storage::SetConfigMode(false);

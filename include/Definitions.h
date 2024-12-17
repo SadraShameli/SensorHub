@@ -30,7 +30,7 @@ class ProfileScope {
      *
      * @param name The name of the profile scope.
      */
-    ProfileScope(const char *name)
+    ProfileScope(const char* name)
         : m_Name(name),
           m_StartTime(esp_timer_get_time()),
           m_StartHeap(esp_get_free_heap_size()) {}
@@ -39,15 +39,13 @@ class ProfileScope {
      * @brief Destructs the profile scope and logs the time taken.
      */
     ~ProfileScope() {
-        ESP_LOGI(
-            "Scope", "%s took %ld ms - heap before: %ld - heap after: %ld",
-            m_Name, (long int)(esp_timer_get_time() - m_StartTime) / 1000,
-            m_StartHeap, esp_get_free_heap_size()
-        );
+        ESP_LOGI("Scope", "%s took %ld ms - heap before: %ld - heap after: %ld",
+                 m_Name, (long int)(esp_timer_get_time() - m_StartTime) / 1000,
+                 m_StartHeap, esp_get_free_heap_size());
     }
 
    private:
-    const char *m_Name;
+    const char* m_Name;
     int64_t m_StartTime;
     uint32_t m_StartHeap;
 };
@@ -61,7 +59,7 @@ class ProfileScope {
  * @param t The container from which to remove trailing whitespace characters.
  */
 template <typename T>
-inline void RemoveWhiteSpace(T &t) {
+inline void RemoveWhiteSpace(T& t) {
     t.erase(t.find_last_not_of(" \n\r\t") + 1);
 }
 
@@ -106,7 +104,7 @@ inline void PrintFreeHeap() {
  * @param filePath The path to the file.
  * @return The size of the file in bytes.
  */
-inline uint32_t GetFileSize(const char *filePath) {
+inline uint32_t GetFileSize(const char* filePath) {
     return (uint32_t)std::filesystem::file_size(filePath);
 }
 

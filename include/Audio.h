@@ -35,34 +35,30 @@ struct DelayStates {
  */
 class AudioFilter {
    public:
-    AudioFilter(const float gain, std::vector<Coefficients> &&coeffs)
+    AudioFilter(const float gain, std::vector<Coefficients>&& coeffs)
         : m_Gain(gain),
           m_Coefficients(std::move(coeffs)),
           m_DelayStates(m_Coefficients.size()) {}
 
     template <typename T>
-    float Filter(T *input, T *output, uint32_t size) {
+    float Filter(T* input, T* output, uint32_t size) {
         if (m_Coefficients.size() < 1) {
             return 0.0f;
         }
 
-        T *source = input;
+        T* source = input;
         for (uint32_t i = 0; i < (m_Coefficients.size() - 1); i++) {
             Filter(source, output, size, m_Coefficients[i], m_DelayStates[i]);
             source = output;
         }
 
-        return FilterRMS(
-            source, output, size, m_Coefficients.back(), m_DelayStates.back(),
-            m_Gain
-        );
+        return FilterRMS(source, output, size, m_Coefficients.back(),
+                         m_DelayStates.back(), m_Gain);
     }
 
     template <typename T>
-    void Filter(
-        T *input, T *output, uint32_t size, const Coefficients &coeffs,
-        DelayStates &delays
-    ) {
+    void Filter(T* input, T* output, uint32_t size, const Coefficients& coeffs,
+                DelayStates& delays) {
         float f0 = coeffs.B1;
         float f1 = coeffs.B2;
         float f2 = coeffs.A1;
@@ -87,10 +83,9 @@ class AudioFilter {
     }
 
     template <typename T>
-    float FilterRMS(
-        T *input, T *output, uint32_t size, const Coefficients &coeffs,
-        DelayStates &delays, float gain
-    ) {
+    float FilterRMS(T* input, T* output, uint32_t size,
+                    const Coefficients& coeffs, DelayStates& delays,
+                    float gain) {
         float f0 = coeffs.B1;
         float f1 = coeffs.B2;
         float f2 = coeffs.A1;
@@ -134,10 +129,8 @@ class AudioFilter {
  * @brief A struct containing the header of a WAV file.
  */
 struct WavHeader {
-    WavHeader(
-        uint32_t sampleRate, uint16_t sampleBitrate, uint16_t channelCount,
-        uint32_t duration
-    )
+    WavHeader(uint32_t sampleRate, uint16_t sampleBitrate,
+              uint16_t channelCount, uint32_t duration)
         : SampleRate(sampleRate), BitsPerSample(sampleBitrate * channelCount) {
         BytesPerSample = BitsPerSample / 8;
         BytesPerSecond = sampleRate * BytesPerSample;
@@ -164,10 +157,8 @@ struct WavHeader {
  * @brief A struct containing audio data.
  */
 struct Audio {
-    Audio(
-        uint32_t sampleRate, uint16_t sampleBitrate, uint32_t bufferTime,
-        uint32_t duration, uint16_t channelCount = 1
-    )
+    Audio(uint32_t sampleRate, uint16_t sampleBitrate, uint32_t bufferTime,
+          uint32_t duration, uint16_t channelCount = 1)
         : Header(sampleRate, sampleBitrate, channelCount, duration),
           BufferCount(sampleRate * bufferTime / 1000) {
         BufferLength = BufferCount * 16 / 8;
@@ -175,19 +166,16 @@ struct Audio {
         DMA_FrameNum =
             (uint32_t)(4092.0f / (sampleBitrate * channelCount / 8.0f));
         DMA_DescNum = (uint32_t)std::max(
-            std::ceil(
-                (float)bufferTime /
-                (Storage::GetSensorState(Configuration::Sensor::Recording)
-                     ? 3.0f
-                     : 1.0f) /
-                ((float)DMA_FrameNum / (float)sampleRate * 1000.0f)
-            ),
-            3.0f
-        );
+            std::ceil((float)bufferTime /
+                      (Storage::GetSensorState(Configuration::Sensor::Recording)
+                           ? 3.0f
+                           : 1.0f) /
+                      ((float)DMA_FrameNum / (float)sampleRate * 1000.0f)),
+            3.0f);
         Buffer = new uint8_t[BufferLength];
     }
 
-    uint8_t *Buffer;
+    uint8_t* Buffer;
     WavHeader Header;
     uint32_t BufferCount, BufferLength, TotalLength, DMA_DescNum, DMA_FrameNum;
 };
@@ -202,7 +190,7 @@ struct Audio {
  * @param samples Pointer to the array of `int16_t` audio samples.
  * @param count The number of samples in the array.
  */
-inline void NormalizeAudio(int16_t *samples, uint32_t count) {
+inline void NormalizeAudio(int16_t* samples, uint32_t count) {
     int16_t max = 0;
     for (uint32_t i = 0; i < count; i++) {
         if (std::abs(samples[i]) > max) {
@@ -229,7 +217,7 @@ inline void NormalizeAudio(int16_t *samples, uint32_t count) {
  * @return The RMS value of the input array.
  */
 template <typename T>
-static float CalculateRMS(T *input, uint32_t size) {
+static float CalculateRMS(T* input, uint32_t size) {
     float sum_sqr = 0.0f;
 
     for (uint32_t count = size; count > 0; count--) {

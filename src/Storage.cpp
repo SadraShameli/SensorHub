@@ -32,7 +32,7 @@ struct StorageData {
     bool ConfigMode;
 };
 
-static const char *TAG = "Storage";
+static const char* TAG = "Storage";
 
 static nvs_handle_t nvsHandle = 0;
 static uint64_t encryptionMask = 0;
@@ -87,10 +87,8 @@ void Init() {
     ESP_ERROR_CHECK(nvs_get_blob(nvsHandle, TAG, nullptr, &required_size));
     ESP_ERROR_CHECK(nvs_get_blob(nvsHandle, TAG, &storageData, &required_size));
 
-    ESP_LOGI(
-        TAG, "Config mode: %s",
-        storageData.ConfigMode == true ? "true" : "false"
-    );
+    ESP_LOGI(TAG, "Config mode: %s",
+             storageData.ConfigMode == true ? "true" : "false");
 
     if (!storageData.ConfigMode) {
         ssid.reserve(Constants::SSIDLength);
@@ -118,10 +116,8 @@ void Init() {
         ESP_LOGI(TAG, "Register Interval: %ld", storageData.RegisterInterval);
 
         for (int i = 0; i < Configuration::Sensor::SensorCount - 1; i++) {
-            ESP_LOGI(
-                TAG, "Sensor %d - state: %s", i + 1,
-                storageData.Sensors[i] ? "enabled" : "disabled"
-            );
+            ESP_LOGI(TAG, "Sensor %d - state: %s", i + 1,
+                     storageData.Sensors[i] ? "enabled" : "disabled");
         }
     }
 }
@@ -189,16 +185,13 @@ void Commit() {
     ESP_LOGI(TAG, "Register Interval: %ld", storageData.RegisterInterval);
 
     for (int i = 0; i < (Configuration::Sensor::SensorCount - 1); i++) {
-        ESP_LOGI(
-            TAG, "Sensor %d - state: %s", i + 1,
-            storageData.Sensors[i] ? "enabled" : "disabled"
-        );
+        ESP_LOGI(TAG, "Sensor %d - state: %s", i + 1,
+                 storageData.Sensors[i] ? "enabled" : "disabled");
     }
 
     ESP_LOGI(TAG, "Saving data");
     ESP_ERROR_CHECK(
-        nvs_set_blob(nvsHandle, TAG, &storageData, sizeof(StorageData))
-    );
+        nvs_set_blob(nvsHandle, TAG, &storageData, sizeof(StorageData)));
     ESP_ERROR_CHECK(nvs_commit(nvsHandle));
 }
 
@@ -221,8 +214,7 @@ void Reset() {
     storageData.ConfigMode = true;
 
     ESP_ERROR_CHECK(
-        nvs_set_blob(nvsHandle, TAG, &storageData, sizeof(StorageData))
-    );
+        nvs_set_blob(nvsHandle, TAG, &storageData, sizeof(StorageData)));
 
     ESP_ERROR_CHECK(nvs_commit(nvsHandle));
 }
@@ -244,10 +236,9 @@ void Reset() {
  * @param base_path The base path for the mounted partition.
  * @param partition_label The label of the partition to mount.
  */
-void Mount(const char *base_path, const char *partition_label) {
-    ESP_LOGI(
-        TAG, "Mounting partition %s - base path: %s", base_path, partition_label
-    );
+void Mount(const char* base_path, const char* partition_label) {
+    ESP_LOGI(TAG, "Mounting partition %s - base path: %s", base_path,
+             partition_label);
 
     esp_vfs_spiffs_conf_t storage_config = {
         .base_path = base_path,
@@ -268,10 +259,8 @@ void Mount(const char *base_path, const char *partition_label) {
         esp_spiffs_info(storage_config.partition_label, &total, &used);
 
     if (err != ESP_OK) {
-        ESP_LOGE(
-            TAG, "Getting partition information failed: %s - formatting",
-            esp_err_to_name(err)
-        );
+        ESP_LOGE(TAG, "Getting partition information failed: %s - formatting",
+                 esp_err_to_name(err));
 
         err = esp_spiffs_format(storage_config.partition_label);
         ESP_ERROR_CHECK(err);
@@ -340,7 +329,7 @@ void CalculateMask() {
  *            a terminating zero.
  * @param str The string to be encrypted.
  */
-void EncryptText(uint32_t *var, const std::string &str) {
+void EncryptText(uint32_t* var, const std::string& str) {
     for (const char c : str) {
         *(var++) = c ^ (uint32_t)encryptionMask;
     }
@@ -358,7 +347,7 @@ void EncryptText(uint32_t *var, const std::string &str) {
  * @param var Pointer to the array of encrypted values.
  * @param str Reference to the string where the decrypted values will be stored.
  */
-void DecryptText(uint32_t *var, std::string &str) {
+void DecryptText(uint32_t* var, std::string& str) {
     str.clear();
 
     while (*var) {
@@ -373,56 +362,72 @@ void DecryptText(uint32_t *var, std::string &str) {
  *
  * @return The SSID from the stored configuration data.
  */
-const std::string &GetSSID() { return ssid; }
+const std::string& GetSSID() {
+    return ssid;
+}
 
 /**
  * @brief Gets the password from the stored configuration data.
  *
  * @return The password from the stored configuration data.
  */
-const std::string &GetPassword() { return password; }
+const std::string& GetPassword() {
+    return password;
+}
 
 /**
  * @brief Gets the address from the stored configuration data.
  *
  * @return The address from the stored configuration data.
  */
-const std::string &GetAddress() { return address; }
+const std::string& GetAddress() {
+    return address;
+}
 
 /**
  * @brief Gets the authentication key from the stored configuration data.
  *
  * @return The authentication key from the stored configuration data.
  */
-const std::string &GetAuthKey() { return AuthKey; }
+const std::string& GetAuthKey() {
+    return AuthKey;
+}
 
 /**
  * @brief Gets the device name from the stored configuration data.
  *
  * @return The device name from the stored configuration data.
  */
-const std::string &GetDeviceName() { return deviceName; }
+const std::string& GetDeviceName() {
+    return deviceName;
+}
 
 /**
  * @brief Gets the device ID from the stored configuration data.
  *
  * @return The device ID from the stored configuration data.
  */
-uint32_t GetDeviceId() { return storageData.DeviceId; }
+uint32_t GetDeviceId() {
+    return storageData.DeviceId;
+}
 
 /**
  * @brief Gets the loudness threshold from the stored configuration data.
  *
  * @return The loudness threshold from the stored configuration data.
  */
-uint32_t GetLoudnessThreshold() { return storageData.LoudnessThreshold; }
+uint32_t GetLoudnessThreshold() {
+    return storageData.LoudnessThreshold;
+}
 
 /**
  * @brief Gets the register interval from the stored configuration data.
  *
  * @return The register interval from the stored configuration data.
  */
-uint32_t GetRegisterInterval() { return storageData.RegisterInterval; }
+uint32_t GetRegisterInterval() {
+    return storageData.RegisterInterval;
+}
 
 /**
  * @brief Gets the state of the specified sensor from the stored configuration
@@ -441,63 +446,81 @@ bool GetSensorState(Configuration::Sensor::Sensors sensor) {
  *
  * @return The configuration mode from the stored configuration data.
  */
-bool GetConfigMode() { return storageData.ConfigMode; };
+bool GetConfigMode() {
+    return storageData.ConfigMode;
+};
 
 /**
  * @brief Sets the SSID in the stored configuration data.
  *
  * @param str The SSID to set in the stored configuration data.
  */
-void SetSSID(std::string &&str) { ssid = std::move(str); }
+void SetSSID(std::string&& str) {
+    ssid = std::move(str);
+}
 
 /**
  * @brief Sets the password in the stored configuration data.
  *
  * @param str The password to set in the stored configuration data.
  */
-void SetPassword(std::string &&str) { password = std::move(str); }
+void SetPassword(std::string&& str) {
+    password = std::move(str);
+}
 
 /**
  * @brief Sets the address in the stored configuration data.
  *
  * @param str The address to set in the stored configuration data.
  */
-void SetAddress(std::string &&str) { address = std::move(str); }
+void SetAddress(std::string&& str) {
+    address = std::move(str);
+}
 
 /**
  * @brief Sets the authentication key in the stored configuration data.
  *
  * @param str The authentication key to set in the stored configuration data.
  */
-void SetAuthKey(std::string &&str) { AuthKey = std::move(str); }
+void SetAuthKey(std::string&& str) {
+    AuthKey = std::move(str);
+}
 
 /**
  * @brief Sets the device name in the stored configuration data.
  *
  * @param str The device name to set in the stored configuration data.
  */
-void SetDeviceName(std::string &&str) { deviceName = std::move(str); }
+void SetDeviceName(std::string&& str) {
+    deviceName = std::move(str);
+}
 
 /**
  * @brief Sets the device ID in the stored configuration data.
  *
  * @param num The device ID to set in the stored configuration data.
  */
-void SetDeviceId(uint32_t num) { storageData.DeviceId = num; }
+void SetDeviceId(uint32_t num) {
+    storageData.DeviceId = num;
+}
 
 /**
  * @brief Sets the loudness threshold in the stored configuration data.
  *
  * @param num The loudness threshold to set in the stored configuration data.
  */
-void SetLoudnessThreshold(uint32_t num) { storageData.LoudnessThreshold = num; }
+void SetLoudnessThreshold(uint32_t num) {
+    storageData.LoudnessThreshold = num;
+}
 
 /**
  * @brief Sets the register interval in the stored configuration data.
  *
  * @param num The register interval to set in the stored configuration data.
  */
-void SetRegisterInterval(uint32_t num) { storageData.RegisterInterval = num; }
+void SetRegisterInterval(uint32_t num) {
+    storageData.RegisterInterval = num;
+}
 
 /**
  * @brief Sets the state of the specified sensor in the stored configuration
@@ -515,6 +538,8 @@ void SetSensorState(Configuration::Sensor::Sensors sensor, bool state) {
  *
  * @param config The configuration mode to set in the stored configuration data.
  */
-void SetConfigMode(bool config) { storageData.ConfigMode = config; }
+void SetConfigMode(bool config) {
+    storageData.ConfigMode = config;
+}
 
 }  // namespace Storage

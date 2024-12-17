@@ -96,14 +96,18 @@ inline static uint32_t Values = 0;
  *
  * @return `true` if the notification is set, `false` otherwise.
  */
-inline bool Get(Notifications value) { return Values & value; }
+inline bool Get(Notifications value) {
+    return Values & value;
+}
 
 /**
  * @brief Sets the specified notification.
  *
  * @param value The notification to set.
  */
-inline void Set(Notifications value) { Values |= value; }
+inline void Set(Notifications value) {
+    Values |= value;
+}
 
 };  // namespace Notification
 }  // namespace Configuration

@@ -140,7 +140,7 @@ class Request {
      *
      * @param url The URL to be used for the request.
      */
-    Request(const char *url) : m_URL(url) { RemoveSlash(); }
+    Request(const char* url) : m_URL(url) { RemoveSlash(); }
 
     /**
      * @brief Constructs a new Request object with the specified URL.
@@ -151,7 +151,7 @@ class Request {
      *
      * @param url The URL to be used for the request.
      */
-    Request(const std::string &url) : m_URL(url) { RemoveSlash(); }
+    Request(const std::string& url) : m_URL(url) { RemoveSlash(); }
 
     /**
      * @brief Constructs a new Request object with the specified URL.
@@ -161,14 +161,14 @@ class Request {
      *
      * @param url The URL to be used for the request.
      */
-    Request(std::string &&url) : m_URL(std::move(url)) { RemoveSlash(); }
+    Request(std::string&& url) : m_URL(std::move(url)) { RemoveSlash(); }
 
     bool GET();
-    bool POST(const std::string &);
-    bool Stream(const char *);
+    bool POST(const std::string&);
+    bool Stream(const char*);
 
-    const std::string &GetURL();
-    const std::string &GetResponse();
+    const std::string& GetURL();
+    const std::string& GetResponse();
 
    private:
     void RemoveSlash();

@@ -18,7 +18,7 @@
 
 namespace Pin {
 
-static const char *TAG = "Pin";
+static const char* TAG = "Pin";
 static TaskHandle_t xHandle = nullptr;
 
 static bool resetCanceled = false;
@@ -45,7 +45,7 @@ static bool resetCanceled = false;
  *
  * @param arg Pointer to the task's argument (unused).
  */
-static void vTask(void *arg) {
+static void vTask(void* arg) {
     ESP_LOGI(TAG, "Initializing");
 
     Input::Init();

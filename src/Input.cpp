@@ -21,7 +21,7 @@ static InputPin inputPins[] = {Up, Down};
  * @brief Initializes the input pins.
  */
 void Init() {
-    for (const auto &pin : inputPins) {
+    for (const auto& pin : inputPins) {
         ESP_ERROR_CHECK(gpio_set_direction(pin.PinNumber, GPIO_MODE_INPUT));
         ESP_ERROR_CHECK(gpio_set_pull_mode(pin.PinNumber, GPIO_PULLUP_ONLY));
     }
@@ -31,7 +31,7 @@ void Init() {
  * @brief Updates the state of the input pins.
  */
 void Update() {
-    for (auto &pin : inputPins) {
+    for (auto& pin : inputPins) {
         bool pinPinState = gpio_get_level(pin.PinNumber);
 
         if (pinPinState && pin.IsLocked) {
@@ -56,7 +56,7 @@ void Update() {
  * @return `true` if the pin has been triggered, `false` otherwise.
  */
 bool GetPinState(Inputs pinNumber) {
-    for (auto &pin : inputPins) {
+    for (auto& pin : inputPins) {
         if ((Inputs)pin.PinNumber == pinNumber && pin.PinState) {
             pin.PinState = false;
 

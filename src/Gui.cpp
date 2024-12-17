@@ -15,7 +15,7 @@
 
 namespace Gui {
 
-static const char *TAG = "Gui";
+static const char* TAG = "Gui";
 static TaskHandle_t xHandle = nullptr;
 
 /**
@@ -27,7 +27,7 @@ static TaskHandle_t xHandle = nullptr;
  *
  * @param arg Pointer to the arguments passed to the task (unused).
  */
-static void vTask(void *arg) {
+static void vTask(void* arg) {
     ESP_LOGI(TAG, "Initializing");
 
     Display::Init();
@@ -70,20 +70,18 @@ void Update() {
             break;
 
         case Menus::Failsafe: {
-            const auto &failures = Failsafe::GetFailures();
+            const auto& failures = Failsafe::GetFailures();
 
             if (failures.empty()) {
-                Display::PrintText(
-                    "Failsafe", "There are currently  no failures."
-                );
+                Display::PrintText("Failsafe",
+                                   "There are currently  no failures.");
             }
 
             else {
-                const auto &failure = failures.top();
+                const auto& failure = failures.top();
                 Display::PrintText(
                     ("Failsafe: " + std::string(failure.Caller)).c_str(),
-                    failure.Message.c_str()
-                );
+                    failure.Message.c_str());
             }
 
             break;
@@ -91,29 +89,25 @@ void Update() {
 
         case Menus::Config:
             if (!Configuration::Notification::Get(
-                    Configuration::Notification::ConfigSet
-                )) {
+                    Configuration::Notification::ConfigSet)) {
                 Display::PrintLines(
                     "Configuration",
                     ("SSID: " + std::string(Configuration::WiFi::SSID)).c_str(),
-                    "Server IP: ", WiFi::GetIPAP().c_str()
-                );
+                    "Server IP: ", WiFi::GetIPAP().c_str());
             }
 
             break;
 
         case Menus::ConfigConnecting:
-            Display::PrintLines(
-                "Configuration",
-                ("Connecting to " + Storage::GetSSID()).c_str(), "", ""
-            );
+            Display::PrintLines("Configuration",
+                                ("Connecting to " + Storage::GetSSID()).c_str(),
+                                "", "");
             break;
 
         case Menus::ConfigConnected:
-            Display::PrintLines(
-                "Configuration", ("Connected to " + Storage::GetSSID()).c_str(),
-                "", "Retrieving data"
-            );
+            Display::PrintLines("Configuration",
+                                ("Connected to " + Storage::GetSSID()).c_str(),
+                                "", "Retrieving data");
             break;
 
         case Menus::ConfigClients:
@@ -121,9 +115,8 @@ void Update() {
             break;
 
         case Menus::Reset:
-            Display::PrintText(
-                "Configuration", "Press bottom button  to reset device"
-            );
+            Display::PrintText("Configuration",
+                               "Press bottom button  to reset device");
             break;
 
         default:
@@ -174,7 +167,9 @@ void Update() {
  * by calling `vTaskSuspend`. The task will remain in the suspended state
  * until it is resumed by another function.
  */
-void Pause() { vTaskSuspend(xHandle); }
+void Pause() {
+    vTaskSuspend(xHandle);
+}
 
 /**
  * @brief Resumes the task associated with the handle `xHandle`.
@@ -182,6 +177,8 @@ void Pause() { vTaskSuspend(xHandle); }
  * This function resumes the execution of a task that was previously suspended.
  * It uses the FreeRTOS API function `vTaskResume` to achieve this.
  */
-void Resume() { vTaskResume(xHandle); }
+void Resume() {
+    vTaskResume(xHandle);
+}
 
 }  // namespace Gui

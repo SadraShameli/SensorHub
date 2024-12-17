@@ -20,10 +20,10 @@ static const float TemperatureOffset = 0.0f, HumidityOffset = 0.0f,
                    SeaLevelTemperature = 9.0f;
 };
 
-static const char *TAG = "Climate";
+static const char* TAG = "Climate";
 static TaskHandle_t xHandle = nullptr;
 
-static bme680_sensor_t *dev = nullptr;
+static bme680_sensor_t* dev = nullptr;
 static bme680_values_float_t values = {0};
 
 static Reading temperature, humidity, airPressure, gasResistance, altitude;
@@ -41,7 +41,7 @@ static bool isOK = false;
  *
  * @param arg Pointer to the task argument (unused).
  */
-static void vTask(void *arg) {
+static void vTask(void* arg) {
     ESP_LOGI(TAG, "Initializing");
 
     dev = bme680_init_sensor(I2C_NUM_0, BME680_I2C_ADDRESS_2, 0);
@@ -118,10 +118,9 @@ void Update() {
     humidity.Update(values.humidity + Constants::HumidityOffset);
 
     if (values.pressure != 0) {
-        float alt = calculateAltitude(
-                        airPressure.Current(), Constants::SeaLevelPressure,
-                        Constants::SeaLevelTemperature
-                    ) +
+        float alt = calculateAltitude(airPressure.Current(),
+                                      Constants::SeaLevelPressure,
+                                      Constants::SeaLevelTemperature) +
                     Constants::AltitudeOffset;
 
         altitude.Update(alt);
@@ -129,20 +128,17 @@ void Update() {
     }
 
     if (values.gas_resistance != 0) {
-        gasResistance.Update(
-            values.gas_resistance + Constants::GasResistanceOffset
-        );
+        gasResistance.Update(values.gas_resistance +
+                             Constants::GasResistanceOffset);
     }
 
     isOK = true;
 
-    ESP_LOGD(
-        TAG,
-        "Temperature: %f, Humidity: %f, Air Pressure: %f, Gas Resistance: "
-        "%f, Altitude: %f",
-        temperature.Current(), humidity.Current(), airPressure.Current(),
-        gasResistance.Current(), altitude.Current()
-    );
+    ESP_LOGD(TAG,
+             "Temperature: %f, Humidity: %f, Air Pressure: %f, Gas Resistance: "
+             "%f, Altitude: %f",
+             temperature.Current(), humidity.Current(), airPressure.Current(),
+             gasResistance.Current(), altitude.Current());
 }
 
 /**
@@ -206,9 +202,8 @@ void ResetValues(Configuration::Sensor::Sensors sensor) {
  * @param seaLevelTemp The standard temperature at sea level in degrees Celsius.
  * @return The calculated altitude in meters.
  */
-float calculateAltitude(
-    float currentPressure, float seaLevelPressure, float seaLevelTemp
-) {
+float calculateAltitude(float currentPressure, float seaLevelPressure,
+                        float seaLevelTemp) {
     // Lapse rate in K/m (temperature decrease per meter of altitude)
     const float L = 0.0065f;
 
@@ -221,10 +216,8 @@ float calculateAltitude(
     // Convert sea level temperature to Kelvin
     float seaLevelTempK = seaLevelTemp + 273.15f;
 
-    float alt = (1.0f - powf(
-                            ((currentPressure) / seaLevelPressure),
-                            (R * L) / (G * 0.0289644f)
-                        )) *
+    float alt = (1.0f - powf(((currentPressure) / seaLevelPressure),
+                             (R * L) / (G * 0.0289644f))) *
                 seaLevelTempK / L;
 
     return alt;
@@ -238,35 +231,45 @@ float calculateAltitude(
  *
  * @return `true` if the system is OK, `false` otherwise.
  */
-bool IsOK() { return isOK; }
+bool IsOK() {
+    return isOK;
+}
 
 /**
  * @brief Retrieves the current temperature reading.
  *
  * @return `const Reading&` Reference to the current temperature reading.
  */
-const Reading &GetTemperature() { return temperature; }
+const Reading& GetTemperature() {
+    return temperature;
+}
 
 /**
  * @brief Retrieves the current humidity reading.
  *
  * @return `const Reading&` Reference to the current humidity reading.
  */
-const Reading &GetHumidity() { return humidity; }
+const Reading& GetHumidity() {
+    return humidity;
+}
 
 /**
  * @brief Retrieves the current air pressure reading.
  *
  * @return `const Reading&` Reference to the air pressure reading.
  */
-const Reading &GetAirPressure() { return airPressure; }
+const Reading& GetAirPressure() {
+    return airPressure;
+}
 
 /**
  * @brief Retrieves the gas resistance reading.
  *
  * @return `const Reading&` Reference to the gas resistance reading.
  */
-const Reading &GetGasResistance() { return gasResistance; }
+const Reading& GetGasResistance() {
+    return gasResistance;
+}
 
 /**
  * @brief Retrieves the altitude reading.
@@ -275,6 +278,8 @@ const Reading &GetGasResistance() { return gasResistance; }
  *
  * @return `const Reading&` A constant reference to the altitude reading.
  */
-const Reading &GetAltitude() { return altitude; }
+const Reading& GetAltitude() {
+    return altitude;
+}
 
 }  // namespace Climate

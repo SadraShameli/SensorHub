@@ -29,7 +29,7 @@ static OutputPin outputPins[] = {LedR, LedY, LedG};
  * (0).
  */
 void Init() {
-    for (const auto &pin : outputPins) {
+    for (const auto& pin : outputPins) {
         ESP_ERROR_CHECK(gpio_set_direction(pin.PinNum, GPIO_MODE_OUTPUT));
         ESP_ERROR_CHECK(gpio_set_level(pin.PinNum, 1));
 
@@ -38,7 +38,7 @@ void Init() {
 
     vTaskDelay(pdMS_TO_TICKS(250));
 
-    for (const auto &pin : outputPins) {
+    for (const auto& pin : outputPins) {
         ESP_ERROR_CHECK(gpio_set_level(pin.PinNum, 0));
     }
 }
@@ -54,7 +54,7 @@ void Init() {
 void Update() {
     clock_t currentTime = clock();
 
-    for (auto &pin : outputPins) {
+    for (auto& pin : outputPins) {
         if ((currentTime - pin.UpdateTime) > pin.Interval) {
             pin.UpdateTime = currentTime;
 
@@ -87,7 +87,7 @@ void Update() {
  * @param targetPinState The target state of the pin.
  */
 void Toggle(Outputs pinNumber, bool targetPinState) {
-    for (auto &pin : outputPins) {
+    for (auto& pin : outputPins) {
         if ((Outputs)pin.PinNum == pinNumber) {
             pin.Interval = ULONG_MAX;
             ESP_ERROR_CHECK(gpio_set_level(pin.PinNum, targetPinState));
@@ -107,7 +107,7 @@ void Toggle(Outputs pinNumber, bool targetPinState) {
  * @param continuousModeBlinking Whether to blink the pin continuously.
  */
 void Blink(Outputs pinNumber, clock_t blinkTime, bool continuousModeBlinking) {
-    for (auto &pin : outputPins) {
+    for (auto& pin : outputPins) {
         if ((Outputs)pin.PinNum == pinNumber) {
             if (pin.Interval != blinkTime) {
                 pin.UpdateTime = 0;
@@ -135,7 +135,7 @@ void Blink(Outputs pinNumber, clock_t blinkTime, bool continuousModeBlinking) {
  * @param continuousModeBlinking Whether to blink the pin continuously.
  */
 void SetContinuity(Outputs pinNumber, bool continuousModeBlinking) {
-    for (auto &pin : outputPins) {
+    for (auto& pin : outputPins) {
         if ((Outputs)pin.PinNum == pinNumber) {
             pin.UpdateTime = 0;
             pin.ContinuousMode = continuousModeBlinking;

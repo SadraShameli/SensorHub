@@ -26,13 +26,13 @@ static const float LoudnessOffset = 0;
 
 };  // namespace Constants
 
-static const char *TAG = "Sound";
+static const char* TAG = "Sound";
 static TaskHandle_t xHandle = nullptr;
 
 static i2s_chan_handle_t i2sHandle = nullptr;
 static esp_http_client_handle_t httpClient = nullptr;
 
-static Audio *audio = nullptr;
+static Audio* audio = nullptr;
 static Reading loudness;
 static bool isOK = false;
 
@@ -57,7 +57,7 @@ static uint32_t transferLength = 0, transferCount = 0;
  *
  * @param arg Pointer to the task argument (unused).
  */
-static void vTask(void *arg) {
+static void vTask(void* arg) {
     ESP_LOGI(TAG, "Initializing");
 
     if (Storage::GetSensorState(Configuration::Sensor::Recording)) {
@@ -94,8 +94,7 @@ static void vTask(void *arg) {
                 .mclk_multiple = I2S_MCLK_MULTIPLE_512,
             },
         .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(
-            I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO
-        ),
+            I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO),
         .gpio_cfg =
             {
                 .bclk = GPIO_NUM_23,
@@ -125,21 +124,21 @@ static void vTask(void *arg) {
 
     if (Storage::GetSensorState(Configuration::Sensor::Recording)) {
         for (int i = 0; i < 4; i++) {
-            ESP_ERROR_CHECK(i2s_channel_read(
-                i2sHandle, audio->Buffer, transferLength, nullptr, portMAX_DELAY
-            ));
+            ESP_ERROR_CHECK(i2s_channel_read(i2sHandle, audio->Buffer,
+                                             transferLength, nullptr,
+                                             portMAX_DELAY));
         }
     }
 
     else {
         for (int i = 0; i < 6; i++) {
-            ESP_ERROR_CHECK(i2s_channel_read(
-                i2sHandle, audio->Buffer, transferLength, nullptr, portMAX_DELAY
-            ));
+            ESP_ERROR_CHECK(i2s_channel_read(i2sHandle, audio->Buffer,
+                                             transferLength, nullptr,
+                                             portMAX_DELAY));
         }
     }
 
-    float rms = CalculateRMS((int16_t *)audio->Buffer, transferCount);
+    float rms = CalculateRMS((int16_t*)audio->Buffer, transferCount);
     float decibel = 20.0f * log10f(rms / Constants::Amplitude) +
                     Constants::RefDB + Constants::OffsetDB;
 
@@ -189,7 +188,9 @@ void Init() {
  *
  * @return `true` if the loudness is above the threshold, `false` otherwise.
  */
-void Update() { UpdateLoudness(); }
+void Update() {
+    UpdateLoudness();
+}
 
 /**
  * @brief Updates the loudness and continues recording if the loudness is above
@@ -206,15 +207,11 @@ void UpdateRecording() {
         return;
     }
 
-    ESP_LOGI(
-        TAG, "Continuing recording - loudness: %ddB - threshold: %lddB",
-        (int)loudness.Current(), Storage::GetLoudnessThreshold()
-    );
+    ESP_LOGI(TAG, "Continuing recording - loudness: %ddB - threshold: %lddB",
+             (int)loudness.Current(), Storage::GetLoudnessThreshold());
 
-    ESP_LOGI(
-        TAG, "POST request to URL: %s - size: %ld", address.c_str(),
-        audio->TotalLength
-    );
+    ESP_LOGI(TAG, "POST request to URL: %s - size: %ld", address.c_str(),
+             audio->TotalLength);
 
     UNIT_TIMER("POST request");
 
@@ -224,8 +221,7 @@ void UpdateRecording() {
         Failsafe::AddFailure(
             TAG, "POST request failed - " + (err == ESP_ERR_HTTP_CONNECT
                                                  ? "URL not found: " + address
-                                                 : esp_err_to_name(err))
-        );
+                                                 : esp_err_to_name(err)));
 
         return;
     }
@@ -249,16 +245,14 @@ void UpdateRecording() {
  * @return `true` if the loudness exceeds the threshold, `false` otherwise.
  */
 bool UpdateLoudness() {
-    i2s_channel_read(
-        i2sHandle, audio->Buffer, audio->BufferLength, nullptr, portMAX_DELAY
-    );
+    i2s_channel_read(i2sHandle, audio->Buffer, audio->BufferLength, nullptr,
+                     portMAX_DELAY);
 
     float decibel = CalculateLoudness();
 
     if (decibel == 0) {
         Failsafe::AddFailureDelayed(
-            TAG, "Loudness not valid: " + std::to_string(decibel) + "dB"
-        );
+            TAG, "Loudness not valid: " + std::to_string(decibel) + "dB");
 
         return isOK = false;
     }
@@ -282,9 +276,8 @@ bool UpdateLoudness() {
  * handles HTTP responses and checks for failures.
  */
 void RegisterRecordings() {
-    int length = esp_http_client_write(
-        httpClient, (char *)&audio->Header, sizeof(WavHeader)
-    );
+    int length = esp_http_client_write(httpClient, (char*)&audio->Header,
+                                       sizeof(WavHeader));
 
     if (length < 0) {
         Failsafe::AddFailure(TAG, "Writing wav header failed");
@@ -294,8 +287,7 @@ void RegisterRecordings() {
     for (size_t byte_count = 0; byte_count < audio->BufferLength;
          byte_count += transferLength) {
         length = esp_http_client_write(
-            httpClient, (char *)audio->Buffer + byte_count, transferLength
-        );
+            httpClient, (char*)audio->Buffer + byte_count, transferLength);
 
         if (length < 0) {
             Failsafe::AddFailure(TAG, "Writing data failed");
@@ -311,12 +303,11 @@ void RegisterRecordings() {
     for (size_t byte_count = 0;
          byte_count < audio->Header.DataLength - audio->BufferLength;
          byte_count += transferLength) {
-        i2s_channel_read(
-            i2sHandle, audio->Buffer, transferLength, nullptr, portMAX_DELAY
-        );
+        i2s_channel_read(i2sHandle, audio->Buffer, transferLength, nullptr,
+                         portMAX_DELAY);
 
         if (Display::IsOK()) {
-            float rms = CalculateRMS((int16_t *)audio->Buffer, transferCount);
+            float rms = CalculateRMS((int16_t*)audio->Buffer, transferCount);
             float decibel = 20.0f * log10f(rms / Constants::Amplitude) +
                             Constants::RefDB + Constants::OffsetDB;
 
@@ -325,9 +316,8 @@ void RegisterRecordings() {
             }
         }
 
-        length = esp_http_client_write(
-            httpClient, (char *)audio->Buffer, transferLength
-        );
+        length = esp_http_client_write(httpClient, (char*)audio->Buffer,
+                                       transferLength);
 
         if (length < 0) {
             Failsafe::AddFailure(TAG, "Writing data failed");
@@ -359,18 +349,15 @@ void RegisterRecordings() {
 
     else {
         Failsafe::AddFailure(
-            TAG, "Status: " + std::to_string(statusCode) + " - empty response"
-        );
+            TAG, "Status: " + std::to_string(statusCode) + " - empty response");
         return;
     }
 
-    esp_http_client_read(
-        httpClient, httpPayload.data(), httpPayload.capacity()
-    );
+    esp_http_client_read(httpClient, httpPayload.data(),
+                         httpPayload.capacity());
 
-    if (!Backend::CheckResponseFailed(
-            httpPayload, (HTTP::Status::StatusCode)statusCode
-        )) {
+    if (!Backend::CheckResponseFailed(httpPayload,
+                                      (HTTP::Status::StatusCode)statusCode)) {
         ResetValues();
     }
 }
@@ -386,7 +373,7 @@ void RegisterRecordings() {
  * @return The loudness in decibels if within the valid range, otherwise 0.
  */
 float CalculateLoudness() {
-    float rms = CalculateRMS((int16_t *)audio->Buffer, audio->BufferCount);
+    float rms = CalculateRMS((int16_t*)audio->Buffer, audio->BufferCount);
     float decibel = 20.0f * log10f(rms / Constants::Amplitude) +
                     Constants::RefDB + Constants::OffsetDB;
 
@@ -404,18 +391,24 @@ float CalculateLoudness() {
  *
  * @return `true` if the microphone is OK, `false` otherwise.
  */
-bool IsOK() { return isOK; };
+bool IsOK() {
+    return isOK;
+};
 
 /**
  * @brief Resets the loudness value.
  */
-void ResetValues() { loudness.Reset(); };
+void ResetValues() {
+    loudness.Reset();
+};
 
 /**
  * @brief Gets the loudness value.
  *
  * @return Reading The loudness value.
  */
-const Reading &GetLoudness() { return loudness; }
+const Reading& GetLoudness() {
+    return loudness;
+}
 
 }  // namespace Mic

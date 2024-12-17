@@ -45,9 +45,9 @@ bool IsConnected();
 void WaitForConnection();
 
 void SetMacAddress();
-const std::string &GetIPAP();
-const std::string &GetIPStation();
-const std::string &GetMacAddress();
-const std::vector<ClientDetails> &GetClientDetails();
+const std::string& GetIPAP();
+const std::string& GetIPStation();
+const std::string& GetMacAddress();
+const std::vector<ClientDetails>& GetClientDetails();
 
 };  // namespace WiFi

@@ -11,7 +11,7 @@
 
 namespace HTTP {
 
-static const char *TAG = "HTTP Client";
+static const char* TAG = "HTTP Client";
 
 static esp_http_client_handle_t httpClient = nullptr;
 static std::string httpBuffer;
@@ -31,7 +31,7 @@ static std::string httpBuffer;
  * If `UNIT_DEBUG` is defined, it logs the status code and response on
  * request completion.
  */
-static esp_err_t httpEventHandler(esp_http_client_event_t *evt) {
+static esp_err_t httpEventHandler(esp_http_client_event_t* evt) {
     if (evt->event_id == HTTP_EVENT_ERROR ||
         evt->event_id == HTTP_EVENT_HEADERS_SENT) {
         httpBuffer.clear();
@@ -39,7 +39,7 @@ static esp_err_t httpEventHandler(esp_http_client_event_t *evt) {
 
     else if (evt->event_id == HTTP_EVENT_ON_DATA) {
         if (evt->data_len >= 0) {
-            httpBuffer.append((const char *)evt->data, evt->data_len);
+            httpBuffer.append((const char*)evt->data, evt->data_len);
         }
     }
 #ifdef UNIT_DEBUG
@@ -111,16 +111,14 @@ bool Request::GET() {
         Failsafe::AddFailure(
             TAG, "GET request failed - " + (err == ESP_ERR_HTTP_CONNECT
                                                 ? "URL not found: " + m_URL
-                                                : esp_err_to_name(err))
-        );
+                                                : esp_err_to_name(err)));
 
         return false;
     }
 
     int statusCode = esp_http_client_get_status_code(httpClient);
-    if (Backend::CheckResponseFailed(
-            httpBuffer, (HTTP::Status::StatusCode)statusCode
-        )) {
+    if (Backend::CheckResponseFailed(httpBuffer,
+                                     (HTTP::Status::StatusCode)statusCode)) {
         return false;
     }
 
@@ -143,23 +141,20 @@ bool Request::GET() {
  * @return `true` if the POST request was successful and the response was valid,
  * `false` otherwise.
  */
-bool Request::POST(const std::string &payload) {
+bool Request::POST(const std::string& payload) {
     if (!WiFi::IsConnected()) {
         return false;
     }
 
-    ESP_LOGI(
-        TAG, "POST request to URL: %s - payload: %s", m_URL.c_str(),
-        payload.c_str()
-    );
+    ESP_LOGI(TAG, "POST request to URL: %s - payload: %s", m_URL.c_str(),
+             payload.c_str());
     UNIT_TIMER("POST request");
 
     esp_http_client_set_url(httpClient, m_URL.c_str());
     esp_http_client_set_method(httpClient, HTTP_METHOD_POST);
     esp_http_client_set_header(httpClient, "Content-Type", "application/json");
-    esp_http_client_set_post_field(
-        httpClient, payload.c_str(), payload.length()
-    );
+    esp_http_client_set_post_field(httpClient, payload.c_str(),
+                                   payload.length());
 
     esp_err_t err = esp_http_client_perform(httpClient);
     esp_http_client_close(httpClient);
@@ -168,15 +163,13 @@ bool Request::POST(const std::string &payload) {
         Failsafe::AddFailure(
             TAG, "POST request failed - " + (err == ESP_ERR_HTTP_CONNECT
                                                  ? "URL not found: " + m_URL
-                                                 : esp_err_to_name(err))
-        );
+                                                 : esp_err_to_name(err)));
         return false;
     }
 
     int statusCode = esp_http_client_get_status_code(httpClient);
-    if (Backend::CheckResponseFailed(
-            httpBuffer, (HTTP::Status::StatusCode)statusCode
-        )) {
+    if (Backend::CheckResponseFailed(httpBuffer,
+                                     (HTTP::Status::StatusCode)statusCode)) {
         return false;
     }
 
@@ -197,7 +190,7 @@ bool Request::POST(const std::string &payload) {
  * @param filename The path to the file that needs to be streamed.
  * @return `true` if the file was successfully streamed, `false` otherwise.
  */
-bool Request::Stream(const char *filename) {
+bool Request::Stream(const char* filename) {
     if (!WiFi::IsConnected()) {
         return false;
     }
@@ -206,9 +199,8 @@ bool Request::Stream(const char *filename) {
     static const int streamSize = 8192;
     static char streamBuffer[streamSize] = {0};
 
-    ESP_LOGI(
-        TAG, "Stream request to URL: %s - file: %s", m_URL.c_str(), filename
-    );
+    ESP_LOGI(TAG, "Stream request to URL: %s - file: %s", m_URL.c_str(),
+             filename);
     UNIT_TIMER("Stream request");
 
     esp_http_client_set_url(httpClient, m_URL.c_str());
@@ -218,7 +210,7 @@ bool Request::Stream(const char *filename) {
         esp_http_client_open(httpClient, Helpers::GetFileSize(filename));
 
     if (err == ESP_OK) {
-        FILE *file = fopen(filename, "rb");
+        FILE* file = fopen(filename, "rb");
         size_t read = 0;
 
         do {
@@ -234,8 +226,7 @@ bool Request::Stream(const char *filename) {
         Failsafe::AddFailure(
             TAG, "Stream request failed - " + (err == ESP_ERR_HTTP_CONNECT
                                                    ? "URL not found: " + m_URL
-                                                   : esp_err_to_name(err))
-        );
+                                                   : esp_err_to_name(err)));
     }
 
     esp_http_client_close(httpClient);
@@ -248,14 +239,18 @@ bool Request::Stream(const char *filename) {
  *
  * @return `const std::string&` The URL used for the request.
  */
-const std::string &Request::GetURL() { return m_URL; }
+const std::string& Request::GetURL() {
+    return m_URL;
+}
 
 /**
  * @brief Retrieves the response received from the request.
  *
  * @return `const std::string&` The response received from the request.
  */
-const std::string &Request::GetResponse() { return m_Response; }
+const std::string& Request::GetResponse() {
+    return m_Response;
+}
 
 /**
  * @brief Removes the trailing slash from the URL if it exists.

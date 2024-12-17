@@ -17,7 +17,7 @@
 
 namespace Network {
 
-static const char *TAG = "Network";
+static const char* TAG = "Network";
 static TaskHandle_t xHandle = nullptr;
 
 static uint32_t registerInterval = 0;
@@ -34,7 +34,7 @@ static uint32_t registerInterval = 0;
  *
  * @param arg Pointer to the task argument (unused).
  */
-static void vTask(void *arg) {
+static void vTask(void* arg) {
     ESP_LOGI(TAG, "Initializing");
 
     if (Storage::GetConfigMode()) {
@@ -107,13 +107,11 @@ void Update() {
 void UpdateConfig() {
     Output::Blink(Output::LedY, 1000, true);
 
-    xTaskNotifyWait(
-        0, Configuration::Notification::ConfigSet,
-        &Configuration::Notification::Values, portMAX_DELAY
-    );
+    xTaskNotifyWait(0, Configuration::Notification::ConfigSet,
+                    &Configuration::Notification::Values, portMAX_DELAY);
 
-    if (Configuration::Notification::Get(Configuration::Notification::ConfigSet
-        )) {
+    if (Configuration::Notification::Get(
+            Configuration::Notification::ConfigSet)) {
         Display::SetMenu(Configuration::Menu::ConfigConnecting);
         HTTP::StopServer();
         WiFi::StartStation();

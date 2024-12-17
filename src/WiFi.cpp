@@ -17,7 +17,7 @@
 
 namespace WiFi {
 
-static const char *TAG = "WiFi";
+static const char* TAG = "WiFi";
 
 static esp_netif_t *sta_netif = nullptr, *ap_netif = nullptr;
 static EventGroupHandle_t wifi_event_group = nullptr;
@@ -41,26 +41,21 @@ static std::vector<ClientDetails> clientDetails(Constants::MaxClients);
  * @param event_id ID of the event.
  * @param event_data Data associated with the event.
  */
-static void wifi_event_handler(
-    void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data
-) {
+static void wifi_event_handler(void* arg, esp_event_base_t event_base,
+                               int32_t event_id, void* event_data) {
     if (event_base == WIFI_EVENT) {
         if (event_id == WIFI_EVENT_AP_STACONNECTED) {
-            wifi_event_ap_staconnected_t *event =
-                (wifi_event_ap_staconnected_t *)event_data;
-            ESP_LOGI(
-                TAG, "Station " MACSTR " connected - aid: %d",
-                MAC2STR(event->mac), event->aid
-            );
+            wifi_event_ap_staconnected_t* event =
+                (wifi_event_ap_staconnected_t*)event_data;
+            ESP_LOGI(TAG, "Station " MACSTR " connected - aid: %d",
+                     MAC2STR(event->mac), event->aid);
         }
 
         else if (event_id == WIFI_EVENT_AP_STADISCONNECTED) {
-            wifi_event_ap_stadisconnected_t *event =
-                (wifi_event_ap_stadisconnected_t *)event_data;
-            ESP_LOGI(
-                TAG, "Station " MACSTR " disconnected - aid: %d",
-                MAC2STR(event->mac), event->aid
-            );
+            wifi_event_ap_stadisconnected_t* event =
+                (wifi_event_ap_stadisconnected_t*)event_data;
+            ESP_LOGI(TAG, "Station " MACSTR " disconnected - aid: %d",
+                     MAC2STR(event->mac), event->aid);
         }
 
         if (event_id == WIFI_EVENT_STA_START) {
@@ -72,11 +67,10 @@ static void wifi_event_handler(
             xEventGroupClearBits(wifi_event_group, States::Connected);
             ipAddress = "0.0.0.0";
 
-            wifi_event_sta_disconnected_t *status =
-                (wifi_event_sta_disconnected_t *)event_data;
-            ESP_LOGW(
-                TAG, "Disconnected from wifi - reason: %d", status->reason
-            );
+            wifi_event_sta_disconnected_t* status =
+                (wifi_event_sta_disconnected_t*)event_data;
+            ESP_LOGW(TAG, "Disconnected from wifi - reason: %d",
+                     status->reason);
 
             if (status->reason == WIFI_REASON_ASSOC_LEAVE) {
                 return;
@@ -85,13 +79,12 @@ static void wifi_event_handler(
             if (!passwordFailsafe &&
                 (status->reason == WIFI_REASON_AUTH_FAIL ||
                  status->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT ||
-                 status->reason == WIFI_REASON_NO_AP_FOUND_W_COMPATIBLE_SECURITY
-                )) {
+                 status->reason ==
+                     WIFI_REASON_NO_AP_FOUND_W_COMPATIBLE_SECURITY)) {
                 passwordFailsafe = true;
                 Failsafe::AddFailure(
                     TAG, "Password: " + Storage::GetPassword() + " for SSID: " +
-                             Storage::GetSSID() + " is not correct."
-                );
+                             Storage::GetSSID() + " is not correct.");
             }
 
             if (retryAttempts < Constants::MaxRetries && !passwordFailsafe) {
@@ -108,8 +101,7 @@ static void wifi_event_handler(
                     status->reason ==
                         WIFI_REASON_NO_AP_FOUND_IN_RSSI_THRESHOLD) {
                     Failsafe::AddFailure(
-                        TAG, "Can't find SSID: " + Storage::GetSSID()
-                    );
+                        TAG, "Can't find SSID: " + Storage::GetSSID());
                 }
 
                 if (Storage::GetConfigMode()) {
@@ -121,15 +113,14 @@ static void wifi_event_handler(
     }
 
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        ip_event_got_ip_t event = *(ip_event_got_ip_t *)event_data;
+        ip_event_got_ip_t event = *(ip_event_got_ip_t*)event_data;
 
         char buffer[4 * 4 + 1] = {0};
         snprintf(buffer, sizeof(buffer), IPSTR, IP2STR(&event.ip_info.ip));
 
-        ESP_LOGI(
-            TAG, "Connected to WiFi - SSID: %s - Password: %s - IP: %s",
-            Storage::GetSSID().c_str(), Storage::GetPassword().c_str(), buffer
-        );
+        ESP_LOGI(TAG, "Connected to WiFi - SSID: %s - Password: %s - IP: %s",
+                 Storage::GetSSID().c_str(), Storage::GetPassword().c_str(),
+                 buffer);
 
         ipAddress = buffer;
         retryAttempts = 0;
@@ -161,21 +152,18 @@ void Init() {
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 
     ESP_ERROR_CHECK(esp_event_handler_instance_register(
-        WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, nullptr, nullptr
-    ));
+        WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, nullptr, nullptr));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(
-        IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, nullptr, nullptr
-    ));
+        IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, nullptr, nullptr));
 
     sta_netif = esp_netif_create_default_wifi_sta();
-    ESP_ERROR_CHECK(esp_netif_set_hostname(sta_netif, Configuration::WiFi::SSID)
-    );
+    ESP_ERROR_CHECK(
+        esp_netif_set_hostname(sta_netif, Configuration::WiFi::SSID));
 
     if (Storage::GetConfigMode()) {
         ap_netif = esp_netif_create_default_wifi_ap();
         ESP_ERROR_CHECK(
-            esp_netif_set_hostname(ap_netif, Configuration::WiFi::SSID)
-        );
+            esp_netif_set_hostname(ap_netif, Configuration::WiFi::SSID));
     }
 }
 
@@ -210,13 +198,12 @@ void StartAP() {
 
     else {
         Failsafe::AddFailure(TAG, "SSID longer than 32 characters");
-        strcpy((char *)wifi_config.ap.ssid, "Unit");
+        strcpy((char*)wifi_config.ap.ssid, "Unit");
     }
 
     if (passLength >= 8 && passLength <= 64) {
-        memcpy(
-            wifi_config.ap.password, Configuration::WiFi::Password, passLength
-        );
+        memcpy(wifi_config.ap.password, Configuration::WiFi::Password,
+               passLength);
         wifi_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
         wifi_config.ap.pairwise_cipher = WIFI_CIPHER_TYPE_CCMP;
     }
@@ -261,10 +248,8 @@ void StartStation() {
     };
 
     if (Storage::GetSSID().length() <= 32) {
-        memcpy(
-            wifi_config.sta.ssid, Storage::GetSSID().c_str(),
-            Storage::GetSSID().length()
-        );
+        memcpy(wifi_config.sta.ssid, Storage::GetSSID().c_str(),
+               Storage::GetSSID().length());
     }
 
     else {
@@ -274,10 +259,8 @@ void StartStation() {
 
     if (Storage::GetPassword().length() >= 8 &&
         Storage::GetPassword().length() <= 64) {
-        memcpy(
-            wifi_config.sta.password, Storage::GetPassword().c_str(),
-            Storage::GetPassword().length()
-        );
+        memcpy(wifi_config.sta.password, Storage::GetPassword().c_str(),
+               Storage::GetPassword().length());
         wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
     }
 
@@ -309,9 +292,8 @@ void StartStation() {
  * otherwise.
  */
 bool IsConnected() {
-    event_bits = xEventGroupWaitBits(
-        wifi_event_group, States::Connected, pdFALSE, pdFALSE, 0
-    );
+    event_bits = xEventGroupWaitBits(wifi_event_group, States::Connected,
+                                     pdFALSE, pdFALSE, 0);
 
     return event_bits & States::Connected;
 }
@@ -323,9 +305,8 @@ bool IsConnected() {
  * bits to be set to connected.
  */
 void WaitForConnection() {
-    xEventGroupWaitBits(
-        wifi_event_group, States::Connected, pdFALSE, pdFALSE, portMAX_DELAY
-    );
+    xEventGroupWaitBits(wifi_event_group, States::Connected, pdFALSE, pdFALSE,
+                        portMAX_DELAY);
 }
 
 /**
@@ -346,9 +327,8 @@ void SetMacAddress() {
         ESP_ERROR_CHECK(esp_efuse_mac_get_default(mac.ArrayRepresentation));
 
         char buffer[Constants::MacLength] = {0};
-        snprintf(
-            buffer, sizeof(buffer), MACSTR, MAC2STR(mac.ArrayRepresentation)
-        );
+        snprintf(buffer, sizeof(buffer), MACSTR,
+                 MAC2STR(mac.ArrayRepresentation));
         macAddress = buffer;
 
         ESP_LOGI(TAG, "Mac set: %s", macAddress.c_str());
@@ -363,7 +343,7 @@ void SetMacAddress() {
  *
  * @return The IP address of the access point.
  */
-const std::string &GetIPAP() {
+const std::string& GetIPAP() {
     esp_netif_ip_info_t ip = {0};
     ESP_ERROR_CHECK(esp_netif_get_ip_info(ap_netif, &ip));
 
@@ -374,29 +354,24 @@ const std::string &GetIPAP() {
     return ipAddress;
 }
 
-const std::vector<ClientDetails> &GetClientDetails() {
+const std::vector<ClientDetails>& GetClientDetails() {
     wifi_sta_list_t wifi_sta_list = {0};
     wifi_sta_mac_ip_list_t wifi_sta_ip_mac_list = {0};
 
     ESP_ERROR_CHECK(esp_wifi_ap_get_sta_list(&wifi_sta_list));
-    ESP_ERROR_CHECK(
-        esp_wifi_ap_get_sta_list_with_ip(&wifi_sta_list, &wifi_sta_ip_mac_list)
-    );
+    ESP_ERROR_CHECK(esp_wifi_ap_get_sta_list_with_ip(&wifi_sta_list,
+                                                     &wifi_sta_ip_mac_list));
 
     clientDetails.clear();
     clientDetails.reserve(wifi_sta_ip_mac_list.num);
 
     for (int i = 0; i < wifi_sta_ip_mac_list.num; i++) {
         ClientDetails client = {0};
-        const auto &station = wifi_sta_ip_mac_list.sta[i];
-        snprintf(
-            client.IPAddress, sizeof(client.IPAddress), IPSTR,
-            IP2STR(&station.ip)
-        );
-        snprintf(
-            client.MacAddress, sizeof(client.MacAddress), MACSTR,
-            MAC2STR(station.mac)
-        );
+        const auto& station = wifi_sta_ip_mac_list.sta[i];
+        snprintf(client.IPAddress, sizeof(client.IPAddress), IPSTR,
+                 IP2STR(&station.ip));
+        snprintf(client.MacAddress, sizeof(client.MacAddress), MACSTR,
+                 MAC2STR(station.mac));
         clientDetails.push_back(client);
     }
 
@@ -410,7 +385,9 @@ const std::vector<ClientDetails> &GetClientDetails() {
  *
  * @return The IP address of the station.
  */
-const std::string &GetIPStation() { return ipAddress; }
+const std::string& GetIPStation() {
+    return ipAddress;
+}
 
 /**
  * @brief Gets the MAC address of the station.
@@ -419,6 +396,8 @@ const std::string &GetIPStation() { return ipAddress; }
  *
  * @return The MAC address of the station.
  */
-const std::string &GetMacAddress() { return macAddress; };
+const std::string& GetMacAddress() {
+    return macAddress;
+};
 
 }  // namespace WiFi

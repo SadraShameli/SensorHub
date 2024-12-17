@@ -19,7 +19,7 @@ static const uint32_t LogoDuration = 1000, ScreenSaverDuration = 1 * 60 * 1000;
 
 };
 
-static const char *TAG = "Display";
+static const char* TAG = "Display";
 
 static ssd1306_handle_t dev = nullptr;
 static Configuration::Menu::Menus currentMenu = Configuration::Menu::Main;
@@ -102,7 +102,9 @@ void Update() {
  *
  * @return `true` if the system is OK, `false` otherwise.
  */
-bool IsOK() { return isOK; }
+bool IsOK() {
+    return isOK;
+}
 
 /**
  * @brief Clears the display screen.
@@ -110,7 +112,9 @@ bool IsOK() { return isOK; }
  * This function clears the entire screen of the SSD1306 display by setting all
  * pixels to 0.
  */
-void Clear() { ssd1306_clear_screen(dev, 0x00); }
+void Clear() {
+    ssd1306_clear_screen(dev, 0x00);
+}
 
 /**
  * @brief Refreshes the display by updating the graphical memory.
@@ -118,7 +122,9 @@ void Clear() { ssd1306_clear_screen(dev, 0x00); }
  * This function calls the `ssd1306_refresh_gram` function to refresh the
  * display with the current graphical memory content.
  */
-void Refresh() { ssd1306_refresh_gram(dev); }
+void Refresh() {
+    ssd1306_refresh_gram(dev);
+}
 
 /**
  * @brief Resets the screen saver and turns the display back on.
@@ -147,10 +153,9 @@ void ResetScreenSaver() {
  * @param text The string to be printed on the display.
  * @param size The size of the text to be printed.
  */
-void Print(uint32_t x, uint32_t y, const char *text, uint32_t size) {
-    ssd1306_draw_string(
-        dev, (uint8_t)x, (uint8_t)y, (const uint8_t *)text, (uint8_t)size, 1
-    );
+void Print(uint32_t x, uint32_t y, const char* text, uint32_t size) {
+    ssd1306_draw_string(dev, (uint8_t)x, (uint8_t)y, (const uint8_t*)text,
+                        (uint8_t)size, 1);
 }
 
 /**
@@ -162,7 +167,7 @@ void Print(uint32_t x, uint32_t y, const char *text, uint32_t size) {
  * @param header The header text to be printed at the top of the display.
  * @param message The message text to be printed below the header.
  */
-void PrintText(const char *header, const char *message) {
+void PrintText(const char* header, const char* message) {
     Clear();
 
     Print(0, 0, header);
@@ -182,9 +187,8 @@ void PrintText(const char *header, const char *message) {
  * @param line3 The text to print on the third line.
  * @param line4 The text to print on the fourth line.
  */
-void PrintLines(
-    const char *line1, const char *line2, const char *line3, const char *line4
-) {
+void PrintLines(const char* line1, const char* line2, const char* line3,
+                const char* line4) {
     Clear();
 
     Print(0, 0, line1);
@@ -256,7 +260,7 @@ void PrintMain() {
  * display after printing.
  */
 void PrintTemperature() {
-    const Reading &reading = Climate::GetTemperature();
+    const Reading& reading = Climate::GetTemperature();
 
     char buff[32] = {0};
     Clear();
@@ -286,7 +290,7 @@ void PrintTemperature() {
  * Finally, it refreshes the display to show the updated information.
  */
 void PrintHumidity() {
-    const Reading &reading = Climate::GetHumidity();
+    const Reading& reading = Climate::GetHumidity();
 
     char buff[32] = {0};
     Clear();
@@ -315,7 +319,7 @@ void PrintHumidity() {
  * refreshed after printing.
  */
 void PrintAirPressure() {
-    const Reading &reading = Climate::GetAirPressure();
+    const Reading& reading = Climate::GetAirPressure();
 
     char buff[32] = {0};
     Clear();
@@ -345,7 +349,7 @@ void PrintAirPressure() {
  * is refreshed after all the readings are printed.
  */
 void PrintGasResistance() {
-    const Reading &reading = Climate::GetGasResistance();
+    const Reading& reading = Climate::GetGasResistance();
 
     char buff[32] = {0};
     Clear();
@@ -376,7 +380,7 @@ void PrintGasResistance() {
  * display to show the updated information.
  */
 void PrintAltitude() {
-    const Reading &reading = Climate::GetAltitude();
+    const Reading& reading = Climate::GetAltitude();
 
     char buff[32] = {0};
     Clear();
@@ -406,7 +410,7 @@ void PrintAltitude() {
  * refreshed at the end to ensure the new values are shown.
  */
 void PrintLoudness() {
-    const Reading &reading = Mic::GetLoudness();
+    const Reading& reading = Mic::GetLoudness();
 
     char buff[32] = {0};
     Clear();
@@ -437,14 +441,14 @@ void PrintLoudness() {
  * `IPAddress` and `MacAddress` fields.
  */
 void PrintWiFiClients() {
-    const std::vector<WiFi::ClientDetails> &clients = WiFi::GetClientDetails();
+    const std::vector<WiFi::ClientDetails>& clients = WiFi::GetClientDetails();
 
     Clear();
 
     Print(0, 0, "Connected devices");
 
     uint32_t offset = 13;
-    for (const auto &client : clients) {
+    for (const auto& client : clients) {
         Print(0, offset, client.IPAddress);
         offset += 10;
 
@@ -505,8 +509,7 @@ void NextMenu() {
 
             case Menus::Failsafe:
                 if (Configuration::Notification::Get(
-                        Configuration::Notification::ConfigSet
-                    )) {
+                        Configuration::Notification::ConfigSet)) {
                     if (WiFi::IsConnected()) {
                         currentMenu = Menus::ConfigConnected;
                     } else {
@@ -563,7 +566,9 @@ void NextMenu() {
  *
  * @return `Configuration::Menu::Menus` The current menu.
  */
-Configuration::Menu::Menus GetMenu() { return currentMenu; }
+Configuration::Menu::Menus GetMenu() {
+    return currentMenu;
+}
 
 /**
  * @brief Sets the current menu and resets the screen saver.
