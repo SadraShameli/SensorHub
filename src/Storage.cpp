@@ -87,7 +87,8 @@ void Init() {
     ESP_ERROR_CHECK(nvs_get_blob(nvsHandle, TAG, nullptr, &required_size));
     ESP_ERROR_CHECK(nvs_get_blob(nvsHandle, TAG, &storageData, &required_size));
 
-    ESP_LOGI(TAG, "Config mode: %s",
+    ESP_LOGI(TAG,
+             "Config mode: %s",
              storageData.ConfigMode == true ? "true" : "false");
 
     if (!storageData.ConfigMode) {
@@ -116,7 +117,9 @@ void Init() {
         ESP_LOGI(TAG, "Register Interval: %ld", storageData.RegisterInterval);
 
         for (int i = 0; i < Configuration::Sensor::SensorCount - 1; i++) {
-            ESP_LOGI(TAG, "Sensor %d - state: %s", i + 1,
+            ESP_LOGI(TAG,
+                     "Sensor %d - state: %s",
+                     i + 1,
                      storageData.Sensors[i] ? "enabled" : "disabled");
         }
     }
@@ -185,7 +188,9 @@ void Commit() {
     ESP_LOGI(TAG, "Register Interval: %ld", storageData.RegisterInterval);
 
     for (int i = 0; i < (Configuration::Sensor::SensorCount - 1); i++) {
-        ESP_LOGI(TAG, "Sensor %d - state: %s", i + 1,
+        ESP_LOGI(TAG,
+                 "Sensor %d - state: %s",
+                 i + 1,
                  storageData.Sensors[i] ? "enabled" : "disabled");
     }
 
@@ -237,7 +242,9 @@ void Reset() {
  * @param partition_label The label of the partition to mount.
  */
 void Mount(const char* base_path, const char* partition_label) {
-    ESP_LOGI(TAG, "Mounting partition %s - base path: %s", base_path,
+    ESP_LOGI(TAG,
+             "Mounting partition %s - base path: %s",
+             base_path,
              partition_label);
 
     esp_vfs_spiffs_conf_t storage_config = {
@@ -259,7 +266,8 @@ void Mount(const char* base_path, const char* partition_label) {
         esp_spiffs_info(storage_config.partition_label, &total, &used);
 
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Getting partition information failed: %s - formatting",
+        ESP_LOGE(TAG,
+                 "Getting partition information failed: %s - formatting",
                  esp_err_to_name(err));
 
         err = esp_spiffs_format(storage_config.partition_label);

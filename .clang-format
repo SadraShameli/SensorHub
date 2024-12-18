@@ -4,7 +4,7 @@ AccessModifierOffset: -1
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: None
 AlignOperands: Align
-AllowAllArgumentsOnNextLine: true
+AllowAllArgumentsOnNextLine: false
 AllowAllConstructorInitializersOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: Empty
@@ -15,7 +15,7 @@ AllowShortLambdasOnASingleLine: Inline
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: Yes
-BinPackArguments: true
+BinPackArguments: false
 BreakBeforeBraces: Custom
 BraceWrapping:
     AfterCaseLabel: false
@@ -42,20 +42,21 @@ ColumnLimit: 80
 CompactNamespaces: false
 ContinuationIndentWidth: 4
 Cpp11BracedListStyle: true
-DerivePointerAlignment: false
+DerivePointerAlignment: true
 EmptyLineBeforeAccessModifier: LogicalBlock
 FixNamespaceComments: true
 IncludeBlocks: Preserve
 IndentCaseLabels: true
 IndentPPDirectives: None
 IndentWidth: 4
+InsertTrailingCommas: Wrapped
 KeepEmptyLinesAtTheStartOfBlocks: true
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: true
-PointerAlignment: Left
-ReflowComments: false
+PointerAlignment: Right
+ReflowComments: true
 SeparateDefinitionBlocks: Always
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false

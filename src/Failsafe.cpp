@@ -60,8 +60,10 @@ void Init() {
 void Update() {
     ESP_LOGI(TAG, "Waiting for failure");
 
-    xTaskNotifyWait(0, Configuration::Notification::NewFailsafe,
-                    &Configuration::Notification::Values, portMAX_DELAY);
+    xTaskNotifyWait(0,
+                    Configuration::Notification::NewFailsafe,
+                    &Configuration::Notification::Values,
+                    portMAX_DELAY);
 
     const Failure& topFailure = failures.top();
     ESP_LOGE(TAG, "%s - %s", topFailure.Caller, topFailure.Message.c_str());

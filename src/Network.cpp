@@ -107,8 +107,10 @@ void Update() {
 void UpdateConfig() {
     Output::Blink(Output::LedY, 1000, true);
 
-    xTaskNotifyWait(0, Configuration::Notification::ConfigSet,
-                    &Configuration::Notification::Values, portMAX_DELAY);
+    xTaskNotifyWait(0,
+                    Configuration::Notification::ConfigSet,
+                    &Configuration::Notification::Values,
+                    portMAX_DELAY);
 
     if (Configuration::Notification::Get(
             Configuration::Notification::ConfigSet)) {

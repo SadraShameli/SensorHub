@@ -10,8 +10,8 @@
  */
 namespace Backend {
 
-bool CheckResponseFailed(const std::string&, HTTP::Status::StatusCode);
-bool SetupConfiguration(const std::string&);
+bool CheckResponseFailed(const std::string &, HTTP::Status::StatusCode);
+bool SetupConfiguration(const std::string &);
 void GetConfiguration();
 bool RegisterReadings();
 

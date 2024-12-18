@@ -92,7 +92,8 @@ static esp_err_t http_resp_dir_html(httpd_req_t* req, const char* dirpath) {
 
     DIR* dir = opendir(dirpath);
     if (dir == nullptr) {
-        httpd_resp_send_err(req, HTTPD_404_NOT_FOUND,
+        httpd_resp_send_err(req,
+                            HTTPD_404_NOT_FOUND,
                             "Directory does not exist");
 
         return ESP_FAIL;
@@ -108,7 +109,8 @@ static esp_err_t http_resp_dir_html(httpd_req_t* req, const char* dirpath) {
     httpd_resp_send(req, upload_script_start, upload_script_size);
 
     while ((entry = readdir(dir)) != nullptr) {
-        strlcpy(entrypath + dirpath_len, entry->d_name,
+        strlcpy(entrypath + dirpath_len,
+                entry->d_name,
                 sizeof(entrypath) - dirpath_len);
 
         if (stat(entrypath, &entry_stat) == -1) {
@@ -246,12 +248,15 @@ static esp_err_t download_get_handler(httpd_req_t* req) {
     FILE* fd = nullptr;
     struct stat file_stat;
 
-    const char* filename = get_path_from_uri(
-        filepath, ((struct file_server_data*)req->user_ctx)->base_path,
-        req->uri, sizeof(filepath));
+    const char* filename =
+        get_path_from_uri(filepath,
+                          ((struct file_server_data*)req->user_ctx)->base_path,
+                          req->uri,
+                          sizeof(filepath));
 
     if (filename == nullptr) {
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR,
+        httpd_resp_send_err(req,
+                            HTTPD_500_INTERNAL_SERVER_ERROR,
                             "Filename too long");
         return ESP_FAIL;
     }
@@ -276,7 +281,8 @@ static esp_err_t download_get_handler(httpd_req_t* req) {
 
     fd = fopen(filepath, "r");
     if (fd == nullptr) {
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR,
+        httpd_resp_send_err(req,
+                            HTTPD_500_INTERNAL_SERVER_ERROR,
                             "Reading existing file failed");
 
         return ESP_FAIL;
@@ -294,7 +300,8 @@ static esp_err_t download_get_handler(httpd_req_t* req) {
             if (httpd_resp_send_chunk(req, chunk, chunksize) != ESP_OK) {
                 fclose(fd);
                 httpd_resp_sendstr_chunk(req, nullptr);
-                httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR,
+                httpd_resp_send_err(req,
+                                    HTTPD_500_INTERNAL_SERVER_ERROR,
                                     "Sending file failed");
 
                 return ESP_FAIL;
@@ -358,7 +365,8 @@ void StartServer() {
     if (server_data == nullptr) {
         Storage::Mount(FOLDER_PATH, PARTITION_NAME);
         server_data = (file_server_data*)calloc(1, sizeof(file_server_data));
-        strlcpy(server_data->base_path, FOLDER_PATH,
+        strlcpy(server_data->base_path,
+                FOLDER_PATH,
                 sizeof(server_data->base_path));
     }
 

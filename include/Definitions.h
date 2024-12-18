@@ -39,9 +39,12 @@ class ProfileScope {
      * @brief Destructs the profile scope and logs the time taken.
      */
     ~ProfileScope() {
-        ESP_LOGI("Scope", "%s took %ld ms - heap before: %ld - heap after: %ld",
-                 m_Name, (long int)(esp_timer_get_time() - m_StartTime) / 1000,
-                 m_StartHeap, esp_get_free_heap_size());
+        ESP_LOGI("Scope",
+                 "%s took %ld ms - heap before: %ld - heap after: %ld",
+                 m_Name,
+                 (long int)(esp_timer_get_time() - m_StartTime) / 1000,
+                 m_StartHeap,
+                 esp_get_free_heap_size());
     }
 
    private:

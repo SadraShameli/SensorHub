@@ -93,7 +93,8 @@ void Update() {
                 Display::PrintLines(
                     "Configuration",
                     ("SSID: " + std::string(Configuration::WiFi::SSID)).c_str(),
-                    "Server IP: ", WiFi::GetIPAP().c_str());
+                    "Server IP: ",
+                    WiFi::GetIPAP().c_str());
             }
 
             break;
@@ -101,13 +102,15 @@ void Update() {
         case Menus::ConfigConnecting:
             Display::PrintLines("Configuration",
                                 ("Connecting to " + Storage::GetSSID()).c_str(),
-                                "", "");
+                                "",
+                                "");
             break;
 
         case Menus::ConfigConnected:
             Display::PrintLines("Configuration",
                                 ("Connected to " + Storage::GetSSID()).c_str(),
-                                "", "Retrieving data");
+                                "",
+                                "Retrieving data");
             break;
 
         case Menus::ConfigClients:

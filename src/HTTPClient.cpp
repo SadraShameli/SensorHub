@@ -109,9 +109,10 @@ bool Request::GET() {
 
     if (err != ESP_OK) {
         Failsafe::AddFailure(
-            TAG, "GET request failed - " + (err == ESP_ERR_HTTP_CONNECT
-                                                ? "URL not found: " + m_URL
-                                                : esp_err_to_name(err)));
+            TAG,
+            "GET request failed - " + (err == ESP_ERR_HTTP_CONNECT
+                                           ? "URL not found: " + m_URL
+                                           : esp_err_to_name(err)));
 
         return false;
     }
@@ -146,14 +147,17 @@ bool Request::POST(const std::string& payload) {
         return false;
     }
 
-    ESP_LOGI(TAG, "POST request to URL: %s - payload: %s", m_URL.c_str(),
+    ESP_LOGI(TAG,
+             "POST request to URL: %s - payload: %s",
+             m_URL.c_str(),
              payload.c_str());
     UNIT_TIMER("POST request");
 
     esp_http_client_set_url(httpClient, m_URL.c_str());
     esp_http_client_set_method(httpClient, HTTP_METHOD_POST);
     esp_http_client_set_header(httpClient, "Content-Type", "application/json");
-    esp_http_client_set_post_field(httpClient, payload.c_str(),
+    esp_http_client_set_post_field(httpClient,
+                                   payload.c_str(),
                                    payload.length());
 
     esp_err_t err = esp_http_client_perform(httpClient);
@@ -161,9 +165,10 @@ bool Request::POST(const std::string& payload) {
 
     if (err != ESP_OK) {
         Failsafe::AddFailure(
-            TAG, "POST request failed - " + (err == ESP_ERR_HTTP_CONNECT
-                                                 ? "URL not found: " + m_URL
-                                                 : esp_err_to_name(err)));
+            TAG,
+            "POST request failed - " + (err == ESP_ERR_HTTP_CONNECT
+                                            ? "URL not found: " + m_URL
+                                            : esp_err_to_name(err)));
         return false;
     }
 
@@ -199,7 +204,9 @@ bool Request::Stream(const char* filename) {
     static const int streamSize = 8192;
     static char streamBuffer[streamSize] = {0};
 
-    ESP_LOGI(TAG, "Stream request to URL: %s - file: %s", m_URL.c_str(),
+    ESP_LOGI(TAG,
+             "Stream request to URL: %s - file: %s",
+             m_URL.c_str(),
              filename);
     UNIT_TIMER("Stream request");
 
@@ -224,9 +231,10 @@ bool Request::Stream(const char* filename) {
 
     else {
         Failsafe::AddFailure(
-            TAG, "Stream request failed - " + (err == ESP_ERR_HTTP_CONNECT
-                                                   ? "URL not found: " + m_URL
-                                                   : esp_err_to_name(err)));
+            TAG,
+            "Stream request failed - " + (err == ESP_ERR_HTTP_CONNECT
+                                              ? "URL not found: " + m_URL
+                                              : esp_err_to_name(err)));
     }
 
     esp_http_client_close(httpClient);

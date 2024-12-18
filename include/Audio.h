@@ -52,8 +52,12 @@ class AudioFilter {
             source = output;
         }
 
-        return FilterRMS(source, output, size, m_Coefficients.back(),
-                         m_DelayStates.back(), m_Gain);
+        return FilterRMS(source,
+                         output,
+                         size,
+                         m_Coefficients.back(),
+                         m_DelayStates.back(),
+                         m_Gain);
     }
 
     template <typename T>

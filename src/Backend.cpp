@@ -42,8 +42,9 @@ bool CheckResponseFailed(const std::string& payload,
     }
 
     if (payload.empty()) {
-        Failsafe::AddFailure(TAG, "Status: " + std::to_string((int)statusCode) +
-                                      " - empty response");
+        Failsafe::AddFailure(
+            TAG,
+            "Status: " + std::to_string((int)statusCode) + " - empty response");
 
         return true;
     }
@@ -52,17 +53,19 @@ bool CheckResponseFailed(const std::string& payload,
     DeserializationError error = deserializeJson(doc, payload);
 
     if (error != DeserializationError::Ok) {
-        Failsafe::AddFailure(TAG, "Status: " + std::to_string((int)statusCode) +
-                                      " - deserialization failed: " +
-                                      std::string(error.c_str()));
+        Failsafe::AddFailure(
+            TAG,
+            "Status: " + std::to_string((int)statusCode) +
+                " - deserialization failed: " + std::string(error.c_str()));
 
         return true;
     }
 
     const char* errorMsg = doc["error"];
     if (errorMsg != nullptr) {
-        Failsafe::AddFailure(TAG, "Status: " + std::to_string((int)statusCode) +
-                                      " - " + errorMsg);
+        Failsafe::AddFailure(
+            TAG,
+            "Status: " + std::to_string((int)statusCode) + " - " + errorMsg);
     }
 
     return true;
@@ -89,7 +92,8 @@ bool SetupConfiguration(const std::string& payload) {
 
     if (error != DeserializationError::Ok) {
         Failsafe::AddFailure(
-            TAG, "Deserialization failed: " + std::string(error.c_str()));
+            TAG,
+            "Deserialization failed: " + std::string(error.c_str()));
 
         return false;
     }
@@ -174,7 +178,8 @@ void GetConfiguration() {
 
         if (error != DeserializationError::Ok) {
             Failsafe::AddFailure(
-                TAG, "Deserialization failed: " + std::string(error.c_str()));
+                TAG,
+                "Deserialization failed: " + std::string(error.c_str()));
 
             return;
         }

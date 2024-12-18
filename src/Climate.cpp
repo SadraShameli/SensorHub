@@ -137,8 +137,11 @@ void Update() {
     ESP_LOGD(TAG,
              "Temperature: %f, Humidity: %f, Air Pressure: %f, Gas Resistance: "
              "%f, Altitude: %f",
-             temperature.Current(), humidity.Current(), airPressure.Current(),
-             gasResistance.Current(), altitude.Current());
+             temperature.Current(),
+             humidity.Current(),
+             airPressure.Current(),
+             gasResistance.Current(),
+             altitude.Current());
 }
 
 /**

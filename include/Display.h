@@ -17,9 +17,9 @@ void Clear();
 void Refresh();
 void ResetScreenSaver();
 
-void Print(uint32_t, uint32_t, const char*, uint32_t = 12);
-void PrintText(const char*, const char*);
-void PrintLines(const char*, const char*, const char*, const char*);
+void Print(uint32_t, uint32_t, const char *, uint32_t = 12);
+void PrintText(const char *, const char *);
+void PrintLines(const char *, const char *, const char *, const char *);
 
 void PrintMain();
 void PrintTemperature();

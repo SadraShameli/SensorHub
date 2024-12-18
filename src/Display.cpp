@@ -154,8 +154,12 @@ void ResetScreenSaver() {
  * @param size The size of the text to be printed.
  */
 void Print(uint32_t x, uint32_t y, const char* text, uint32_t size) {
-    ssd1306_draw_string(dev, (uint8_t)x, (uint8_t)y, (const uint8_t*)text,
-                        (uint8_t)size, 1);
+    ssd1306_draw_string(dev,
+                        (uint8_t)x,
+                        (uint8_t)y,
+                        (const uint8_t*)text,
+                        (uint8_t)size,
+                        1);
 }
 
 /**

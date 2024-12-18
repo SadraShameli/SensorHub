@@ -93,8 +93,9 @@ static void vTask(void* arg) {
                 .clk_src = I2S_CLK_SRC_APLL,
                 .mclk_multiple = I2S_MCLK_MULTIPLE_512,
             },
-        .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(
-            I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO),
+        .slot_cfg =
+            I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT,
+                                                I2S_SLOT_MODE_MONO),
         .gpio_cfg =
             {
                 .bclk = GPIO_NUM_23,
@@ -124,16 +125,20 @@ static void vTask(void* arg) {
 
     if (Storage::GetSensorState(Configuration::Sensor::Recording)) {
         for (int i = 0; i < 4; i++) {
-            ESP_ERROR_CHECK(i2s_channel_read(i2sHandle, audio->Buffer,
-                                             transferLength, nullptr,
+            ESP_ERROR_CHECK(i2s_channel_read(i2sHandle,
+                                             audio->Buffer,
+                                             transferLength,
+                                             nullptr,
                                              portMAX_DELAY));
         }
     }
 
     else {
         for (int i = 0; i < 6; i++) {
-            ESP_ERROR_CHECK(i2s_channel_read(i2sHandle, audio->Buffer,
-                                             transferLength, nullptr,
+            ESP_ERROR_CHECK(i2s_channel_read(i2sHandle,
+                                             audio->Buffer,
+                                             transferLength,
+                                             nullptr,
                                              portMAX_DELAY));
         }
     }
@@ -207,10 +212,14 @@ void UpdateRecording() {
         return;
     }
 
-    ESP_LOGI(TAG, "Continuing recording - loudness: %ddB - threshold: %lddB",
-             (int)loudness.Current(), Storage::GetLoudnessThreshold());
+    ESP_LOGI(TAG,
+             "Continuing recording - loudness: %ddB - threshold: %lddB",
+             (int)loudness.Current(),
+             Storage::GetLoudnessThreshold());
 
-    ESP_LOGI(TAG, "POST request to URL: %s - size: %ld", address.c_str(),
+    ESP_LOGI(TAG,
+             "POST request to URL: %s - size: %ld",
+             address.c_str(),
              audio->TotalLength);
 
     UNIT_TIMER("POST request");
@@ -219,9 +228,10 @@ void UpdateRecording() {
 
     if (err != ESP_OK) {
         Failsafe::AddFailure(
-            TAG, "POST request failed - " + (err == ESP_ERR_HTTP_CONNECT
-                                                 ? "URL not found: " + address
-                                                 : esp_err_to_name(err)));
+            TAG,
+            "POST request failed - " + (err == ESP_ERR_HTTP_CONNECT
+                                            ? "URL not found: " + address
+                                            : esp_err_to_name(err)));
 
         return;
     }
@@ -245,14 +255,18 @@ void UpdateRecording() {
  * @return `true` if the loudness exceeds the threshold, `false` otherwise.
  */
 bool UpdateLoudness() {
-    i2s_channel_read(i2sHandle, audio->Buffer, audio->BufferLength, nullptr,
+    i2s_channel_read(i2sHandle,
+                     audio->Buffer,
+                     audio->BufferLength,
+                     nullptr,
                      portMAX_DELAY);
 
     float decibel = CalculateLoudness();
 
     if (decibel == 0) {
         Failsafe::AddFailureDelayed(
-            TAG, "Loudness not valid: " + std::to_string(decibel) + "dB");
+            TAG,
+            "Loudness not valid: " + std::to_string(decibel) + "dB");
 
         return isOK = false;
     }
@@ -276,7 +290,8 @@ bool UpdateLoudness() {
  * handles HTTP responses and checks for failures.
  */
 void RegisterRecordings() {
-    int length = esp_http_client_write(httpClient, (char*)&audio->Header,
+    int length = esp_http_client_write(httpClient,
+                                       (char*)&audio->Header,
                                        sizeof(WavHeader));
 
     if (length < 0) {
@@ -286,8 +301,9 @@ void RegisterRecordings() {
 
     for (size_t byte_count = 0; byte_count < audio->BufferLength;
          byte_count += transferLength) {
-        length = esp_http_client_write(
-            httpClient, (char*)audio->Buffer + byte_count, transferLength);
+        length = esp_http_client_write(httpClient,
+                                       (char*)audio->Buffer + byte_count,
+                                       transferLength);
 
         if (length < 0) {
             Failsafe::AddFailure(TAG, "Writing data failed");
@@ -303,7 +319,10 @@ void RegisterRecordings() {
     for (size_t byte_count = 0;
          byte_count < audio->Header.DataLength - audio->BufferLength;
          byte_count += transferLength) {
-        i2s_channel_read(i2sHandle, audio->Buffer, transferLength, nullptr,
+        i2s_channel_read(i2sHandle,
+                         audio->Buffer,
+                         transferLength,
+                         nullptr,
                          portMAX_DELAY);
 
         if (Display::IsOK()) {
@@ -316,7 +335,8 @@ void RegisterRecordings() {
             }
         }
 
-        length = esp_http_client_write(httpClient, (char*)audio->Buffer,
+        length = esp_http_client_write(httpClient,
+                                       (char*)audio->Buffer,
                                        transferLength);
 
         if (length < 0) {
@@ -349,11 +369,13 @@ void RegisterRecordings() {
 
     else {
         Failsafe::AddFailure(
-            TAG, "Status: " + std::to_string(statusCode) + " - empty response");
+            TAG,
+            "Status: " + std::to_string(statusCode) + " - empty response");
         return;
     }
 
-    esp_http_client_read(httpClient, httpPayload.data(),
+    esp_http_client_read(httpClient,
+                         httpPayload.data(),
                          httpPayload.capacity());
 
     if (!Backend::CheckResponseFailed(httpPayload,
