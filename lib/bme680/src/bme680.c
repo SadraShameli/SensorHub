@@ -29,22 +29,18 @@
 #define error(s, f, ...)
 #define error_dev(s, f, d, ...)
 #endif
-
-// modes: unfortunately, only SLEEP_MODE and FORCED_MODE are documented
-#define BME680_SLEEP_MODE 0x00   // low power sleeping
-#define BME680_FORCED_MODE 0x01  // perform one TPHG cycle (field data 0 filled)
-#define BME680_PARALLEL_MODE 0x02  // no information what it does :-(
+#define BME680_SLEEP_MODE 0x00
+#define BME680_FORCED_MODE 0x01
+#define BME680_PARALLEL_MODE 0x02
 #define BME680_SQUENTUAL_MODE \
-    0x02  // no information what it does (field data 0+1+2 filled)
-
-// register addresses
+    0x02
 #define BME680_REG_RES_HEAT_VAL 0x00
 #define BME680_REG_RES_HEAT_RANGE 0x02
 #define BME680_REG_RANGE_SW_ERROR 0x06
 
-#define BME680_REG_IDAC_HEAT_BASE 0x50  // 10 regsrs idac_heat_0 ... idac_heat_9
-#define BME680_REG_RES_HEAT_BASE 0x5a  // 10 registers res_heat_0 ... res_heat_9
-#define BME680_REG_GAS_WAIT_BASE 0x64  // 10 registers gas_wait_0 ... gas_wait_9
+#define BME680_REG_IDAC_HEAT_BASE 0x50
+#define BME680_REG_RES_HEAT_BASE 0x5a
+#define BME680_REG_GAS_WAIT_BASE 0x64
 #define BME680_REG_CTRL_GAS_0 0x70
 #define BME680_REG_CTRL_GAS_1 0x71
 #define BME680_REG_CTRL_HUM 0x72
@@ -53,8 +49,6 @@
 #define BME680_REG_CONFIG 0x75
 #define BME680_REG_ID 0xd0
 #define BME680_REG_RESET 0xe0
-
-// field data 0 registers
 #define BME680_REG_MEAS_STATUS_0 0x1d
 #define BME680_REG_MEAS_INDEX_0 0x1e
 #define BME680_REG_PRESS_MSB_0 0x1f
@@ -67,100 +61,83 @@
 #define BME680_REG_HUM_LSB_0 0x26
 #define BME680_REG_GAS_R_MSB_0 0x2a
 #define BME680_REG_GAS_R_LSB_0 0x2b
-
-// field data 1 registers (not documented, used in SEQUENTIAL_MODE)
 #define BME680_REG_MEAS_STATUS_1 0x2e
 #define BME680_REG_MEAS_INDEX_1 0x2f
-
-// field data 2 registers (not documented, used in SEQUENTIAL_MODE)
 #define BME680_REG_MEAS_STATUS_2 0x3f
 #define BME680_REG_MEAS_INDEX_2 0x40
-
-// field data addresses
-#define BME680_REG_RAW_DATA_0 BME680_REG_MEAS_STATUS_0  // 0x1d ... 0x2b
-#define BME680_REG_RAW_DATA_1 BME680_REG_MEAS_STATUS_1  // 0x2e ... 0x3c
-#define BME680_REG_RAW_DATA_2 BME680_REG_MEAS_STATUS_2  // 0x40 ... 0x4d
+#define BME680_REG_RAW_DATA_0 BME680_REG_MEAS_STATUS_0
+#define BME680_REG_RAW_DATA_1 BME680_REG_MEAS_STATUS_1
+#define BME680_REG_RAW_DATA_2 BME680_REG_MEAS_STATUS_2
 #define BME680_REG_RAW_DATA_LEN \
     (BME680_REG_GAS_R_LSB_0 - BME680_REG_MEAS_STATUS_0 + 1)
-
-// calibration data registers
-#define BME680_REG_CD1_ADDR 0x89  // 25 byte calibration data
+#define BME680_REG_CD1_ADDR 0x89
 #define BME680_REG_CD1_LEN 25
-#define BME680_REG_CD2_ADDR 0xe1  // 16 byte calibration data
+#define BME680_REG_CD2_ADDR 0xe1
 #define BME680_REG_CD2_LEN 16
-#define BME680_REG_CD3_ADDR 0x00  //  8 byte device specific calibration data
+#define BME680_REG_CD3_ADDR 0x00
 #define BME680_REG_CD3_LEN 8
+#define BME680_NEW_DATA_BITS 0x80
+#define BME680_NEW_DATA_SHIFT 7
+#define BME680_GAS_MEASURING_BITS 0x40
+#define BME680_GAS_MEASURING_SHIFT 6
+#define BME680_MEASURING_BITS 0x20
+#define BME680_MEASURING_SHIFT 5
+#define BME680_GAS_MEAS_INDEX_BITS 0x0f
+#define BME680_GAS_MEAS_INDEX_SHIFT 0
 
-// register structure definitions
-#define BME680_NEW_DATA_BITS 0x80        // BME680_REG_MEAS_STATUS<7>
-#define BME680_NEW_DATA_SHIFT 7          // BME680_REG_MEAS_STATUS<7>
-#define BME680_GAS_MEASURING_BITS 0x40   // BME680_REG_MEAS_STATUS<6>
-#define BME680_GAS_MEASURING_SHIFT 6     // BME680_REG_MEAS_STATUS<6>
-#define BME680_MEASURING_BITS 0x20       // BME680_REG_MEAS_STATUS<5>
-#define BME680_MEASURING_SHIFT 5         // BME680_REG_MEAS_STATUS<5>
-#define BME680_GAS_MEAS_INDEX_BITS 0x0f  // BME680_REG_MEAS_STATUS<3:0>
-#define BME680_GAS_MEAS_INDEX_SHIFT 0    // BME680_REG_MEAS_STATUS<3:0>
+#define BME680_GAS_R_LSB_BITS 0xc0
+#define BME680_GAS_R_LSB_SHIFT 6
+#define BME680_GAS_VALID_BITS 0x20
+#define BME680_GAS_VALID_SHIFT 5
+#define BME680_HEAT_STAB_R_BITS 0x10
+#define BME680_HEAT_STAB_R_SHIFT 4
+#define BME680_GAS_RANGE_R_BITS 0x0f
+#define BME680_GAS_RANGE_R_SHIFT 0
 
-#define BME680_GAS_R_LSB_BITS 0xc0    // BME680_REG_GAS_R_LSB<7:6>
-#define BME680_GAS_R_LSB_SHIFT 6      // BME680_REG_GAS_R_LSB<7:6>
-#define BME680_GAS_VALID_BITS 0x20    // BME680_REG_GAS_R_LSB<5>
-#define BME680_GAS_VALID_SHIFT 5      // BME680_REG_GAS_R_LSB<5>
-#define BME680_HEAT_STAB_R_BITS 0x10  // BME680_REG_GAS_R_LSB<4>
-#define BME680_HEAT_STAB_R_SHIFT 4    // BME680_REG_GAS_R_LSB<4>
-#define BME680_GAS_RANGE_R_BITS 0x0f  // BME680_REG_GAS_R_LSB<3:0>
-#define BME680_GAS_RANGE_R_SHIFT 0    // BME680_REG_GAS_R_LSB<3:0>
+#define BME680_HEAT_OFF_BITS 0x04
+#define BME680_HEAT_OFF_SHIFT 3
 
-#define BME680_HEAT_OFF_BITS 0x04  // BME680_REG_CTRL_GAS_0<3>
-#define BME680_HEAT_OFF_SHIFT 3    // BME680_REG_CTRL_GAS_0<3>
+#define BME680_RUN_GAS_BITS 0x10
+#define BME680_RUN_GAS_SHIFT 4
+#define BME680_NB_CONV_BITS 0x0f
+#define BME680_NB_CONV_SHIFT 0
 
-#define BME680_RUN_GAS_BITS 0x10  // BME680_REG_CTRL_GAS_1<4>
-#define BME680_RUN_GAS_SHIFT 4    // BME680_REG_CTRL_GAS_1<4>
-#define BME680_NB_CONV_BITS 0x0f  // BME680_REG_CTRL_GAS_1<3:0>
-#define BME680_NB_CONV_SHIFT 0    // BME680_REG_CTRL_GAS_1<3:0>
+#define BME680_SPI_3W_INT_EN_BITS 0x40
+#define BME680_SPI_3W_INT_EN_SHIFT 6
+#define BME680_OSR_H_BITS 0x07
+#define BME680_OSR_H_SHIFT 0
 
-#define BME680_SPI_3W_INT_EN_BITS 0x40  // BME680_REG_CTRL_HUM<6>
-#define BME680_SPI_3W_INT_EN_SHIFT 6    // BME680_REG_CTRL_HUM<6>
-#define BME680_OSR_H_BITS 0x07          // BME680_REG_CTRL_HUM<2:0>
-#define BME680_OSR_H_SHIFT 0            // BME680_REG_CTRL_HUM<2:0>
+#define BME680_OSR_T_BITS 0xe0
+#define BME680_OSR_T_SHIFT 5
+#define BME680_OSR_P_BITS 0x1c
+#define BME680_OSR_P_SHIFT 2
+#define BME680_MODE_BITS 0x03
+#define BME680_MODE_SHIFT 0
 
-#define BME680_OSR_T_BITS 0xe0  // BME680_REG_CTRL_MEAS<7:5>
-#define BME680_OSR_T_SHIFT 5    // BME680_REG_CTRL_MEAS<7:5>
-#define BME680_OSR_P_BITS 0x1c  // BME680_REG_CTRL_MEAS<4:2>
-#define BME680_OSR_P_SHIFT 2    // BME680_REG_CTRL_MEAS<4:2>
-#define BME680_MODE_BITS 0x03   // BME680_REG_CTRL_MEAS<1:0>
-#define BME680_MODE_SHIFT 0     // BME680_REG_CTRL_MEAS<1:0>
+#define BME680_FILTER_BITS 0x1c
+#define BME680_FILTER_SHIFT 2
+#define BME680_SPI_3W_EN_BITS 0x01
+#define BME680_SPI_3W_EN_SHIFT 0
 
-#define BME680_FILTER_BITS 0x1c     // BME680_REG_CONFIG<4:2>
-#define BME680_FILTER_SHIFT 2       // BME680_REG_CONFIG<4:2>
-#define BME680_SPI_3W_EN_BITS 0x01  // BME680_REG_CONFIG<0>
-#define BME680_SPI_3W_EN_SHIFT 0    // BME680_REG_CONFIG<0>
+#define BME680_SPI_MEM_PAGE_BITS 0x10
+#define BME680_SPI_MEM_PAGE_SHIFT 4
 
-#define BME680_SPI_MEM_PAGE_BITS 0x10  // BME680_REG_STATUS<4>
-#define BME680_SPI_MEM_PAGE_SHIFT 4    // BME680_REG_STATUS<4>
+#define BME680_GAS_WAIT_BITS 0x3f
+#define BME680_GAS_WAIT_SHIFT 0
+#define BME680_GAS_WAIT_MULT_BITS 0xc0
+#define BME680_GAS_WAIT_MULT_SHIFT 6
+#define BME680_RESET_CMD 0xb6
+#define BME680_RESET_PERIOD 5
 
-#define BME680_GAS_WAIT_BITS 0x3f       // BME680_REG_GAS_WAIT+x<5:0>
-#define BME680_GAS_WAIT_SHIFT 0         // BME680_REG_GAS_WAIT+x<5:0>
-#define BME680_GAS_WAIT_MULT_BITS 0xc0  // BME680_REG_GAS_WAIT+x<7:6>
-#define BME680_GAS_WAIT_MULT_SHIFT 6    // BME680_REG_GAS_WAIT+x<7:6>
-
-// commands
-#define BME680_RESET_CMD 0xb6  // BME680_REG_RESET<7:0>
-#define BME680_RESET_PERIOD 5  // reset time in ms
-
-#define BME680_RHR_BITS 0x30   // BME680_REG_RES_HEAT_RANGE<5:4>
-#define BME680_RHR_SHIFT 4     // BME680_REG_RES_HEAT_RANGE<5:4>
-#define BME680_RSWE_BITS 0xf0  // BME680_REG_RANGE_SW_ERROR<7:4>
-#define BME680_RSWE_SHIFT 4    // BME680_REG_RANGE_SW_ERROR<7:4>
-
-// calibration data are stored in a calibration data map
+#define BME680_RHR_BITS 0x30
+#define BME680_RHR_SHIFT 4
+#define BME680_RSWE_BITS 0xf0
+#define BME680_RSWE_SHIFT 4
 #define BME680_CDM_SIZE \
     (BME680_REG_CD1_LEN + BME680_REG_CD2_LEN + BME680_REG_CD3_LEN)
 #define BME680_CDM_OFF1 0
 #define BME680_CDM_OFF2 BME680_REG_CD1_LEN
 #define BME680_CDM_OFF3 BME680_CDM_OFF2 + BME680_REG_CD2_LEN
-
-// calibration parameter offsets in calibration data map
-// calibration data from 0x89
 #define BME680_CDM_T2 1
 #define BME680_CDM_T3 3
 #define BME680_CDM_P1 5
@@ -173,7 +150,6 @@
 #define BME680_CDM_P8 19
 #define BME680_CDM_P9 21
 #define BME680_CDM_P10 23
-// calibration data from 0e1
 #define BME680_CDM_H2 25
 #define BME680_CDM_H1 26
 #define BME680_CDM_H3 28
@@ -185,29 +161,26 @@
 #define BME680_CDM_GH2 35
 #define BME680_CDM_GH1 37
 #define BME680_CDM_GH3 38
-// device specific calibration data from 0x00
-#define BME680_CDM_RHV 41   // 0x00 - res_heat_val
-#define BME680_CDM_RHR 43   // 0x02 - res_heat_range
-#define BME680_CDM_RSWE 45  // 0x04 - range_sw_error
+#define BME680_CDM_RHV 41
+#define BME680_CDM_RHR 43
+#define BME680_CDM_RSWE 45
 
-/**
- * @brief   Raw data (integer values) read from sensor
- */
+
 typedef struct {
-    bool gas_valid;      // indicate that gas measurement results are valid
-    bool heater_stable;  // indicate that heater temperature was stable
+    bool gas_valid;
+    bool heater_stable;
 
-    uint32_t temperature;     // degree celsius x100
-    uint32_t pressure;        // pressure in Pascal
-    uint16_t humidity;        // relative humidity x1000 in %
-    uint16_t gas_resistance;  // gas resistance data
-    uint8_t gas_range;        // gas resistance range
+    uint32_t temperature;
+    uint32_t pressure;
+    uint16_t humidity;
+    uint16_t gas_resistance;
+    uint8_t gas_range;
 
-    uint8_t gas_index;  // heater profile used (0 ... 9)
+    uint8_t gas_index;
     uint8_t meas_index;
 } bme680_raw_data_t;
 
-/** Forward declaration of functions for internal use */
+
 
 static bool bme680_set_mode(bme680_sensor_t *dev, uint8_t mode);
 static bool bme680_get_raw_data(bme680_sensor_t *dev, bme680_raw_data_t *raw);
@@ -261,8 +234,6 @@ bme680_sensor_t *bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs) {
     if ((dev = malloc(sizeof(bme680_sensor_t))) == NULL) {
         return NULL;
     }
-
-    // init sensor data structure
     dev->bus = bus;
     dev->addr = addr;
     dev->cs = cs;
@@ -276,22 +247,16 @@ bme680_sensor_t *bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs) {
     dev->settings.heater_profile = BME680_HEATER_NOT_USED;
     memset(dev->settings.heater_temperature, 0, sizeof(uint16_t) * 10);
     memset(dev->settings.heater_duration, 0, sizeof(uint16_t) * 10);
-
-    // if addr==0 then SPI is used and has to be initialized
     if (!addr && !spi_device_init(bus, cs)) {
         error_dev("Could not initialize SPI interface.", __FUNCTION__, dev);
         free(dev);
         return NULL;
     }
-
-    // reset the sensor
     if (!bme680_reset(dev)) {
         error_dev("Could not reset the sensor device.", __FUNCTION__, dev);
         free(dev);
         return NULL;
     }
-
-    // check availability of the sensor
     if (!bme680_is_available(dev)) {
         error_dev("Sensor is not available.", __FUNCTION__, dev);
         free(dev);
@@ -299,8 +264,6 @@ bme680_sensor_t *bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs) {
     }
 
     uint8_t buf[BME680_CDM_SIZE];
-
-    // read all calibration parameters from sensor
     if (bme680_read_reg(
             dev, BME680_REG_CD1_ADDR, buf + BME680_CDM_OFF1, BME680_REG_CD1_LEN
         ) &&
@@ -313,8 +276,6 @@ bme680_sensor_t *bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs) {
         dev->calib_data.par_t1 = lsb_msb_to_type(uint16_t, buf, BME680_CDM_T1);
         dev->calib_data.par_t2 = lsb_msb_to_type(int16_t, buf, BME680_CDM_T2);
         dev->calib_data.par_t3 = lsb_to_type(int8_t, buf, BME680_CDM_T3);
-
-        // pressure compensation parameters
         dev->calib_data.par_p1 = lsb_msb_to_type(uint16_t, buf, BME680_CDM_P1);
         dev->calib_data.par_p2 = lsb_msb_to_type(int16_t, buf, BME680_CDM_P2);
         dev->calib_data.par_p3 = lsb_to_type(int8_t, buf, BME680_CDM_P3);
@@ -325,8 +286,6 @@ bme680_sensor_t *bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs) {
         dev->calib_data.par_p8 = lsb_msb_to_type(int16_t, buf, BME680_CDM_P8);
         dev->calib_data.par_p9 = lsb_msb_to_type(int16_t, buf, BME680_CDM_P9);
         dev->calib_data.par_p10 = lsb_to_type(uint8_t, buf, BME680_CDM_P10);
-
-        // humidity compensation parameters
         dev->calib_data.par_h1 =
             (uint16_t)(((uint16_t)buf[BME680_CDM_H1 + 1] << 4) |
                        (buf[BME680_CDM_H1] & 0x0F));
@@ -338,8 +297,6 @@ bme680_sensor_t *bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs) {
         dev->calib_data.par_h5 = lsb_to_type(int8_t, buf, BME680_CDM_H5);
         dev->calib_data.par_h6 = lsb_to_type(uint8_t, buf, BME680_CDM_H6);
         dev->calib_data.par_h7 = lsb_to_type(int8_t, buf, BME680_CDM_H7);
-
-        // gas sensor compensation parameters
         dev->calib_data.par_gh1 = lsb_to_type(int8_t, buf, BME680_CDM_GH1);
         dev->calib_data.par_gh2 = lsb_msb_to_type(int16_t, buf, BME680_CDM_GH2);
         dev->calib_data.par_gh3 = lsb_to_type(int8_t, buf, BME680_CDM_GH3);
@@ -360,8 +317,6 @@ bme680_sensor_t *bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs) {
         free(dev);
         return NULL;
     }
-
-    // Set the default temperature, pressure and humidity settings
     if (!bme680_set_oversampling_rates(dev, osr_1x, osr_1x, osr_1x) ||
         !bme680_set_filter_size(dev, iir_size_3)) {
         error_dev(
@@ -371,11 +326,7 @@ bme680_sensor_t *bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs) {
         free(dev);
         return NULL;
     }
-
-    // Set ambient temperature of sensor to default value (25 degree C)
     dev->settings.ambient_temperature = 25;
-
-    // Set heater default profile 0 to 320 degree Celsius for 150 ms
     if (!bme680_set_heater_profile(dev, 0, 320, 150)) {
         error_dev(
             "Could not configure default heater profile settings.",
@@ -402,15 +353,11 @@ bool bme680_force_measurement(bme680_sensor_t *dev) {
     }
 
     dev->error_code = BME680_OK;
-
-    // return remaining time when measurement is already running
     if (dev->meas_started) {
         debug_dev("Measurement is already running.", __FUNCTION__, dev);
         dev->error_code |= BME680_MEAS_ALREADY_RUNNING;
         return false;
     }
-
-    // Set the power mode to forced mode to trigger one TPHG measurement cycle
     if (!bme680_set_mode(dev, BME680_FORCED_MODE)) {
         error_dev(
             "Could not set forced mode to start TPHG measurement cycle.",
@@ -431,25 +378,14 @@ bool bme680_force_measurement(bme680_sensor_t *dev) {
     return true;
 }
 
-/**
- * @brief Estimate the measurement duration in ms
- *
- * Timing formulas extracted from BME280 datasheet and test in some
- * experiments. They represent the maximum measurement duration.
- *
- * @return  estimated measurement duration in RTOS ticks or -1 on error
- */
+
 uint32_t bme680_get_measurement_duration(const bme680_sensor_t *dev) {
     if (!dev) {
         return 0;
     }
 
-    int32_t duration = 0; /* Calculate in us */
-
-    // wake up duration from sleep into forced mode
+    int32_t duration = 0;
     duration += 1250;
-
-    // THP cycle duration which consumes 1963 µs for each measurement at maximum
     if (dev->settings.osr_temperature) {
         duration += (1 << (dev->settings.osr_temperature - 1)) * 2300;
     }
@@ -459,35 +395,17 @@ uint32_t bme680_get_measurement_duration(const bme680_sensor_t *dev) {
     if (dev->settings.osr_humidity) {
         duration += (1 << (dev->settings.osr_humidity - 1)) * 2300 + 575;
     }
-
-    // if gas measurement is used
     if (dev->settings.heater_profile != BME680_HEATER_NOT_USED &&
         dev->settings.heater_duration[dev->settings.heater_profile] &&
         dev->settings.heater_temperature[dev->settings.heater_profile]) {
-        // gas heating time
         duration +=
             dev->settings.heater_duration[dev->settings.heater_profile] * 1000;
-        // gas measurement duration;
         duration += 2300 + 575;
     }
-
-    // round up to next ms (1 us ... 1000 us => 1 ms)
     duration += 999;
     duration /= 1000;
-
-    // some ms tolerance
     duration += 5;
-
-    // ceil to next integer value that is divisible by portTICK_PERIOD_MS and
-    // compute RTOS ticks (1 ... portTICK_PERIOD_MS =  1 tick)
     duration = (duration + portTICK_PERIOD_MS - 1) / portTICK_PERIOD_MS;
-
-    // Since first RTOS tick can be shorter than the half of defined tick
-    // period, the delay caused by vTaskDelay(duration) might be 1 or 2 ms
-    // shorter than computed duration in rare cases. Since the duration is
-    // computed for maximum and not for the typical durations and therefore
-    // tends to be too long, this should not be a problem. Therefore, only one
-    // additional tick used.
     return duration + 1;
 }
 
@@ -497,16 +415,12 @@ bool bme680_is_measuring(bme680_sensor_t *dev) {
     }
 
     dev->error_code = BME680_OK;
-
-    // if measurement wasn't started, it is of course not measuring
     if (!dev->meas_started) {
         dev->error_code |= BME680_MEAS_NOT_RUNNING;
         return false;
     }
 
     uint8_t raw[2];
-
-    // read measurement status from sensor
     if (!bme680_read_reg(dev, BME680_REG_MEAS_STATUS_0, raw, 2)) {
         error_dev(
             "Could not read measurement status from sensor.", __FUNCTION__, dev
@@ -515,8 +429,6 @@ bool bme680_is_measuring(bme680_sensor_t *dev) {
     }
 
     dev->meas_status = raw[0];
-
-    // test whether measuring bit is set
     return (dev->meas_status & BME680_MEASURING_BITS);
 }
 
@@ -528,8 +440,6 @@ bool bme680_get_results_fixed(
     }
 
     dev->error_code = BME680_OK;
-
-    // fill data structure with invalid values
     results->temperature = INT16_MIN;
     results->pressure = 0;
     results->humidity = 0;
@@ -538,12 +448,8 @@ bool bme680_get_results_fixed(
     bme680_raw_data_t raw;
 
     if (!bme680_get_raw_data(dev, &raw)) {
-        // return invalid values
         return false;
     }
-
-    // use compensation algorithms to compute sensor values in fixed point
-    // format
 
     if (dev->settings.osr_temperature) {
         results->temperature = bme680_convert_temperature(dev, raw.temperature);
@@ -558,7 +464,6 @@ bool bme680_get_results_fixed(
     }
 
     if (dev->settings.heater_profile != BME680_HEATER_NOT_USED) {
-        // convert gas only if raw data are valid and heater was stable
         if (raw.gas_valid && raw.heater_stable) {
             results->gas_resistance =
                 bme680_convert_gas(dev, raw.gas_resistance, raw.gas_range);
@@ -606,10 +511,10 @@ bool bme680_measure_fixed(
     int32_t duration = bme680_force_measurement(dev);
 
     if (duration == BME680_NOK) {
-        return false;  // measurement couldn't be started
+        return false;
     }
 
-    else if (duration > 0) {  // wait for results
+    else if (duration > 0) {
         vTaskDelay(duration);
     }
 
@@ -622,10 +527,10 @@ bool bme680_measure_float(
     int32_t duration = bme680_force_measurement(dev);
 
     if (duration == BME680_NOK) {
-        return false;  // measurement couldn't be started
+        return false;
     }
 
-    else if (duration > 0) {  // wait for results
+    else if (duration > 0) {
         vTaskDelay(duration);
     }
 
@@ -654,8 +559,6 @@ bool bme680_set_oversampling_rates(
     if (!ost_changed && !osp_changed && !osh_changed) {
         return true;
     }
-
-    // Set the temperature, pressure and humidity oversampling
     dev->settings.osr_temperature = ost;
     dev->settings.osr_pressure = osp;
     dev->settings.osr_humidity = osh;
@@ -663,35 +566,25 @@ bool bme680_set_oversampling_rates(
     uint8_t reg;
 
     if (ost_changed || osp_changed) {
-        // read the current register value
         if (!bme680_read_reg(dev, BME680_REG_CTRL_MEAS, &reg, 1)) {
             return false;
         }
-
-        // set changed bit values
         if (ost_changed) {
             reg = bme_set_reg_bit(reg, BME680_OSR_T, ost);
         }
         if (osp_changed) {
             reg = bme_set_reg_bit(reg, BME680_OSR_P, osp);
         }
-
-        // write back the new register value
         if (!bme680_write_reg(dev, BME680_REG_CTRL_MEAS, &reg, 1)) {
             return false;
         }
     }
 
     if (osh_changed) {
-        // read the current register value
         if (!bme680_read_reg(dev, BME680_REG_CTRL_HUM, &reg, 1)) {
             return false;
         }
-
-        // set changed bit value
         reg = bme_set_reg_bit(reg, BME680_OSR_H, osh);
-
-        // write back the new register value
         if (!bme680_write_reg(dev, BME680_REG_CTRL_HUM, &reg, 1)) {
             return false;
         }
@@ -719,20 +612,14 @@ bool bme680_set_filter_size(bme680_sensor_t *dev, bme680_filter_size_t size) {
         return true;
     }
 
-    /* Set the temperature, pressure and humidity settings */
+    
     dev->settings.filter_size = size;
 
     uint8_t reg;
-
-    // read the current register value
     if (!bme680_read_reg(dev, BME680_REG_CONFIG, &reg, 1)) {
         return false;
     }
-
-    // set changed bit value
     reg = bme_set_reg_bit(reg, BME680_FILTER, size);
-
-    // write back the new register value
     if (!bme680_write_reg(dev, BME680_REG_CONFIG, &reg, 1)) {
         return false;
     }
@@ -768,19 +655,13 @@ bool bme680_set_heater_profile(
     if (!temperature_changed && !duration_changed) {
         return true;
     }
-
-    // set external gas sensor configuration
-    dev->settings.heater_temperature[profile] = temperature;  // degree Celsius
-    dev->settings.heater_duration[profile] = duration;        // milliseconds
-
-    // compute internal gas sensor configuration parameters
+    dev->settings.heater_temperature[profile] = temperature;
+    dev->settings.heater_duration[profile] = duration;
     uint8_t heat_dur =
-        bme680_heater_duration(duration);  // internal duration value
+        bme680_heater_duration(duration);
     uint8_t heat_res = bme680_heater_resistance(
         dev, temperature
-    );  // internal temperature value
-
-    // set internal gas sensor configuration parameters if changed
+    );
     if (temperature_changed &&
         !bme680_write_reg(
             dev, BME680_REG_RES_HEAT_BASE + profile, &heat_res, 1
@@ -823,13 +704,10 @@ bool bme680_use_heater_profile(bme680_sensor_t *dev, int8_t profile) {
 
     dev->settings.heater_profile = profile;
 
-    uint8_t reg = 0;  // set
-    // set active profile
+    uint8_t reg = 0;
     reg = bme_set_reg_bit(
         reg, BME680_NB_CONV, profile != BME680_HEATER_NOT_USED ? profile : 0
     );
-
-    // enable or disable gas measurement
     reg = bme_set_reg_bit(
         reg, BME680_RUN_GAS,
         (profile != BME680_HEATER_NOT_USED &&
@@ -856,11 +734,7 @@ bool bme680_set_ambient_temperature(bme680_sensor_t *dev, int16_t ambient) {
     if (!ambient_changed) {
         return true;
     }
-
-    // set ambient temperature configuration
-    dev->settings.ambient_temperature = ambient;  // degree Celsius
-
-    // update all valid heater profiles
+    dev->settings.ambient_temperature = ambient;
     uint8_t data[10];
     for (int i = 0; i < BME680_HEATER_PROFILES; i++) {
         data[i] = dev->settings.heater_temperature[i]
@@ -903,11 +777,9 @@ bool bme680_set_mode(bme680_sensor_t *dev, uint8_t mode) {
     return true;
 }
 
-/** Functions for internal use only */
 
-/**
- * @brief   Check the chip ID to test whether sensor is available
- */
+
+
 static bool bme680_is_available(bme680_sensor_t *dev) {
     uint8_t chip_id;
 
@@ -940,16 +812,10 @@ static bool bme680_reset(bme680_sensor_t *dev) {
     dev->error_code = BME680_OK;
 
     uint8_t reg = BME680_RESET_CMD;
-
-    // send reset command
     if (!bme680_write_reg(dev, BME680_REG_RESET, &reg, 1)) {
         return false;
     }
-
-    // wait the time the sensor needs for reset
     bme680_delay_ms(BME680_RESET_PERIOD);
-
-    // check whether the sensor is reachable again
     if (!bme680_read_reg(dev, BME680_REG_STATUS, &reg, 1)) {
         dev->error_code = BME680_RESET_CMD_FAILED;
         return false;
@@ -958,10 +824,7 @@ static bool bme680_reset(bme680_sensor_t *dev) {
     return true;
 }
 
-/**
- * @brief   Calculate temperature from raw temperature value
- * @ref     BME280 datasheet, page 50
- */
+
 static int16_t bme680_convert_temperature(
     bme680_sensor_t *dev, uint32_t raw_temperature
 ) {
@@ -989,17 +852,7 @@ static int16_t bme680_convert_temperature(
     return temperature;
 }
 
-/**
- * @brief       Calculate pressure from raw pressure value
- * @copyright   Copyright (C) 2017 - 2018 Bosch Sensortec GmbH
- *
- * The algorithm was extracted from the original Bosch Sensortec BME680 driver
- * published as open source. Divisions and multiplications by potences of 2
- * were replaced by shift operations for efficiency reasons.
- *
- * @ref         [BME680_diver](https://github.com/BoschSensortec/BME680_driver)
- * @ref         BME280 datasheet, page 50
- */
+
 static uint32_t bme680_convert_pressure(
     bme680_sensor_t *dev, uint32_t raw_pressure
 ) {
@@ -1043,16 +896,7 @@ static uint32_t bme680_convert_pressure(
     return (uint32_t)pressure;
 }
 
-/**
- * @brief       Calculate humidity from raw humidity data
- * @copyright   Copyright (C) 2017 - 2018 Bosch Sensortec GmbH
- *
- * The algorithm was extracted from the original Bosch Sensortec BME680 driver
- * published as open source. Divisions and multiplications by potences of 2
- * were replaced by shift operations for efficiency reasons.
- *
- * @ref         [BME680_diver](https://github.com/BoschSensortec/BME680_driver)
- */
+
 static uint32_t bme680_convert_humidity(
     bme680_sensor_t *dev, uint16_t raw_humidity
 ) {
@@ -1090,7 +934,7 @@ static uint32_t bme680_convert_humidity(
     var6 = (var4 * var5) >> 1;
     humidity = (((var3 + var6) >> 10) * ((int32_t)1000)) >> 12;
 
-    if (humidity > 100000) { /* Cap at 100%rH */
+    if (humidity > 100000) { 
         humidity = 100000;
     } else if (humidity < 0) {
         humidity = 0;
@@ -1099,34 +943,27 @@ static uint32_t bme680_convert_humidity(
     return (uint32_t)humidity;
 }
 
-/**
- * @brief   Lookup table for gas resistance computation
- * @ref     BME680 datasheet, page 19
- */
+
 static float lookup_table[16][2] = {
-    // const1, const2          // gas_range
-    {1.0, 8000000.0},      // 0
-    {1.0, 4000000.0},      // 1
-    {1.0, 2000000.0},      // 2
-    {1.0, 1000000.0},      // 3
-    {1.0, 499500.4995},    // 4
-    {0.99, 248262.1648},   // 5
-    {1.0, 125000.0},       // 6
-    {0.992, 63004.03226},  // 7
-    {1.0, 31281.28128},    // 8
-    {1.0, 15625.0},        // 9
-    {0.998, 7812.5},       // 10
-    {0.995, 3906.25},      // 11
-    {1.0, 1953.125},       // 12
-    {0.99, 976.5625},      // 13
-    {1.0, 488.28125},      // 14
-    {1.0, 244.140625}      // 15
+    {1.0, 8000000.0},
+    {1.0, 4000000.0},
+    {1.0, 2000000.0},
+    {1.0, 1000000.0},
+    {1.0, 499500.4995},
+    {0.99, 248262.1648},
+    {1.0, 125000.0},
+    {0.992, 63004.03226},
+    {1.0, 31281.28128},
+    {1.0, 15625.0},
+    {0.998, 7812.5},
+    {0.995, 3906.25},
+    {1.0, 1953.125},
+    {0.99, 976.5625},
+    {1.0, 488.28125},
+    {1.0, 244.140625}
 };
 
-/**
- * @brief   Calculate gas resistance from raw gas resistance value and gas range
- * @ref     BME680 datasheet
- */
+
 static uint32_t bme680_convert_gas(
     bme680_sensor_t *dev, uint16_t gas, uint8_t gas_range
 ) {
@@ -1170,7 +1007,6 @@ static bool bme680_get_raw_data(
     uint8_t raw[BME680_REG_RAW_DATA_LEN] = {0};
 
     if (!(dev->meas_status & BME680_NEW_DATA_BITS)) {
-        // read measurement status from sensor
         if (!bme680_read_reg(dev, BME680_REG_MEAS_STATUS_0, raw, 2)) {
             error_dev(
                 "Could not read measurement status from sensor.", __FUNCTION__,
@@ -1178,8 +1014,6 @@ static bool bme680_get_raw_data(
             );
             return false;
         }
-
-        // test whether there are new data
         dev->meas_status = raw[0];
         if (dev->meas_status & BME680_MEASURING_BITS &&
             !(dev->meas_status & BME680_NEW_DATA_BITS)) {
@@ -1195,8 +1029,6 @@ static bool bme680_get_raw_data(
 
     dev->meas_started = false;
     raw_data->gas_index = (dev->meas_status & BME680_GAS_MEAS_INDEX_BITS);
-
-    // if there are new data, read raw data from sensor
 
     if (!bme680_read_reg(
             dev, BME680_REG_RAW_DATA_0, raw, BME680_REG_RAW_DATA_LEN
@@ -1218,22 +1050,7 @@ static bool bme680_get_raw_data(
         ((uint16_t)raw[BME680_RAW_G_OFF] << 2) | raw[BME680_RAW_G_OFF + 1] >> 6;
     raw_data->gas_range = raw[BME680_RAW_G_OFF + 1] & BME680_GAS_RANGE_R_BITS;
 
-    /*
-    // These data are not documented and it is not really clear when they are
-    filled if (!bme680_read_reg(dev, BME680_REG_MEAS_STATUS_1, raw,
-    BME680_REG_RAW_DATA_LEN))
-    {
-        error_dev ("Could not read raw data from sensor.", __FUNCTION__, dev);
-        return false;
-    }
-
-    if (!bme680_read_reg(dev, BME680_REG_MEAS_STATUS_2, raw,
-    BME680_REG_RAW_DATA_LEN))
-    {
-        error_dev ("Could not read raw data from sensor.", __FUNCTION__, dev);
-        return false;
-    }
-    */
+    
     debug(
         "Raw data: %ld %ld %d %d %d", __FUNCTION__, raw_data->temperature,
         raw_data->pressure, raw_data->humidity, raw_data->gas_resistance,
@@ -1243,19 +1060,7 @@ static bool bme680_get_raw_data(
     return true;
 }
 
-/**
- * @brief   Calculate internal duration representation
- *
- * Durations are internally represents as one byte
- *
- *  duration = value<5:0> * multiplier<7:6>
- *
- * where the multiplier is 1, 4, 16, or 64. Maximum duration is therefore
- * 64*64 = 4032 ms. The function takes a real world duration value given
- * in milliseconds and computes the internal representation.
- *
- * @ref Datasheet
- */
+
 static uint8_t bme680_heater_duration(uint16_t duration) {
     uint8_t multiplier = 0;
 
@@ -1266,11 +1071,7 @@ static uint8_t bme680_heater_duration(uint16_t duration) {
     return (uint8_t)(duration | (multiplier << 6));
 }
 
-/**
- * @brief  Calculate internal heater resistance value from real temperature.
- *
- * @ref Datasheet of BME680
- */
+
 static uint8_t bme680_heater_resistance(
     const bme680_sensor_t *dev, uint16_t temp
 ) {
@@ -1285,8 +1086,6 @@ static uint8_t bme680_heater_resistance(
     }
 
     const bme680_calib_data_t *cd = &dev->calib_data;
-
-    // from datasheet
     double var1;
     double var2;
     double var3;
@@ -1345,7 +1144,6 @@ static bool bme680_write_reg(
 #define BME680_BIT_SWITCH_MEM_PAGE_1 0x10
 
 static bool bme680_spi_set_mem_page(bme680_sensor_t *dev, uint8_t reg) {
-    // mem pages (reg 0x00 .. 0x7f = 1, reg 0x80 ... 0xff = 0
     uint8_t mem_page = (reg < 0x80) ? BME680_BIT_SWITCH_MEM_PAGE_1
                                     : BME680_BIT_SWITCH_MEM_PAGE_0;
 
@@ -1358,7 +1156,6 @@ static bool bme680_spi_set_mem_page(bme680_sensor_t *dev, uint8_t reg) {
         dev->error_code |= BME680_SPI_SET_PAGE_FAILED;
         return false;
     }
-    // sdk_os_delay_us (100);
     return true;
 }
 
@@ -1378,8 +1175,6 @@ static bool bme680_spi_read(
         );
         return false;
     }
-
-    // set mem page first
     if (!bme680_spi_set_mem_page(dev, reg)) {
         error_dev(
             "Error on read from SPI slave on bus 1. Could not set mem page.",
@@ -1404,8 +1199,6 @@ static bool bme680_spi_read(
         dev->error_code |= BME680_SPI_READ_FAILED;
         return false;
     }
-    // shift data one by left, first byte received while sending register
-    // address is invalid
     for (int i = 0; i < len; i++) {
         data[i] = miso[i + 1];
     }
@@ -1441,8 +1234,6 @@ static bool bme680_spi_write(
 
         return false;
     }
-
-    // set mem page first if not mem page register is used
     if (reg != BME680_REG_STATUS && !bme680_spi_set_mem_page(dev, reg)) {
         error_dev(
             "Error on write from SPI slave on bus 1. Could not set mem page.",
@@ -1452,11 +1243,7 @@ static bool bme680_spi_write(
     }
 
     reg &= 0x7f;
-
-    // first byte in output is the register address
     mosi[0] = reg;
-
-    // shift data one byte right, first byte in output is the register address
     for (int i = 0; i < len; i++) {
         mosi[i + 1] = data[i];
     }

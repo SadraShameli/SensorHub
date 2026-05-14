@@ -1,12 +1,12 @@
 #pragma once
 
-/**
- * @namespace
- * @brief A namespace for managing the pin.
- */
+#include "core/Service.h"
+
 namespace Pin {
+
+extern const Kernel::Service kService;
 
 void Init();
 void Update();
 
-};  // namespace Pin
+}

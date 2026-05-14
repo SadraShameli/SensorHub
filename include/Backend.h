@@ -4,17 +4,18 @@
 
 #include "HTTP.h"
 
-/**
- * @namespace
- * @brief A namespace for managing backend related functionality.
- */
 namespace Backend {
+
+struct ProbeResult {
+    bool ok;
+    std::string error;
+};
 
 bool CheckResponseFailed(const std::string &, HTTP::Status::StatusCode);
 bool SetupConfiguration(const std::string &);
-void GetConfiguration();
+ProbeResult ProbeAndStoreConfiguration();
 bool RegisterReadings();
 
 extern std::string DeviceURL, ReadingURL, RecordingURL;
 
-};  // namespace Backend
+};

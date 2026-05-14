@@ -1,10 +1,10 @@
 #pragma once
 
-/**
- * @namespace
- * @brief A namespace for managing the graphical user interface.
- */
+#include "core/Service.h"
+
 namespace Gui {
+
+extern const Kernel::Service kService;
 
 void Init();
 void Update();
@@ -12,4 +12,4 @@ void Update();
 void Pause();
 void Resume();
 
-};  // namespace Gui
+}

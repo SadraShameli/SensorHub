@@ -1,20 +1,21 @@
 #include "Pin.h"
 
-#include <ctime>
+#include <cstdint>
 #include <vector>
 
-#include "Climate.h"
 #include "Configuration.h"
 #include "Display.h"
 #include "Failsafe.h"
 #include "Input.h"
-#include "Mic.h"
 #include "Output.h"
 #include "Storage.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "sensors/ISensor.h"
+#include "sensors/SensorRegistry.h"
 
 namespace Pin {
 
@@ -23,28 +24,6 @@ static TaskHandle_t xHandle = nullptr;
 
 static bool resetCanceled = false;
 
-/**
- * @brief Task function that initializes input and output modules and
- * continuously updates them.
- *
- * This function is intended to be run as a FreeRTOS task. It performs the
- * following steps:
- *
- * 1. Logs an initialization message.
- *
- * 2. Initializes the Input and Output modules.
- *
- * 3. Enters an infinite loop where it:
- *    - Updates the Input module.
- *
- *    - Updates the Output module.
- *
- *    - Calls the Update function.
- *
- *    - Delays for 10 milliseconds.
- *
- * @param arg Pointer to the task's argument (unused).
- */
 static void vTask(void* arg) {
     ESP_LOGI(TAG, "Initializing");
 
@@ -62,35 +41,34 @@ static void vTask(void* arg) {
     vTaskDelete(nullptr);
 }
 
-/**
- * @brief Initializes the Pin module.
- *
- * This function creates a FreeRTOS task to run the `vTask` function.
- */
 void Init() {
     xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY, &xHandle);
 }
 
-/**
- * @brief Updates the Pin module.
- *
- * This function checks if the `Up` or `Down` input pins are pressed and
- * performs the following actions:
- *
- * - If the `Up` pin is pressed, it advances to the next menu.
- *
- * - If the `Down` pin is pressed, it resets the values of the current menu.
- */
+const Kernel::Service kService = {
+    .name = "Pin",
+    .modes = Kernel::RunAlways,
+    .on_init = nullptr,
+    .task_entry = &vTask,
+    .stack_bytes = 4096,
+    .priority = tskIDLE_PRIORITY,
+    .out_handle = &xHandle,
+    .should_start = nullptr,
+};
+
 void Update() {
     using Menus = Configuration::Menu::Menus;
-    using Sensors = Configuration::Sensor::Sensors;
 
     if (Input::GetPinState(Input::Inputs::Up)) {
         Output::Blink(Output::LedY);
         Display::ResetScreenSaver();
 
         if (!Storage::GetConfigMode()) {
-            while (!resetCanceled && clock() < 10000) {
+            constexpr int64_t kResetWindowUs = 10LL * 1000LL * 1000LL;
+            const int64_t resetStartUs = esp_timer_get_time();
+
+            while (!resetCanceled &&
+                   (esp_timer_get_time() - resetStartUs) < kResetWindowUs) {
                 Display::SetMenu(Menus::Reset);
                 Input::Update();
                 Output::Update();
@@ -129,39 +107,19 @@ void Update() {
             Failsafe::PopFailure();
         }
 
-        switch (Display::GetMenu()) {
-            case Menus::Temperature:
-                Climate::ResetValues(Sensors::Temperature);
-                break;
+        const auto menu = Display::GetMenu();
 
-            case Menus::Humidity:
-                Climate::ResetValues(Sensors::Humidity);
-                break;
+        if (menu == Menus::Failsafe) {
+            Failsafe::PopFailure();
+            return;
+        }
 
-            case Menus::AirPressure:
-                Climate::ResetValues(Sensors::AirPressure);
-                break;
-
-            case Menus::GasResistance:
-                Climate::ResetValues(Sensors::GasResistance);
-                break;
-
-            case Menus::Altitude:
-                Climate::ResetValues(Sensors::Altitude);
-                break;
-
-            case Menus::Loudness:
-            case Menus::Recording:
-                Mic::ResetValues();
-                break;
-
-            case Menus::Failsafe:
-                Failsafe::PopFailure();
-
-            default:
-                break;
+        auto* sensor = ::Sensors::SensorRegistry::Instance().ById(
+            static_cast<uint8_t>(menu));
+        if (sensor) {
+            sensor->ResetMinMax();
         }
     }
 }
 
-}  // namespace Pin
+}

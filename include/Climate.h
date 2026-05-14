@@ -2,12 +2,11 @@
 
 #include "Configuration.h"
 #include "Definitions.h"
+#include "core/Service.h"
 
-/**
- * @namespace
- * @brief A namespace for managing climate data.
- */
 namespace Climate {
+
+extern const Kernel::Service kService;
 
 void Init();
 void Update();
@@ -22,4 +21,4 @@ const Reading& GetAirPressure();
 const Reading& GetGasResistance();
 const Reading& GetAltitude();
 
-};  // namespace Climate
+};

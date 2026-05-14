@@ -1,23 +1,22 @@
 #pragma once
 
 #include "Definitions.h"
+#include "core/Service.h"
 
-/**
- * @namespace
- * @brief A namespace for managing the microphone.
- */
 namespace Mic {
+
+extern const Kernel::Service kService;
+extern const Kernel::Service kSenderService;
 
 void Init();
 void Update();
 
 void UpdateRecording();
 bool UpdateLoudness();
-void RegisterRecordings();
 float CalculateLoudness();
 
 bool IsOK();
 void ResetValues();
 const Reading& GetLoudness();
 
-};  // namespace Mic
+};

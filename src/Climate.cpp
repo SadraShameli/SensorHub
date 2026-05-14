@@ -4,12 +4,16 @@
 
 #include <cmath>
 
+#include "Configuration.h"
 #include "Failsafe.h"
 #include "Gui.h"
+#include "Storage.h"
 #include "bme680.h"
 #include "driver/gpio.h"
 #include "driver/i2c.h"
 #include "esp_log.h"
+#include "sensors/ISensor.h"
+#include "sensors/SensorRegistry.h"
 
 namespace Climate {
 namespace Constants {
@@ -30,24 +34,66 @@ static Reading temperature, humidity, airPressure, gasResistance, altitude;
 static uint32_t duration = 0;
 static bool isOK = false;
 
-/**
- * @brief Task function to initialize and periodically update the BME680 sensor.
- *
- * This function initializes the BME680 sensor with specified I2C parameters and
- * oversampling rates. It sets the filter size and heater profile for the
- * sensor. If the sensor initialization fails, it logs an error and deletes the
- * task. Once initialized, it enters an infinite loop where it updates the
- * sensor data and delays for a specified duration.
- *
- * @param arg Pointer to the task argument (unused).
- */
+namespace {
+
+class ClimateSensor : public Sensors::ISensor {
+   public:
+    ClimateSensor(uint8_t id, const char* name, const char* unit,
+                  Reading& reading)
+        : m_id(id), m_name(name), m_unit(unit), m_reading(&reading) {}
+
+    const char* Name() const override { return m_name; }
+
+    const char* Unit() const override { return m_unit; }
+
+    uint8_t Id() const override { return m_id; }
+
+    bool IsOk() const override { return isOK; }
+
+    Reading Snapshot() const override {
+        return Reading(m_reading->Current(),
+                       m_reading->Min(),
+                       m_reading->Max());
+    }
+
+    void ResetMinMax() override { m_reading->Reset(); }
+
+   private:
+    uint8_t m_id;
+    const char* m_name;
+    const char* m_unit;
+    Reading* m_reading;
+};
+
+ClimateSensor s_temperature{Configuration::Sensor::Temperature,
+                            "Temperature",
+                            "c",
+                            temperature};
+ClimateSensor s_humidity{Configuration::Sensor::Humidity,
+                         "Humidity",
+                         "%",
+                         humidity};
+ClimateSensor s_airPressure{Configuration::Sensor::AirPressure,
+                            "Air Pressure",
+                            " hPa",
+                            airPressure};
+ClimateSensor s_gasResistance{Configuration::Sensor::GasResistance,
+                              "Gas Resistance",
+                              " Ohms",
+                              gasResistance};
+ClimateSensor s_altitude{Configuration::Sensor::Altitude,
+                         "Altitude",
+                         "m",
+                         altitude};
+
+}
+
 static void vTask(void* arg) {
     ESP_LOGI(TAG, "Initializing");
 
     dev = bme680_init_sensor(I2C_NUM_0, BME680_I2C_ADDRESS_2, 0);
     if (dev == nullptr) {
-        Failsafe::AddFailure(TAG, "No sensor detected");
-
+        ESP_LOGW(TAG, "No sensor detected, skipping");
         vTaskDelete(nullptr);
     }
 
@@ -68,31 +114,40 @@ static void vTask(void* arg) {
     vTaskDelete(nullptr);
 }
 
-/**
- * @brief Initializes the climate control task.
- *
- * This function creates a new FreeRTOS task for climate control using the
- * specified task function, task name, stack size, priority, and task handle.
- *
- * @note The task is created with a priority of `tskIDLE_PRIORITY + 2` and a
- * stack size of 4096 bytes.
- */
+static void RegisterSensors() {
+    auto& registry = ::Sensors::SensorRegistry::Instance();
+    registry.Register(&s_temperature);
+    registry.Register(&s_humidity);
+    registry.Register(&s_airPressure);
+    registry.Register(&s_gasResistance);
+    registry.Register(&s_altitude);
+}
+
+static bool ShouldStart() {
+    using S = Configuration::Sensor::Sensors;
+    return Storage::GetSensorState(S::Temperature) ||
+           Storage::GetSensorState(S::Humidity) ||
+           Storage::GetSensorState(S::AirPressure) ||
+           Storage::GetSensorState(S::GasResistance) ||
+           Storage::GetSensorState(S::Altitude);
+}
+
 void Init() {
+    RegisterSensors();
     xTaskCreate(&vTask, TAG, 4096, nullptr, tskIDLE_PRIORITY + 2, &xHandle);
 }
 
-/**
- * @brief Updates the sensor readings and processes the results.
- *
- * This function forces a measurement from the BME680 sensor and waits for the
- * specified duration. If the measurement is successful, it retrieves the
- * results and updates the temperature, humidity, air pressure, altitude, and
- * gas resistance values with the appropriate offsets. If the measurement or
- * result retrieval fails, it logs the failure and deletes the current task.
- *
- * @note The function uses FreeRTOS `vTaskDelay` and `vTaskDelete` for task
- * management.
- */
+const Kernel::Service kService = {
+    .name = "Climate",
+    .modes = Kernel::RunInNormalMode,
+    .on_init = &RegisterSensors,
+    .task_entry = &vTask,
+    .stack_bytes = 4096,
+    .priority = tskIDLE_PRIORITY + 2,
+    .out_handle = &xHandle,
+    .should_start = &ShouldStart,
+};
+
 void Update() {
     if (!bme680_force_measurement(dev)) {
         Failsafe::AddFailure(TAG, "Taking measurement failed");
@@ -103,7 +158,7 @@ void Update() {
         return;
     }
 
-    vTaskDelay(duration);
+    vTaskDelay(pdMS_TO_TICKS(duration ? duration : 50));
 
     if (!bme680_get_results_float(dev, &values)) {
         Failsafe::AddFailureDelayed(TAG, "Getting result failed");
@@ -118,13 +173,16 @@ void Update() {
     humidity.Update(values.humidity + Constants::HumidityOffset);
 
     if (values.pressure != 0) {
-        float alt = calculateAltitude(airPressure.Current(),
-                                      Constants::SeaLevelPressure,
-                                      Constants::SeaLevelTemperature) +
-                    Constants::AltitudeOffset;
 
+        const float freshPressure =
+            values.pressure + Constants::AirPressureOffset;
+        const float alt = calculateAltitude(freshPressure,
+                                            Constants::SeaLevelPressure,
+                                            Constants::SeaLevelTemperature) +
+                          Constants::AltitudeOffset;
+
+        airPressure.Update(freshPressure);
         altitude.Update(alt);
-        airPressure.Update(values.pressure + Constants::AirPressureOffset);
     }
 
     if (values.gas_resistance != 0) {
@@ -144,25 +202,6 @@ void Update() {
              altitude.Current());
 }
 
-/**
- * @brief Resets the values of the specified sensor.
- *
- * This function resets the values of the sensor specified by the
- * parameter `sensor`. It supports the following sensor types:
- *
- * - Temperature
- *
- * - Humidity
- *
- * - GasResistance
- *
- * - AirPressure
- *
- * - Altitude
- *
- * @param sensor The sensor whose values need to be reset. It should be
- *               one of the enumerators of `Configuration::Sensor::Sensors`.
- */
 void ResetValues(Configuration::Sensor::Sensors sensor) {
     using Sensors = Configuration::Sensor::Sensors;
 
@@ -192,31 +231,15 @@ void ResetValues(Configuration::Sensor::Sensors sensor) {
     }
 }
 
-/**
- * @brief Calculates the altitude based on the current pressure, sea level
- * pressure, and sea level temperature.
- *
- * This function uses the barometric formula to estimate the altitude above sea
- * level.
- *
- * @param currentPressure The current atmospheric pressure in Pascals.
- * @param seaLevelPressure The standard atmospheric pressure at sea level in
- * Pascals.
- * @param seaLevelTemp The standard temperature at sea level in degrees Celsius.
- * @return The calculated altitude in meters.
- */
 float calculateAltitude(float currentPressure, float seaLevelPressure,
                         float seaLevelTemp) {
-    // Lapse rate in K/m (temperature decrease per meter of altitude)
+
     const float L = 0.0065f;
 
-    // Universal gas constant in J/(mol·K)
     const float R = 8.31432f;
 
-    // Gravitational acceleration in m/s²
     const float G = 9.80665f;
 
-    // Convert sea level temperature to Kelvin
     float seaLevelTempK = seaLevelTemp + 273.15f;
 
     float alt = (1.0f - powf(((currentPressure) / seaLevelPressure),
@@ -226,63 +249,28 @@ float calculateAltitude(float currentPressure, float seaLevelPressure,
     return alt;
 }
 
-/**
- * @brief Checks if the system status is OK.
- *
- * This function returns the status of the system, indicating whether it is
- * operating correctly.
- *
- * @return `true` if the system is OK, `false` otherwise.
- */
 bool IsOK() {
     return isOK;
 }
 
-/**
- * @brief Retrieves the current temperature reading.
- *
- * @return `const Reading&` Reference to the current temperature reading.
- */
 const Reading& GetTemperature() {
     return temperature;
 }
 
-/**
- * @brief Retrieves the current humidity reading.
- *
- * @return `const Reading&` Reference to the current humidity reading.
- */
 const Reading& GetHumidity() {
     return humidity;
 }
 
-/**
- * @brief Retrieves the current air pressure reading.
- *
- * @return `const Reading&` Reference to the air pressure reading.
- */
 const Reading& GetAirPressure() {
     return airPressure;
 }
 
-/**
- * @brief Retrieves the gas resistance reading.
- *
- * @return `const Reading&` Reference to the gas resistance reading.
- */
 const Reading& GetGasResistance() {
     return gasResistance;
 }
 
-/**
- * @brief Retrieves the altitude reading.
- *
- * This function returns a constant reference to the altitude reading.
- *
- * @return `const Reading&` A constant reference to the altitude reading.
- */
 const Reading& GetAltitude() {
     return altitude;
 }
 
-}  // namespace Climate
+}

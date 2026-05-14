@@ -1,0 +1,11 @@
+{
+    "name": "sensorhub_core",
+    "version": "0.1.0",
+    "description": "Pure-logic primitives for SensorHub (host-buildable, no ESP-IDF deps).",
+    "build": {
+        "flags": [
+            "-std=c++26",
+            "-I include"
+        ]
+    }
+}

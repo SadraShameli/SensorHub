@@ -1,0 +1,14 @@
+# Release-env-specific overrides. Layered on top of sdkconfig.defaults.
+
+# Optimize for speed (matches `-Ofast` in platformio.ini).
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Disable assertions: removes runtime checks and adds -DNDEBUG (also
+# enables ArduinoJson/STL size optimizations that key off NDEBUG).
+CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_DISABLE=y
+
+# Strip ESP_RETURN_ON_* / ESP_EXIT_ON_* error strings from flash.
+CONFIG_COMPILER_OPTIMIZATION_CHECKS_SILENT=y
+
+# Drop debug-only logs from release images.
+CONFIG_LOG_MAXIMUM_LEVEL_INFO=y

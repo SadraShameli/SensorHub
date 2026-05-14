@@ -1,0 +1,145 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    build:
+        name: Build (${{ matrix.env }})
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                env: [release, debug]
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Cache PlatformIO
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.platformio/.cache
+                      ~/.cache/pip
+                  key: ${{ runner.os }}-pio-${{ matrix.env }}-${{ hashFiles('platformio.ini') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pio-${{ matrix.env }}-
+                      ${{ runner.os }}-pio-
+
+            - name: Install PlatformIO
+              run: pip install --upgrade platformio
+
+            - name: Build ${{ matrix.env }}
+              run: pio run -e ${{ matrix.env }}
+
+    native-tests:
+        name: Native unit tests
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Cache PlatformIO
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.platformio/.cache
+                      ~/.cache/pip
+                  key: ${{ runner.os }}-pio-native-${{ hashFiles('platformio.ini') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pio-native-
+                      ${{ runner.os }}-pio-
+
+            - name: Install PlatformIO
+              run: pip install --upgrade platformio
+
+            - name: Run native tests
+              run: pio test -e native --verbose
+
+    cppcheck:
+        name: Static analysis (cppcheck)
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install cppcheck
+              run: sudo apt-get update && sudo apt-get install -y cppcheck
+
+            - name: Run cppcheck
+              run: |
+                  cppcheck \
+                    --enable=warning,style,performance,portability \
+                    --suppress=missingIncludeSystem \
+                    --suppress=unusedFunction \
+                    --inline-suppr \
+                    --error-exitcode=1 \
+                    --std=c++20 \
+                    -I include \
+                    -I lib/sensorhub_core/include \
+                    src lib/sensorhub_core
+
+    lint:
+        name: clang-tidy (native)
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Cache PlatformIO
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.platformio/.cache
+                      ~/.cache/pip
+                  key: ${{ runner.os }}-pio-native-${{ hashFiles('platformio.ini') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pio-native-
+                      ${{ runner.os }}-pio-
+
+            - name: Install PlatformIO and clang-tidy
+              run: |
+                  pip install --upgrade platformio
+                  sudo apt-get update && sudo apt-get install -y clang-tidy
+
+            - name: Generate compile_commands.json
+              run: pio run -t compiledb -e native
+
+            - name: Run clang-tidy
+              run: |
+                  clang-tidy -p . \
+                    $(find test/test_native -name "*.cpp" | tr '\n' ' ')
+
+    format:
+        name: clang-format
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install clang-format
+              run: sudo apt-get update && sudo apt-get install -y clang-format
+
+            - name: Check formatting
+              run: |
+                  fail=0
+                  while IFS= read -r -d '' f; do
+                    if ! diff -q "$f" <(clang-format "$f") >/dev/null; then
+                      echo "::error file=$f::clang-format diff"
+                      fail=1
+                    fi
+                  done < <(find src include lib/sensorhub_core/include test/test_native -type f \( -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' \) -print0)
+                  exit $fail

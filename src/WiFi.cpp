@@ -1,6 +1,7 @@
 #include "WiFi.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cstring>
 
 #include "Backend.h"
@@ -12,6 +13,7 @@
 #include "Storage.h"
 #include "esp_log.h"
 #include "esp_mac.h"
+#include "esp_random.h"
 #include "esp_wifi.h"
 #include "esp_wifi_ap_get_sta_list.h"
 
@@ -26,21 +28,10 @@ static EventBits_t event_bits;
 
 static int retryAttempts = 0;
 static bool passwordFailsafe = false;
+static std::atomic<int> lastDisconnectReason{0};
 static std::string ipAddress, macAddress;
 static std::vector<ClientDetails> clientDetails(Constants::MaxClients);
 
-/**
- * @brief WiFi event handler function.
- *
- * This function handles various WiFi events such as station connection,
- * disconnection, and IP acquisition. It performs actions based on the
- * type of event received.
- *
- * @param arg User-defined argument.
- * @param event_base Base ID of the event.
- * @param event_id ID of the event.
- * @param event_data Data associated with the event.
- */
 static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                                int32_t event_id, void* event_data) {
     if (event_base == WIFI_EVENT) {
@@ -73,11 +64,19 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
 
             wifi_event_sta_disconnected_t* status =
                 (wifi_event_sta_disconnected_t*)event_data;
+            lastDisconnectReason.store(status->reason,
+                                       std::memory_order_relaxed);
             ESP_LOGW(TAG,
                      "Disconnected from wifi - reason: %d",
                      status->reason);
 
             if (status->reason == WIFI_REASON_ASSOC_LEAVE) {
+                return;
+            }
+
+            if (Storage::GetConfigMode()) {
+                xEventGroupSetBits(wifi_event_group, States::ConnectFailed);
+                Output::SetContinuity(Output::LedY, false);
                 return;
             }
 
@@ -87,10 +86,9 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                  status->reason ==
                      WIFI_REASON_NO_AP_FOUND_W_COMPATIBLE_SECURITY)) {
                 passwordFailsafe = true;
-                Failsafe::AddFailure(TAG,
-                                     "Password: " + Storage::GetPassword() +
-                                         " for SSID: " + Storage::GetSSID() +
-                                         " is not correct.");
+                Failsafe::AddFailure(
+                    TAG,
+                    "Incorrect password for SSID: " + Storage::GetSSID());
             }
 
             if (retryAttempts < Constants::MaxRetries && !passwordFailsafe) {
@@ -110,11 +108,6 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                         TAG,
                         "Can't find SSID: " + Storage::GetSSID());
                 }
-
-                if (Storage::GetConfigMode()) {
-                    passwordFailsafe = false;
-                    Network::Reset();
-                }
             }
         }
     }
@@ -126,9 +119,8 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
         snprintf(buffer, sizeof(buffer), IPSTR, IP2STR(&event.ip_info.ip));
 
         ESP_LOGI(TAG,
-                 "Connected to WiFi - SSID: %s - Password: %s - IP: %s",
+                 "Connected to WiFi - SSID: %s - IP: %s",
                  Storage::GetSSID().c_str(),
-                 Storage::GetPassword().c_str(),
                  buffer);
 
         ipAddress = buffer;
@@ -139,16 +131,17 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-/**
- * @brief Initializes the WiFi module.
- *
- * This function initializes the WiFi module by setting the MAC address,
- * initializing the network interface, creating the event loop, and initializing
- * the WiFi configuration. It registers the event handlers for WiFi and IP
- * events and creates the default station network interface. If the
- * configuration mode is enabled, it also creates the default access point
- * network interface.
- */
+const Kernel::Service kService = {
+    .name = "WiFi",
+    .modes = Kernel::RunAlways,
+    .on_init = &Init,
+    .task_entry = nullptr,
+    .stack_bytes = 0,
+    .priority = 0,
+    .out_handle = nullptr,
+    .should_start = nullptr,
+};
+
 void Init() {
     SetMacAddress();
 
@@ -182,17 +175,6 @@ void Init() {
     }
 }
 
-/**
- * @brief Starts the WiFi module as an access point.
- *
- * This function starts the WiFi module as an access point by setting the
- * configuration parameters for the access point. It checks the length of the
- * SSID and password and sets the authentication mode accordingly. If the WiFi
- * mode is set to station, it disconnects the WiFi and stops the WiFi module
- * before starting the access point. It then sets the WiFi mode to access point,
- * sets the configuration, and starts the WiFi module. Finally, it starts the
- * HTTP server.
- */
 void StartAP() {
     ESP_LOGI(TAG, "Starting as access point");
 
@@ -204,28 +186,12 @@ void StartAP() {
             },
     };
 
-    size_t ssidLength = strlen(Configuration::WiFi::SSID);
-    size_t passLength = strlen(Configuration::WiFi::Password);
-
+    const size_t ssidLength = strlen(Configuration::WiFi::SSID);
     if (ssidLength <= 32) {
         memcpy(wifi_config.ap.ssid, Configuration::WiFi::SSID, ssidLength);
-    }
-
-    else {
+    } else {
         Failsafe::AddFailure(TAG, "SSID longer than 32 characters");
         strcpy((char*)wifi_config.ap.ssid, "Unit");
-    }
-
-    if (passLength >= 8 && passLength <= 64) {
-        memcpy(wifi_config.ap.password,
-               Configuration::WiFi::Password,
-               passLength);
-        wifi_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
-        wifi_config.ap.pairwise_cipher = WIFI_CIPHER_TYPE_CCMP;
-    }
-
-    else if (passLength) {
-        Failsafe::AddFailure(TAG, "Password too long or too short");
     }
 
     if (wifi_mode == WIFI_MODE_STA) {
@@ -243,16 +209,6 @@ void StartAP() {
     HTTP::StartServer();
 }
 
-/**
- * @brief Starts the WiFi module as a station.
- *
- * This function starts the WiFi module as a station by setting the
- * configuration parameters for the station. It checks the length of the SSID
- * and password and sets the authentication mode accordingly. If the WiFi mode
- * is set to access point, it disconnects the WiFi and stops the WiFi module
- * before starting the station. It then sets the WiFi mode to station, sets the
- * configuration, and starts the WiFi module.
- */
 void StartStation() {
     ESP_LOGI(TAG, "Starting as station");
 
@@ -287,6 +243,23 @@ void StartStation() {
         return;
     }
 
+    xEventGroupClearBits(wifi_event_group,
+                         States::Connected | States::ConnectFailed);
+    lastDisconnectReason.store(0, std::memory_order_relaxed);
+    passwordFailsafe = false;
+    retryAttempts = 0;
+
+    const bool keepAP = (ap_netif != nullptr && wifi_mode == WIFI_MODE_AP);
+
+    if (keepAP) {
+        ESP_LOGI(TAG, "Adding station to AP (APSTA)");
+        wifi_mode = WIFI_MODE_APSTA;
+        ESP_ERROR_CHECK(esp_wifi_set_mode(wifi_mode));
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+        ESP_ERROR_CHECK(esp_wifi_connect());
+        return;
+    }
+
     if (wifi_mode == WIFI_MODE_AP) {
         ESP_LOGI(TAG, "Wifi mode AP, switching to Station");
         ESP_ERROR_CHECK(esp_wifi_stop());
@@ -299,16 +272,6 @@ void StartStation() {
     ESP_ERROR_CHECK(esp_wifi_start());
 }
 
-/**
- * @brief Stops the WiFi module.
- *
- * This function stops the WiFi module by disconnecting the WiFi, stopping the
- * WiFi module, and clearing the event group bits. It also stops the HTTP server
- * if it is running.
- *
- * @return `true` if the WiFi module was stopped successfully, `false`
- * otherwise.
- */
 bool IsConnected() {
     event_bits = xEventGroupWaitBits(wifi_event_group,
                                      States::Connected,
@@ -319,12 +282,6 @@ bool IsConnected() {
     return event_bits & States::Connected;
 }
 
-/**
- * @brief Waits for the WiFi connection.
- *
- * This function waits for the WiFi connection by waiting for the event group
- * bits to be set to connected.
- */
 void WaitForConnection() {
     xEventGroupWaitBits(wifi_event_group,
                         States::Connected,
@@ -333,12 +290,39 @@ void WaitForConnection() {
                         portMAX_DELAY);
 }
 
-/**
- * @brief Sets the MAC address.
- *
- * This function reads the MAC address from the ESP32 chip and sets it as a
- * string.
- */
+bool WaitForConnection(uint32_t timeoutMs) {
+    EventBits_t bits =
+        xEventGroupWaitBits(wifi_event_group,
+                            States::Connected | States::ConnectFailed,
+                            pdFALSE,
+                            pdFALSE,
+                            pdMS_TO_TICKS(timeoutMs));
+    return (bits & States::Connected) != 0;
+}
+
+int GetLastDisconnectReason() {
+    return lastDisconnectReason.load(std::memory_order_relaxed);
+}
+
+const char* DisconnectReasonString(int reason) {
+    switch (reason) {
+        case WIFI_REASON_AUTH_FAIL:
+        case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+        case WIFI_REASON_NO_AP_FOUND_W_COMPATIBLE_SECURITY:
+            return "Incorrect WiFi password";
+        case WIFI_REASON_NO_AP_FOUND:
+        case WIFI_REASON_NO_AP_FOUND_IN_RSSI_THRESHOLD:
+            return "WiFi network not found";
+        case WIFI_REASON_BEACON_TIMEOUT:
+        case WIFI_REASON_HANDSHAKE_TIMEOUT:
+            return "WiFi connection timed out";
+        case 0:
+            return "Connection timed out";
+        default:
+            return "WiFi connection failed";
+    }
+}
+
 void SetMacAddress() {
     if (macAddress.empty()) {
         ESP_LOGI(TAG, "Reading mac");
@@ -361,14 +345,6 @@ void SetMacAddress() {
     }
 }
 
-/**
- * @brief Gets the IP address of the access point.
- *
- * This function gets the IP address of the access point and sets it as a
- * string.
- *
- * @return The IP address of the access point.
- */
 const std::string& GetIPAP() {
     esp_netif_ip_info_t ip = {0};
     ESP_ERROR_CHECK(esp_netif_get_ip_info(ap_netif, &ip));
@@ -408,26 +384,12 @@ const std::vector<ClientDetails>& GetClientDetails() {
     return clientDetails;
 }
 
-/**
- * @brief Gets the IP address of the station.
- *
- * This function gets the IP address of the station and sets it as a string.
- *
- * @return The IP address of the station.
- */
 const std::string& GetIPStation() {
     return ipAddress;
 }
 
-/**
- * @brief Gets the MAC address of the station.
- *
- * This function gets the MAC address of the station and sets it as a string.
- *
- * @return The MAC address of the station.
- */
 const std::string& GetMacAddress() {
     return macAddress;
 };
 
-}  // namespace WiFi
+}

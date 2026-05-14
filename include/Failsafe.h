@@ -1,23 +1,18 @@
 #pragma once
 
-#include <stack>
+#include <optional>
 #include <string>
 
-/**
- * @namespace
- * @brief A namespace for managing failures.
- */
+#include "core/Service.h"
+
 namespace Failsafe {
 
-/**
- * @class
- * @brief Represents a failure with a caller and a message.
- *
- * The Failure class encapsulates information about a failure, including the
- * caller and a message describing the failure.
- */
+extern const Kernel::Service kService;
+
 class Failure {
    public:
+    Failure() = default;
+
     Failure(const char* caller, const char* message)
         : Caller(caller), Message(message) {}
 
@@ -27,7 +22,7 @@ class Failure {
     Failure(const char* caller, std::string&& message)
         : Caller(caller), Message(std::move(message)) {}
 
-    const char* Caller;
+    const char* Caller = nullptr;
     std::string Message;
 };
 
@@ -38,6 +33,7 @@ void AddFailure(const char*, std::string&&);
 void AddFailureDelayed(const char*, std::string&&);
 void PopFailure();
 
-const std::stack<Failsafe::Failure>& GetFailures();
+std::optional<Failure> PeekTopFailure();
+size_t FailureCount();
 
-};  // namespace Failsafe
+};

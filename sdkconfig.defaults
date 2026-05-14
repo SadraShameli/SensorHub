@@ -1,0 +1,53 @@
+# SensorHub project-specific sdkconfig overrides.
+# PlatformIO regenerates sdkconfig.{env} from this on next build.
+#
+# Keep this file small. Only list deltas from the ESP-IDF defaults.
+
+# ---------------------------------------------------------------------------
+# Partition table
+# ---------------------------------------------------------------------------
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_PARTITION_TABLE_FILENAME="partitions.csv"
+
+# ---------------------------------------------------------------------------
+# HTTP server
+# ---------------------------------------------------------------------------
+CONFIG_HTTPD_MAX_REQ_HDR_LEN=1024
+CONFIG_HTTPD_MAX_URI_LEN=512
+CONFIG_HTTPD_ERR_RESP_NO_DELAY=y
+
+# ---------------------------------------------------------------------------
+# HTTP client + TLS
+# ---------------------------------------------------------------------------
+CONFIG_ESP_HTTP_CLIENT_ENABLE_HTTPS=y
+CONFIG_ESP_TLS_USING_MBEDTLS=y
+
+# Phase 2: bundled CA roots for HTTPS verification.
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y
+
+# ---------------------------------------------------------------------------
+# Task watchdog
+# ---------------------------------------------------------------------------
+CONFIG_ESP_TASK_WDT_EN=y
+CONFIG_ESP_TASK_WDT_INIT=y
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=5
+
+# ---------------------------------------------------------------------------
+# Log level (release builds; debug env can override in sdkconfig.defaults.debug)
+# ---------------------------------------------------------------------------
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+
+# ---------------------------------------------------------------------------
+# C++ language features used by sensorhub_core
+# ---------------------------------------------------------------------------
+CONFIG_COMPILER_CXX_EXCEPTIONS=n
+CONFIG_COMPILER_CXX_RTTI=n
+
+# ---------------------------------------------------------------------------
+# CPU frequency: run the ESP32 at its rated maximum 240 MHz (default is 160).
+# Improves mbedTLS / WiFi throughput; ~50% more dynamic power.
+# ---------------------------------------------------------------------------
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+CONFIG_ESP32_DEFAULT_CPU_FREQ_240=y

@@ -1,25 +1,22 @@
 #include "Input.h"
 
 #include "driver/gpio.h"
+#include "esp_timer.h"
 
 namespace Input {
 
-/**
- * @struct
- * @brief Structure to hold the state of an input pin.
- */
+static constexpr int64_t kDebounceUs = 50LL * 1000LL;
+
 struct InputPin {
     gpio_num_t PinNumber = GPIO_NUM_NC;
     bool PinState = false, IsLocked = false;
+    int64_t LastChangeUs = 0;
 
     InputPin(Inputs _PinNumber) : PinNumber((gpio_num_t)_PinNumber) {}
 };
 
 static InputPin inputPins[] = {Up, Down};
 
-/**
- * @brief Initializes the input pins.
- */
 void Init() {
     for (const auto& pin : inputPins) {
         ESP_ERROR_CHECK(gpio_set_direction(pin.PinNumber, GPIO_MODE_INPUT));
@@ -27,34 +24,30 @@ void Init() {
     }
 }
 
-/**
- * @brief Updates the state of the input pins.
- */
 void Update() {
+    const int64_t nowUs = esp_timer_get_time();
+
     for (auto& pin : inputPins) {
+        if ((nowUs - pin.LastChangeUs) < kDebounceUs) {
+            continue;
+        }
+
         bool pinPinState = gpio_get_level(pin.PinNumber);
 
         if (pinPinState && pin.IsLocked) {
             pin.PinState = false;
             pin.IsLocked = false;
+            pin.LastChangeUs = nowUs;
         }
 
         else if (!pinPinState && !pin.IsLocked) {
             pin.IsLocked = true;
             pin.PinState = true;
+            pin.LastChangeUs = nowUs;
         }
     }
 }
 
-/**
- * @brief Gets the state of the specified input pin.
- *
- * This function checks if the specified input pin has been triggered and resets
- * the pin state.
- *
- * @param pinNumber The input pin to check.
- * @return `true` if the pin has been triggered, `false` otherwise.
- */
 bool GetPinState(Inputs pinNumber) {
     for (auto& pin : inputPins) {
         if ((Inputs)pin.PinNumber == pinNumber && pin.PinState) {
@@ -67,4 +60,4 @@ bool GetPinState(Inputs pinNumber) {
     return false;
 }
 
-}  // namespace Input
+}

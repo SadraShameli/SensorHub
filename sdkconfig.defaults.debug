@@ -1,0 +1,12 @@
+# Debug-env-specific overrides. Layered on top of sdkconfig.defaults.
+
+# Verbose logging.
+CONFIG_LOG_DEFAULT_LEVEL_DEBUG=y
+CONFIG_LOG_MAXIMUM_LEVEL_DEBUG=y
+
+# Debug-build optimization.
+CONFIG_COMPILER_OPTIMIZATION_DEBUG=y
+CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_ENABLE=y
+
+# Helpful for catching corruption in the field.
+CONFIG_HEAP_POISONING_LIGHT=y
