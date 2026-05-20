@@ -114,6 +114,13 @@ bool SetupConfiguration(const std::string& payload) {
     }
     Storage::SetAddress(std::move(address));
 
+    std::string token = doc["token"].as<std::string>();
+    if (token.empty() || token.length() >= 64) {
+        Failsafe::AddFailure(TAG, "Invalid device token");
+        return false;
+    }
+    Storage::SetAuthKey(std::move(token));
+
     Network::NotifyConfigSet();
     return true;
 }
@@ -186,7 +193,7 @@ bool RegisterReadings() {
     serializeJson(doc, payload);
 
     HTTP::Request request(Storage::GetAddress() + ReadingURL);
-    if (request.POST(payload)) {
+    if (request.POST(payload, Storage::GetAuthKey())) {
         return true;
     }
 

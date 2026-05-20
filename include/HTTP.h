@@ -79,7 +79,7 @@ class Request {
     Request(std::string&& url) : m_URL(std::move(url)) { RemoveSlash(); }
 
     bool GET();
-    bool POST(const std::string&);
+    bool POST(const std::string&, const std::string& bearerToken = {});
     bool Stream(const char*);
 
     const std::string& GetURL();

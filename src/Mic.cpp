@@ -310,6 +310,9 @@ static void SenderTask(void* arg) {
     esp_http_client_handle_t httpClient = esp_http_client_init(&httpConfig);
     assert(httpClient);
 
+    const std::string authBearer = "Bearer " + Storage::GetAuthKey();
+    esp_http_client_set_header(httpClient, "Authorization", authBearer.c_str());
+
     for (;;) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 

@@ -88,7 +88,7 @@ bool Request::GET() {
     return true;
 }
 
-bool Request::POST(const std::string& payload) {
+bool Request::POST(const std::string& payload, const std::string& bearerToken) {
     if (!WiFi::IsConnected()) {
         return false;
     }
@@ -103,12 +103,22 @@ bool Request::POST(const std::string& payload) {
     esp_http_client_set_url(httpClient, m_URL.c_str());
     esp_http_client_set_method(httpClient, HTTP_METHOD_POST);
     esp_http_client_set_header(httpClient, "Content-Type", "application/json");
+
+    if (!bearerToken.empty()) {
+        std::string auth = "Bearer " + bearerToken;
+        esp_http_client_set_header(httpClient, "Authorization", auth.c_str());
+    }
+
     esp_http_client_set_post_field(httpClient,
                                    payload.c_str(),
                                    payload.length());
 
     esp_err_t err = esp_http_client_perform(httpClient);
     esp_http_client_close(httpClient);
+
+    if (!bearerToken.empty()) {
+        esp_http_client_delete_header(httpClient, "Authorization");
+    }
 
     if (err != ESP_OK) {
         Failsafe::AddFailure(

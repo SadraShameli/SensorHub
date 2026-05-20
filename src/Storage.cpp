@@ -34,6 +34,7 @@ static constexpr size_t kSsidMax = 33;
 static constexpr size_t kPassMax = 65;
 static constexpr size_t kUrlMax = 241;
 static constexpr size_t kUuidMax = 37;
+static constexpr size_t kDevTokenMax = 64;
 static constexpr size_t kApPassMax = 17;
 
 }
@@ -108,7 +109,7 @@ void LoadAll() {
     ESP_ERROR_CHECK(ReadStr(Keys::kSsid, g_cache.ssid, Limits::kSsidMax));
     ESP_ERROR_CHECK(ReadStr(Keys::kPass, g_cache.password, Limits::kPassMax));
     ESP_ERROR_CHECK(ReadStr(Keys::kSrvUrl, g_cache.address, Limits::kUrlMax));
-    ESP_ERROR_CHECK(ReadStr(Keys::kAuthKey, g_cache.authKey, Limits::kUuidMax));
+    ESP_ERROR_CHECK(ReadStr(Keys::kAuthKey, g_cache.authKey, Limits::kDevTokenMax));
     ESP_ERROR_CHECK(
         ReadStr(Keys::kDevName, g_cache.deviceName, Limits::kUuidMax));
     ESP_ERROR_CHECK(
@@ -269,7 +270,7 @@ void Commit() {
         ESP_LOGE(TAG, "Address too long");
         return;
     }
-    if (g_cache.authKey.length() >= Limits::kUuidMax) {
+    if (g_cache.authKey.length() >= Limits::kDevTokenMax) {
         ESP_LOGE(TAG, "Auth Key too long");
         return;
     }
